@@ -1,2 +1,2 @@
 Wrocław:PL
-Berlin
+Berlin:DE

@@ -30,6 +30,7 @@ class EventService {
 
   Stream<CityDataState> getEventsForCity(
     String slug, {
+    String countryCode = '',
     double? latitude,
     double? longitude,
     DateTime? from,
@@ -44,6 +45,7 @@ class EventService {
     }
 
     final dataset = await _fetchDataset(slug);
+    print(dataset);
     if (dataset != null && !_isStale(dataset['generated_at'])) {
       final events = _parseEvents(dataset);
       _setCache(slug, events);
@@ -61,7 +63,7 @@ class EventService {
           'Discovering events — usually takes about 2 minutes the first time.',
     );
 
-    if (!await _triggerScrape(cityName)) {
+    if (!await _triggerScrape(cityName, countryCode: countryCode)) {
       yield const CityDataState(
         CityDataStatus.error,
         message: 'Could not start event discovery. Try again later.',
@@ -135,16 +137,18 @@ class EventService {
     return null;
   }
 
-  Future<bool> _triggerScrape(String city) async {
+  Future<bool> _triggerScrape(String city, {String countryCode = ''}) async {
     try {
       final r = await _client.post(
         Uri.parse(_triggerUrl),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'city': city}),
+        body: json.encode({'city': city, 'country_code': countryCode}),
       );
       if (r.statusCode == 200) {
         final body = json.decode(r.body) as Map<String, dynamic>;
-        return body['status'] == 'triggered' || body['status'] == 'fresh';
+        return body['status'] == 'triggered' ||
+            body['status'] == 'fresh' ||
+            body['status'] == 'already_running';
       }
     } catch (_) {}
     return false;
