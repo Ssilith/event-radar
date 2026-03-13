@@ -1,6 +1,6 @@
 const STALE_MS = 30 * 24 * 60 * 60 * 1000;
 const BASE_URL = () =>
-  `https://${process.env.GITHUB_OWNER}.github.io/${process.env.GITHUB_REPO}/scraper/datasets`;
+  `https://${process.env.GITHUB_OWNER}.github.io/${process.env.GITHUB_REPO}/datasets`;
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
