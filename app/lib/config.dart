@@ -1,22 +1,15 @@
 class AppConfig {
-  static const datasetsBase = String.fromEnvironment(
-    'DATASETS_BASE',
+  static const vercelBase = String.fromEnvironment(
+    'VERCEL_BASE',
     defaultValue: '',
   );
 
-  static const triggerUrl = String.fromEnvironment(
-    'TRIGGER_URL',
-    defaultValue: '',
-  );
+  static String get datasetsBase => '$vercelBase/api/datasets';
+  static String get triggerUrl => '$vercelBase/api/trigger';
 
   static void validate() {
-    final missing = <String>[];
-    if (datasetsBase.isEmpty) missing.add('DATASETS_BASE');
-    if (triggerUrl.isEmpty) missing.add('TRIGGER_URL');
-    if (missing.isNotEmpty) {
-      throw StateError(
-        'Missing required --dart-define values: ${missing.join(', ')}',
-      );
+    if (vercelBase.isEmpty) {
+      throw StateError('Missing --dart-define VERCEL_BASE');
     }
   }
 }

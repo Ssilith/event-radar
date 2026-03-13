@@ -45,7 +45,6 @@ class EventService {
     }
 
     final dataset = await _fetchDataset(slug);
-    print(dataset);
     if (dataset != null && !_isStale(dataset['generated_at'])) {
       final events = _parseEvents(dataset);
       _setCache(slug, events);
@@ -103,7 +102,10 @@ class EventService {
 
   Future<List<Map<String, dynamic>>> fetchIndex() async {
     try {
-      final r = await _client.get(Uri.parse('$_datasetsBase/index.json'));
+      final uri = Uri.parse(
+        _datasetsBase,
+      ).replace(queryParameters: {'path': 'index.json'});
+      final r = await _client.get(uri);
       if (r.statusCode == 200) {
         final data = json.decode(r.body) as Map<String, dynamic>;
         return List<Map<String, dynamic>>.from(data['cities'] ?? []);
@@ -126,10 +128,10 @@ class EventService {
 
   Future<Map<String, dynamic>?> _fetchDataset(String slug) async {
     try {
-      final r = await _client.get(
-        Uri.parse('$_datasetsBase/$slug.json'),
-        headers: {'Cache-Control': 'no-cache'},
-      );
+      final uri = Uri.parse(
+        _datasetsBase,
+      ).replace(queryParameters: {'path': '$slug.json'});
+      final r = await _client.get(uri, headers: {'Cache-Control': 'no-cache'});
       if (r.statusCode == 200) {
         return json.decode(r.body) as Map<String, dynamic>;
       }
@@ -156,10 +158,10 @@ class EventService {
 
   Future<Map<String, dynamic>?> _findInIndex(String cityName) async {
     try {
-      final r = await _client.get(
-        Uri.parse('$_datasetsBase/index.json'),
-        headers: {'Cache-Control': 'no-cache'},
-      );
+      final uri = Uri.parse(
+        _datasetsBase,
+      ).replace(queryParameters: {'path': 'index.json'});
+      final r = await _client.get(uri, headers: {'Cache-Control': 'no-cache'});
       if (r.statusCode != 200) return null;
       final cities = (json.decode(r.body)['cities'] as List? ?? [])
           .cast<Map<String, dynamic>>();
