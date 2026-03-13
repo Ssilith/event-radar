@@ -1,0 +1,229 @@
+{
+  "languages": {
+    "pl": {
+      "name": "Polish",
+      "terms": {
+        "events": "wydarzenia",
+        "concerts": "koncerty",
+        "festival": "festiwal",
+        "things_to_do": "co robić"
+      }
+    },
+    "de": {
+      "name": "German",
+      "terms": {
+        "events": "Veranstaltungen",
+        "concerts": "Konzerte",
+        "festival": "Festival",
+        "things_to_do": "was tun in"
+      }
+    },
+    "fr": {
+      "name": "French",
+      "terms": {
+        "events": "événements",
+        "concerts": "concerts",
+        "festival": "festival",
+        "things_to_do": "que faire à"
+      }
+    },
+    "es": {
+      "name": "Spanish",
+      "terms": {
+        "events": "eventos",
+        "concerts": "conciertos",
+        "festival": "festival",
+        "things_to_do": "qué hacer en"
+      }
+    },
+    "it": {
+      "name": "Italian",
+      "terms": {
+        "events": "eventi",
+        "concerts": "concerti",
+        "festival": "festival",
+        "things_to_do": "cosa fare a"
+      }
+    },
+    "pt": {
+      "name": "Portuguese",
+      "terms": {
+        "events": "eventos",
+        "concerts": "concertos",
+        "festival": "festival",
+        "things_to_do": "o que fazer em"
+      }
+    },
+    "nl": {
+      "name": "Dutch",
+      "terms": {
+        "events": "evenementen",
+        "concerts": "concerten",
+        "festival": "festival",
+        "things_to_do": "wat te doen in"
+      }
+    },
+    "cs": {
+      "name": "Czech",
+      "terms": {
+        "events": "události",
+        "concerts": "koncerty",
+        "festival": "festival",
+        "things_to_do": "co dělat v"
+      }
+    },
+    "hu": {
+      "name": "Hungarian",
+      "terms": {
+        "events": "események",
+        "concerts": "koncertek",
+        "festival": "fesztivál",
+        "things_to_do": "programok"
+      }
+    },
+    "ro": {
+      "name": "Romanian",
+      "terms": {
+        "events": "evenimente",
+        "concerts": "concerte",
+        "festival": "festival",
+        "things_to_do": "ce să faci în"
+      }
+    },
+    "uk": {
+      "name": "Ukrainian",
+      "terms": {
+        "events": "події",
+        "concerts": "концерти",
+        "festival": "фестиваль",
+        "things_to_do": "що робити в"
+      }
+    },
+    "ja": {
+      "name": "Japanese",
+      "terms": {
+        "events": "イベント",
+        "concerts": "コンサート",
+        "festival": "フェスティバル",
+        "things_to_do": "おすすめスポット"
+      }
+    },
+    "ko": {
+      "name": "Korean",
+      "terms": {
+        "events": "이벤트",
+        "concerts": "콘서트",
+        "festival": "축제",
+        "things_to_do": "즐길거리"
+      }
+    },
+    "zh": {
+      "name": "Chinese",
+      "terms": {
+        "events": "活动",
+        "concerts": "音乐会",
+        "festival": "节日",
+        "things_to_do": "旅游景点"
+      }
+    },
+    "tr": {
+      "name": "Turkish",
+      "terms": {
+        "events": "etkinlikler",
+        "concerts": "konserler",
+        "festival": "festival",
+        "things_to_do": "yapılacak şeyler"
+      }
+    },
+    "ar": {
+      "name": "Arabic",
+      "terms": {
+        "events": "فعاليات",
+        "concerts": "حفلات موسيقية",
+        "festival": "مهرجان",
+        "things_to_do": "ماذا تفعل في"
+      }
+    },
+    "sv": {
+      "name": "Swedish",
+      "terms": {
+        "events": "evenemang",
+        "concerts": "konserter",
+        "festival": "festival",
+        "things_to_do": "vad göra i"
+      }
+    },
+    "no": {
+      "name": "Norwegian",
+      "terms": {
+        "events": "arrangementer",
+        "concerts": "konserter",
+        "festival": "festival",
+        "things_to_do": "hva gjøre i"
+      }
+    },
+    "fi": {
+      "name": "Finnish",
+      "terms": {
+        "events": "tapahtumat",
+        "concerts": "konsertit",
+        "festival": "festivaali",
+        "things_to_do": "mitä tehdä"
+      }
+    },
+    "da": {
+      "name": "Danish",
+      "terms": {
+        "events": "begivenheder",
+        "concerts": "koncerter",
+        "festival": "festival",
+        "things_to_do": "hvad man kan lave i"
+      }
+    },
+    "el": {
+      "name": "Greek",
+      "terms": {
+        "events": "εκδηλώσεις",
+        "concerts": "συναυλίες",
+        "festival": "φεστιβάλ",
+        "things_to_do": "τι να κάνετε σε"
+      }
+    }
+  },
+
+  "country_language": {
+    "PL": "pl",
+    "DE": "de",
+    "AT": "de",
+    "CH": "de",
+    "FR": "fr",
+    "BE": "fr",
+    "ES": "es",
+    "MX": "es",
+    "AR": "es",
+    "CO": "es",
+    "CL": "es",
+    "IT": "it",
+    "PT": "pt",
+    "BR": "pt",
+    "NL": "nl",
+    "CZ": "cs",
+    "HU": "hu",
+    "RO": "ro",
+    "UA": "uk",
+    "JP": "ja",
+    "KR": "ko",
+    "CN": "zh",
+    "TW": "zh",
+    "HK": "zh",
+    "TR": "tr",
+    "SA": "ar",
+    "AE": "ar",
+    "EG": "ar",
+    "SE": "sv",
+    "NO": "no",
+    "FI": "fi",
+    "DK": "da",
+    "GR": "el"
+  }
+}

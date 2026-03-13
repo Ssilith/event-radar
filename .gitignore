@@ -1,0 +1,60 @@
+# Python 
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Scraper runtime files
+scraper/.cache/
+scraper/datasets/
+
+# Secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Vercel
+node_modules/
+.vercel/
+.next/
+
+# Flutter
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/build/
+app/.pub-cache/
+app/.pub/
+app/pubspec.lock   # remove this line if you want reproducible builds (recommended)
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# GitHub Actions
+act/
+
+# Misc 
+*.log
+*.tmp
+_site/
+
+# Other
+cspell.json

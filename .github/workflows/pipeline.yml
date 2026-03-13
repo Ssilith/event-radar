@@ -1,0 +1,128 @@
+name: Event Discovery Pipeline
+
+on:
+  schedule:
+    - cron: "0 6 1 * *"
+
+  workflow_dispatch:
+    inputs:
+      cities:
+        description: "City to scrape on-demand"
+        required: false
+        default: ""
+      days_ahead:
+        description: "Days ahead to collect"
+        required: false
+        default: "90"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "event-pipeline-${{ github.event.inputs.cities || 'scheduled' }}"
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    name: "Scrape & Publish"
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r scraper/requirements.txt
+
+      - name: Restore page cache
+        uses: actions/cache@v4
+        with:
+          path: scraper/.cache/
+          key: scraper-cache-${{ runner.os }}
+          restore-keys: scraper-cache-${{ runner.os }}
+
+      - name: Resolve cities to scrape
+        run: |
+          INPUT="${{ github.event.inputs.cities }}"
+
+          if [ ! -f cities.txt ]; then
+            cat > cities.txt << 'EOF'
+          Wrocław:PL
+          EOF
+          fi
+
+          if [ -n "$INPUT" ]; then
+            echo "CITIES=$INPUT" >> $GITHUB_ENV
+            echo "On-demand: $INPUT"
+
+            if ! grep -qxF "$INPUT" cities.txt; then
+              echo "$INPUT" >> cities.txt
+              echo "Added '$INPUT' to cities.txt for future monthly runs"
+              echo "NEW_CITY=true" >> $GITHUB_ENV
+            fi
+          else
+            CITIES=$(paste -sd',' cities.txt)
+            echo "CITIES=$CITIES" >> $GITHUB_ENV
+            echo "Monthly run: $CITIES"
+          fi
+
+      - name: Save new city to repo
+        if: env.NEW_CITY == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cities.txt
+          git commit -m "chore: add ${{ github.event.inputs.cities }} to cities.txt"
+          git push
+
+      - name: Run scraper
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          DAYS_AHEAD: ${{ github.event.inputs.days_ahead || '90' }}
+        run: python main.py
+        working-directory: scraper/
+
+      - name: Prepare GitHub Pages output
+        run: |
+          mkdir -p _site
+          cp -r scraper/datasets/ _site/
+
+          cat > _site/index.html << 'HTML'
+          <!DOCTYPE html>
+          <html><head><meta charset="UTF-8"><title>EventRadar API</title>
+          <style>body{font-family:monospace;max-width:700px;margin:40px auto;background:#0a0e1a;color:#ccc}
+          h1{color:#00e5b4}a{color:#4cc9f0}code{background:#1a2040;padding:2px 6px;border-radius:4px}
+          .c{margin:6px 0;padding:10px;background:#111827;border-radius:6px}</style></head>
+          <body><h1>EventRadar API</h1>
+          <p>Updated monthly + on-demand for new cities.</p>
+          <p><code>GET /datasets/index.json</code>&nbsp;<code>GET /datasets/{slug}.json</code></p>
+          <div id="out">Loading...</div>
+          <script>fetch('datasets/index.json').then(r=>r.json()).then(d=>{
+            document.getElementById('out').innerHTML=d.cities.map(c=>
+              `<div class="c"><b>${c.city}</b> — ${c.count} events
+              <a href="datasets/${c.url}">JSON</a>
+              <small style="float:right;color:#555">${(c.updated_at||'').slice(0,10)}</small></div>`
+            ).join('')
+          })</script></body></html>
+          HTML
+
+          cat > _site/_headers << 'HEADERS'
+          /datasets/*
+            Access-Control-Allow-Origin: *
+            Cache-Control: public, max-age=1800, stale-while-revalidate=3600
+          HEADERS
+
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site/
+      - uses: actions/deploy-pages@v4
