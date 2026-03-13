@@ -1,4 +1,4 @@
-const STALE_MS = 30 * 24 * 60 * 60 * 1000; //* 30 days
+const STALE_MS = 30 * 24 * 60 * 60 * 1000;
 
 const BASE_URL = () =>
   `https://${process.env.GITHUB_OWNER}.github.io/${process.env.GITHUB_REPO}/datasets`;
@@ -12,10 +12,14 @@ const GH_HEADERS = {
   "X-GitHub-Api-Version": "2022-11-28",
 };
 
-export default async function handler(req, res) {
+function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
+export default async function handler(req, res) {
+  setCors(res);
 
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST")
@@ -44,8 +48,7 @@ export default async function handler(req, res) {
     }
   }
 
-  const alreadyRunning = await isWorkflowRunning(cityName);
-  if (alreadyRunning) {
+  if (await isWorkflowRunning()) {
     return res.json({
       status: "already_running",
       city: cityName,
@@ -53,6 +56,7 @@ export default async function handler(req, res) {
       index_url: `${BASE_URL()}/index.json`,
     });
   }
+
   const ghRes = await fetch(
     `${GITHUB_API()}/actions/workflows/pipeline.yml/dispatches`,
     {
@@ -82,23 +86,18 @@ export default async function handler(req, res) {
   });
 }
 
-async function isWorkflowRunning(cityName) {
+async function isWorkflowRunning() {
   try {
     const r = await fetch(
-      `${GITHUB_API()}/actions/workflows/pipeline.yml/runs?status=in_progress&per_page=10`,
+      `${GITHUB_API()}/actions/workflows/pipeline.yml/runs?status=in_progress&per_page=5`,
       { headers: GH_HEADERS },
     );
     if (!r.ok) return false;
-
     const data = await r.json();
-    const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-
     return (
-      data.workflow_runs?.some((run) => {
-        const startedAt = new Date(run.created_at).getTime();
-        if (startedAt < tenMinutesAgo) return false;
-        return run.status === "in_progress" || run.status === "queued";
-      }) ?? false
+      data.workflow_runs?.some(
+        (run) => run.status === "in_progress" || run.status === "queued",
+      ) ?? false
     );
   } catch {
     return false;

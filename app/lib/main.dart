@@ -45,12 +45,12 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               icon: const Icon(Icons.location_city),
-              label: const Text('Browse Wrocław events'),
+              label: const Text('Browse Berlin events'),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) =>
-                      const EventsScreen(city: 'wroclaw', countryCode: 'PL'),
+                      const EventsScreen(city: 'berlin', countryCode: 'DE'),
                 ),
               ),
             ),

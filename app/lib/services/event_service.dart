@@ -131,7 +131,7 @@ class EventService {
       final uri = Uri.parse(
         _datasetsBase,
       ).replace(queryParameters: {'path': '$slug.json'});
-      final r = await _client.get(uri, headers: {'Cache-Control': 'no-cache'});
+      final r = await _client.get(uri);
       if (r.statusCode == 200) {
         return json.decode(r.body) as Map<String, dynamic>;
       }
@@ -161,7 +161,7 @@ class EventService {
       final uri = Uri.parse(
         _datasetsBase,
       ).replace(queryParameters: {'path': 'index.json'});
-      final r = await _client.get(uri, headers: {'Cache-Control': 'no-cache'});
+      final r = await _client.get(uri);
       if (r.statusCode != 200) return null;
       final cities = (json.decode(r.body)['cities'] as List? ?? [])
           .cast<Map<String, dynamic>>();
