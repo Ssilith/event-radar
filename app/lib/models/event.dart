@@ -36,8 +36,8 @@ class Event {
       id: json['id'] as String,
       title: json['title'] as String,
       city: json['city'] as String,
-      start: DateTime.parse(json['start'] as String),
-      end: json['end'] != null ? DateTime.parse(json['end'] as String) : null,
+      start: _parseDate(json['start'] as String),
+      end: json['end'] != null ? _parseDate(json['end'] as String) : null,
       venue: json['venue'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
@@ -46,9 +46,22 @@ class Event {
       source: json['source'] as String?,
       price: json['price'] as String?,
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'] as String)
+          ? _parseDate(json['updated_at'] as String)
           : null,
     );
+  }
+
+  static DateTime _parseDate(String raw) {
+    try {
+      return DateTime.parse(raw);
+    } catch (_) {}
+
+    final stripped = raw.replaceFirst(RegExp(r'[+-]\d{2}:\d{2}$'), '');
+    try {
+      return DateTime.parse(stripped);
+    } catch (_) {}
+
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   double? distanceTo(double lat, double lon) {

@@ -187,7 +187,7 @@ class EventService {
     DateTime? to,
   ) {
     final start = from ?? DateTime.now();
-    final end = to ?? start.add(const Duration(days: 7));
+    final end = to ?? start.add(const Duration(days: 90));
     return events
         .where((e) => e.start.isAfter(start) && e.start.isBefore(end))
         .where((e) {

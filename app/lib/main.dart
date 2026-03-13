@@ -45,12 +45,12 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               icon: const Icon(Icons.location_city),
-              label: const Text('Browse Berlin events'),
+              label: const Text('Browse Wrocław events'),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) =>
-                      const EventsScreen(city: 'berlin', countryCode: 'DE'),
+                      const EventsScreen(city: 'Wrocław', countryCode: 'PL'),
                 ),
               ),
             ),
@@ -97,12 +97,15 @@ class _EventsScreenState extends State<EventsScreen> {
         )
         .listen(
           (state) => setState(() => _state = state),
-          onError: (_) => setState(
-            () => _state = const CityDataState(
-              CityDataStatus.error,
-              message: 'Something went wrong.',
-            ),
-          ),
+          onError: (e) {
+            print(e);
+            setState(
+              () => _state = const CityDataState(
+                CityDataStatus.error,
+                message: 'Something went wrong.',
+              ),
+            );
+          },
         );
   }
 
