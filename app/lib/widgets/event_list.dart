@@ -22,9 +22,12 @@ class _EventTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final hasTrailing = event.category != null || event.price != null;
+
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        backgroundColor: scheme.primaryContainer,
         child: Text(
           _formatMonthDay(event.start),
           style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
@@ -40,8 +43,27 @@ class _EventTile extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             )
           : null,
-      trailing: event.price != null
-          ? Text(event.price!, style: Theme.of(context).textTheme.bodySmall)
+      trailing: hasTrailing
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (event.category != null)
+                  Text(
+                    event.category!,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                if (event.price != null)
+                  Text(
+                    event.price!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            )
           : null,
     );
   }

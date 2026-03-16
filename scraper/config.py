@@ -43,7 +43,7 @@ def build_search_queries(city: str, country_code: str = "") -> list[str]:
     year = datetime.now().year
     ascii_city = city_to_ascii(city)
 
-    queries = [
+    english = [
         f"events in {ascii_city} {month} {year}",
         f"concerts {ascii_city} {year}",
         f"festival {ascii_city} {month} {year}",
@@ -51,7 +51,7 @@ def build_search_queries(city: str, country_code: str = "") -> list[str]:
         f"things to do {ascii_city} upcoming",
     ]
 
-    lang = None
+    native: list[str] = []
     queries_path = Path(__file__).parent / "queries.json"
     if queries_path.exists():
         data = json.loads(queries_path.read_text(encoding="utf-8"))
@@ -59,16 +59,19 @@ def build_search_queries(city: str, country_code: str = "") -> list[str]:
         terms = data["languages"].get(lang, {}).get("terms") if lang else None
 
         if terms:
-            queries += [
+            native = [
                 f"{terms['events']} {city} {month} {year}",
                 f"{terms['concerts']} {city} {year}",
                 f"{terms['festival']} {city} {month} {year}",
                 f"{terms['things_to_do']} {city}",
             ]
         elif city != ascii_city:
-            log.debug(
-                "No country code for %r, city has non-ASCII chars — using Polish queries",
-                city,
-            )
+            log.debug("No country code for %r", city)
+
+    queries: list[str] = []
+    for pair in zip(native, english):
+        queries.extend(pair)
+    queries.extend(native[len(english) :])
+    queries.extend(english[len(native) :])
 
     return queries

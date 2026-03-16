@@ -93,6 +93,11 @@ class SchemaOrgExtractor:
             if p is not None:
                 price = f"{currency} {p}".strip() if currency else str(p)
 
+        raw_type = obj.get("@type", "")
+        schema_type = (
+            raw_type[0] if isinstance(raw_type, list) and raw_type else raw_type
+        ) or None
+
         return RawEvent(
             title=title,
             start=self._norm_date(start),
@@ -105,6 +110,7 @@ class SchemaOrgExtractor:
             price=price,
             latitude=lat,
             longitude=lon,
+            category=schema_type,
         )
 
     @staticmethod

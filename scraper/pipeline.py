@@ -10,6 +10,26 @@ import aiohttp
 from config import CACHE_DIR, DAYS_AHEAD, OUTPUT_DIR, USER_AGENT, city_to_slug, log
 from models import NormalizedEvent, RawEvent
 
+CATEGORY_MAP: dict[str, str] = {
+    "MusicEvent": "Music",
+    "Concert": "Music",
+    "TheaterEvent": "Theater",
+    "VisualArtsEvent": "Art",
+    "ExhibitionEvent": "Art",
+    "Festival": "Festival",
+    "FoodEvent": "Food",
+    "SportsEvent": "Sports",
+    "ComedyEvent": "Comedy",
+    "DanceEvent": "Dance",
+    "LiteraryEvent": "Literature",
+    "EducationEvent": "Education",
+    "ChildrensEvent": "Family",
+    "ScreeningEvent": "Film",
+    "SaleEvent": "Market",
+    "BusinessEvent": "Business",
+    "SocialEvent": "Social",
+}
+
 
 class PageFetcher:
     def __init__(self, session: aiohttp.ClientSession):
@@ -207,6 +227,7 @@ class EventNormalizer:
             url=raw.url,
             source=raw.source,
             price=raw.price,
+            category=CATEGORY_MAP.get(raw.category or "", None),
         )
 
 

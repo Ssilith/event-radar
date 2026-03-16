@@ -16,6 +16,7 @@ class RawEvent:
     url: Optional[str] = None
     source: Optional[str] = None
     price: Optional[str] = None
+    category: Optional[str] = None
 
 
 @dataclass
@@ -32,6 +33,7 @@ class NormalizedEvent:
     url: Optional[str]
     source: Optional[str]
     price: Optional[str]
+    category: Optional[str]
     updated_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )

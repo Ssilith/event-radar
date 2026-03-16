@@ -9,6 +9,8 @@ class Event {
   final String title;
   final String city;
 
+  final String? category;
+
   @JsonKey(fromJson: _parseDate)
   final DateTime start;
   @JsonKey(fromJson: _parseDateOrNull)
@@ -31,6 +33,7 @@ class Event {
     required this.id,
     required this.title,
     required this.city,
+    this.category,
     required this.start,
     this.end,
     this.venue,
