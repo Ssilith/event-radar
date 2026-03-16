@@ -1,0 +1,221 @@
+CATEGORY_MAP: dict[str, str] = {
+    "MusicEvent": "Music",
+    "Concert": "Music",
+    "TheaterEvent": "Theater",
+    "VisualArtsEvent": "Art",
+    "ExhibitionEvent": "Art",
+    "Festival": "Festival",
+    "FoodEvent": "Food",
+    "SportsEvent": "Sports",
+    "ComedyEvent": "Comedy",
+    "DanceEvent": "Dance",
+    "LiteraryEvent": "Literature",
+    "EducationEvent": "Education",
+    "ChildrensEvent": "Family",
+    "ScreeningEvent": "Film",
+    "SaleEvent": "Market",
+    "BusinessEvent": "Business",
+    "SocialEvent": "Social",
+}
+
+KEYWORD_CATEGORIES: list[tuple[str, list[str]]] = [
+    (
+        "Tour",
+        [
+            "walking tour",
+            "guided tour",
+            "city tour",
+            "zwiedzanie",
+            "wycieczka",
+            "sightseeing tour",
+        ],
+    ),
+    (
+        "Comedy",
+        [
+            "stand-up",
+            "standup",
+            "stand up",
+            "comedy show",
+            "comedy night",
+            "komedia",
+            "open mic",
+            "improv",
+            "kabaret",
+        ],
+    ),
+    (
+        "Music",
+        [
+            "concert",
+            "koncert",
+            "live music",
+            "gig",
+            "jazz",
+            "muzyki",
+            "muzyka",
+            "singer",
+            "songwriter",
+            "orchestra",
+            "orkiestra",
+            "philharmonic",
+            "filharmonia",
+            "opera",
+            "choir",
+            "chór",
+            "dj set",
+            "electronic music",
+            "band live",
+        ],
+    ),
+    (
+        "Theater",
+        [
+            "theater show",
+            "theatre show",
+            "spektakl",
+            "teatr",
+            "theatrical",
+            "monodram",
+            "premiera teatr",
+            "musical show",
+        ],
+    ),
+    (
+        "Art",
+        [
+            "exhibition",
+            "wystawa",
+            "gallery",
+            "galeria",
+            "art show",
+            "vernissage",
+            "wernisaż",
+            "art walk",
+            "body worlds",
+            "installation art",
+        ],
+    ),
+    (
+        "Film",
+        [
+            "film screening",
+            "movie screening",
+            "cinema",
+            "kino",
+            "film festival",
+            "documentary film",
+            "short film",
+            "pokaz filmu",
+        ],
+    ),
+    (
+        "Dance",
+        [
+            "dance show",
+            "dance performance",
+            "taniec",
+            "salsa",
+            "tango",
+            "ballet",
+            "balet",
+            "choreography",
+        ],
+    ),
+    (
+        "Food",
+        [
+            "food festival",
+            "food market",
+            "culinary",
+            "kulinar",
+            "tasting event",
+            "degustacja",
+            "wine tasting",
+            "beer tasting",
+            "food tour",
+            "kolacja",
+            "brunch event",
+            "dinner show",
+        ],
+    ),
+    (
+        "Sports",
+        [
+            "sport",
+            "run ",
+            "bieg",
+            "marathon",
+            "maraton",
+            "match",
+            "tournament",
+            "turniej",
+            "race ",
+            "wyścig",
+            "football match",
+            "basketball",
+            "yoga class",
+            "pilates",
+            "fitness class",
+        ],
+    ),
+    (
+        "Family",
+        [
+            "family event",
+            "for children",
+            "dla dzieci",
+            "kids event",
+            "children's event",
+            "baby",
+            "bajka",
+            "fairy tale",
+            "puppet show",
+            "family fun",
+            "entertainment for children",
+        ],
+    ),
+    ("Festival", ["festival", "festiwal", "open air festival", "outdoor festival"]),
+    (
+        "Market",
+        [
+            "flea market",
+            "pchli targ",
+            "craft market",
+            "food market",
+            "christmas market",
+            "jarmark",
+            "bazaar",
+            "bazar",
+            "targ ",
+        ],
+    ),
+    (
+        "Education",
+        [
+            "lecture",
+            "wykład",
+            "workshop",
+            "warsztat",
+            "seminar",
+            "conference",
+            "konferencja",
+            "webinar",
+            "training course",
+        ],
+    ),
+]
+
+
+def infer_category(title: str, description: str | None, schema_type: str | None) -> str:
+    if schema_type and schema_type not in ("Event", ""):
+        mapped = CATEGORY_MAP.get(schema_type)
+        if mapped:
+            return mapped
+
+    haystack = f"{title} {description or ''}".lower()
+    for category, keywords in KEYWORD_CATEGORIES:
+        if any(kw in haystack for kw in keywords):
+            return category
+
+    return "Other"
