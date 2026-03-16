@@ -1,18 +1,30 @@
 import 'dart:math';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'event.g.dart';
+
+@JsonSerializable()
 class Event {
   final String id;
   final String title;
   final String city;
+
+  @JsonKey(fromJson: _parseDate)
   final DateTime start;
+  @JsonKey(fromJson: _parseDateOrNull)
   final DateTime? end;
+
   final String? venue;
   final double? latitude;
   final double? longitude;
+
   final String? description;
   final String? url;
   final String? source;
+
   final String? price;
+
+  @JsonKey(name: 'updated_at', fromJson: _parseDateOrNull)
   final DateTime? updatedAt;
 
   const Event({
@@ -31,58 +43,53 @@ class Event {
     this.updatedAt,
   });
 
-  factory Event.fromJson(Map<String, dynamic> json) {
-    return Event(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      city: json['city'] as String,
-      start: _parseDate(json['start'] as String),
-      end: json['end'] != null ? _parseDate(json['end'] as String) : null,
-      venue: json['venue'] as String?,
-      latitude: (json['latitude'] as num?)?.toDouble(),
-      longitude: (json['longitude'] as num?)?.toDouble(),
-      description: json['description'] as String?,
-      url: json['url'] as String?,
-      source: json['source'] as String?,
-      price: json['price'] as String?,
-      updatedAt: json['updated_at'] != null
-          ? _parseDate(json['updated_at'] as String)
-          : null,
+  factory Event.fromJson(Map<String, dynamic> json) => _$EventFromJson(json);
+  Map<String, dynamic> toJson() => _$EventToJson(this);
+
+  bool get hasLocation => latitude != null && longitude != null;
+
+  bool get isUpcoming => start.isAfter(DateTime.now());
+
+  bool get isFree {
+    final p = price?.trim().toLowerCase();
+    if (p == null) return false;
+
+    if (p.contains('free')) return true;
+
+    final number = double.tryParse(
+      p.replaceAll(RegExp(r'[^0-9.,]'), '').replaceAll(',', '.'),
     );
-  }
 
-  static DateTime _parseDate(String raw) {
-    try {
-      return DateTime.parse(raw);
-    } catch (_) {}
-
-    final stripped = raw.replaceFirst(RegExp(r'[+-]\d{2}:\d{2}$'), '');
-    try {
-      return DateTime.parse(stripped);
-    } catch (_) {}
-
-    return DateTime.fromMillisecondsSinceEpoch(0);
+    return number == 0;
   }
 
   double? distanceTo(double lat, double lon) {
-    if (latitude == null || longitude == null) return null;
-    const r = 6371.0; // Earth radius in km
-    final dLat = _rad(lat - latitude!);
-    final dLon = _rad(lon - longitude!);
+    if (!hasLocation) return null;
+
+    const earthRadiusKm = 6371.0;
+    final dLat = _toRad(lat - latitude!);
+    final dLon = _toRad(lon - longitude!);
+
+    final sinHalfDLat = sin(dLat / 2);
+    final sinHalfDLon = sin(dLon / 2);
+
     final a =
-        sin(dLat / 2) * sin(dLat / 2) +
-        cos(_rad(latitude!)) * cos(_rad(lat)) * sin(dLon / 2) * sin(dLon / 2);
-    return r * 2 * atan2(sqrt(a), sqrt(1 - a));
+        sinHalfDLat * sinHalfDLat +
+        cos(_toRad(latitude!)) * cos(_toRad(lat)) * sinHalfDLon * sinHalfDLon;
+
+    return earthRadiusKm * 2 * atan2(sqrt(a), sqrt(1 - a));
   }
-
-  static double _rad(double deg) => deg * pi / 180;
-
-  bool get hasLocation => latitude != null && longitude != null;
-  bool get isFree =>
-      price != null &&
-      (price!.contains('0') || price!.toLowerCase().contains('free'));
-  bool get isUpcoming => start.isAfter(DateTime.now());
-
-  @override
-  String toString() => 'Event($id, $title, $start)';
 }
+
+double _toRad(double deg) => deg * pi / 180;
+
+DateTime _parseDate(String raw) {
+  final dt = DateTime.tryParse(raw);
+  if (dt != null) return dt.toLocal();
+
+  final stripped = raw.replaceFirst(RegExp(r'[+-]\d{2}:\d{2}$'), '');
+  return DateTime.tryParse(stripped)?.toLocal() ??
+      (throw FormatException('Cannot parse date: $raw'));
+}
+
+DateTime? _parseDateOrNull(String? raw) => raw == null ? null : _parseDate(raw);

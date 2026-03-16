@@ -1,0 +1,66 @@
+import 'package:app/models/event.dart';
+import 'package:flutter/material.dart';
+
+class EventList extends StatelessWidget {
+  final List<Event> events;
+  const EventList({super.key, required this.events});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: events.length,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (context, i) => _EventTile(event: events[i]),
+    );
+  }
+}
+
+class _EventTile extends StatelessWidget {
+  final Event event;
+  const _EventTile({required this.event});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        child: Text(
+          _formatMonthDay(event.start),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+      ),
+      title: Text(event.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+      subtitle: event.venue != null
+          ? Text(
+              event.venue!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          : null,
+      trailing: event.price != null
+          ? Text(event.price!, style: Theme.of(context).textTheme.bodySmall)
+          : null,
+    );
+  }
+
+  static String _formatMonthDay(DateTime dt) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[dt.month - 1]}\n${dt.day}';
+  }
+}
