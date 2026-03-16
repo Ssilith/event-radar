@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Optional
 import aiohttp
 from config import CACHE_DIR, DAYS_AHEAD, OUTPUT_DIR, USER_AGENT, city_to_slug, log
-from models import NormalizedEvent, RawEvent
 
 CATEGORY_MAP: dict[str, str] = {
     "MusicEvent": "Music",
@@ -29,6 +28,217 @@ CATEGORY_MAP: dict[str, str] = {
     "BusinessEvent": "Business",
     "SocialEvent": "Social",
 }
+
+
+KEYWORD_CATEGORIES: list[tuple[str, list[str]]] = [
+    (
+        "Comedy",
+        [
+            "stand-up",
+            "standup",
+            "stand up",
+            "comedy",
+            "komedia",
+            "open mic",
+            "improv",
+            "kabaret",
+        ],
+    ),
+    (
+        "Music",
+        [
+            "concert",
+            "koncert",
+            "band",
+            "live music",
+            "gig",
+            "jazz",
+            "muzyki",
+            "muzyka",
+            "singer",
+            "songwriter",
+            "orchestra",
+            "orkiestra",
+            "philharmonic",
+            "filharmonia",
+            "opera",
+            "choir",
+            "chór",
+            "dj set",
+            "electronic music",
+        ],
+    ),
+    (
+        "Theater",
+        [
+            "theater",
+            "theatre",
+            "spektakl",
+            "teatr",
+            "play ",
+            "musical",
+            "drama",
+            "monodram",
+            "premiera teatr",
+        ],
+    ),
+    (
+        "Art",
+        [
+            "exhibition",
+            "wystawa",
+            "gallery",
+            "galeria",
+            "art show",
+            "vernissage",
+            "wernisaż",
+            "opening night",
+            "art walk",
+            "body worlds",
+            "installation",
+        ],
+    ),
+    (
+        "Film",
+        [
+            "film",
+            "movie",
+            "cinema",
+            "kino",
+            "screening",
+            "pokaz filmu",
+            "documentary",
+            "short film",
+        ],
+    ),
+    (
+        "Dance",
+        [
+            "dance",
+            "taniec",
+            "dancing",
+            "salsa",
+            "tango",
+            "ballet",
+            "balet",
+            "choreography",
+        ],
+    ),
+    (
+        "Food",
+        [
+            "food",
+            "jedzenie",
+            "culinary",
+            "kulinar",
+            "tasting",
+            "degustacja",
+            "wine",
+            "wino",
+            "beer",
+            "piwo",
+            "dinner",
+            "kolacja",
+            "brunch",
+            "restaurant",
+        ],
+    ),
+    (
+        "Sports",
+        [
+            "sport",
+            "run",
+            "bieg",
+            "marathon",
+            "maraton",
+            "match",
+            "tournament",
+            "turniej",
+            "race",
+            "wyścig",
+            "football",
+            "basketball",
+            "yoga",
+            "pilates",
+            "fitness",
+        ],
+    ),
+    (
+        "Family",
+        [
+            "family",
+            "rodzina",
+            "kids",
+            "dzieci",
+            "children",
+            "child",
+            "baby",
+            "bajka",
+            "fairy tale",
+            "puppet",
+        ],
+    ),
+    ("Festival", ["festival", "festiwal", "fest ", "open air", "outdoor event"]),
+    (
+        "Market",
+        [
+            "market",
+            "targ",
+            "bazaar",
+            "bazar",
+            "fair ",
+            "jarmark",
+            "flea market",
+            "pchli targ",
+            "craft market",
+        ],
+    ),
+    (
+        "Education",
+        [
+            "lecture",
+            "wykład",
+            "workshop",
+            "warsztat",
+            "seminar",
+            "conference",
+            "konferencja",
+            "talk ",
+            "webinar",
+            "training",
+        ],
+    ),
+    (
+        "Tour",
+        [
+            "walking tour",
+            "guided tour",
+            "city tour",
+            "zwiedzanie",
+            "wycieczka",
+            "tour ",
+        ],
+    ),
+]
+
+
+def infer_category(
+    title: str, description: str | None, schema_type: str | None
+) -> str | None:
+    if schema_type and schema_type not in ("Event", ""):
+        mapped = CATEGORY_MAP.get(schema_type)
+        if mapped:
+            return mapped
+
+    haystack = f"{title} {description or ''}".lower()
+    for category, keywords in KEYWORD_CATEGORIES:
+        if any(kw in haystack for kw in keywords):
+            return category
+
+    return None
+
+
+from models import NormalizedEvent, RawEvent
 
 
 class PageFetcher:
@@ -227,7 +437,7 @@ class EventNormalizer:
             url=raw.url,
             source=raw.source,
             price=raw.price,
-            category=CATEGORY_MAP.get(raw.category or "", None),
+            category=infer_category(raw.title, raw.description, raw.category),
         )
 
 
