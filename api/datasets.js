@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     } else {
       res.setHeader(
         "Cache-Control",
-        "public, max-age=1800, stale-while-revalidate=3600",
+        "public, max-age=1800, stale-while-revalidate=3600", //* 30 mins
       );
     }
 

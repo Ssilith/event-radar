@@ -14,6 +14,12 @@ dependencies:
   # text
   diacritic: ^0.1.6
 
+  # localization
+  geolocator: ^14.0.2
+
+  # dropdown
+  dropdown_search: ^6.0.2
+
   # build utilities
   http: ^1.6.0
   json_annotation: ^4.11.0
