@@ -1,4 +1,3 @@
 wrocław:PL
 berlin:DE
-wroclaw-county:PL
 opole:PL

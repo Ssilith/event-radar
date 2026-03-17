@@ -17,6 +17,9 @@ dependencies:
   # localization
   geolocator: ^14.0.2
 
+  # settings
+  app_settings: ^7.0.0
+
   # dropdown
   dropdown_search: ^6.0.2
 

@@ -1,3 +1,4 @@
+import 'package:event_radar/utils/language.dart';
 import 'package:flutter/material.dart';
 import 'package:event_radar/models/city_item.dart';
 import 'package:event_radar/screens/events_screen.dart';
@@ -22,13 +23,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _init() async {
-    await CityService.instance.init();
-    if (mounted) {
-      setState(() {
-        _selected = CityService.instance.knownCities.firstOrNull;
-        _loading = false;
-      });
-    }
+    final service = CityService.instance;
+    await service.init();
+
+    if (!mounted) return;
+    setState(() {
+      _selected = service.defaultCity;
+      _loading = false;
+    });
+
+    service.resolveLocation(languageCode: deviceLanguageCode);
   }
 
   void _browse() {
@@ -43,12 +47,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _onCitySelected(CityItem city) {
+    CityService.instance.markUsed(city);
+    setState(() => _selected = city);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('EventRadar'),
+        title: const Text('Event Radar'),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -64,17 +73,14 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 32),
-
             if (_loading)
               const Center(child: CircularProgressIndicator())
             else
               CityPicker(
                 initialValue: _selected,
-                onCitySelected: (city) => setState(() => _selected = city),
+                onCitySelected: _onCitySelected,
               ),
-
             const SizedBox(height: 24),
-
             FilledButton.icon(
               icon: const Icon(Icons.search),
               label: const Text('Find events'),

@@ -1,4 +1,6 @@
 import 'dart:convert';
+
+import 'package:event_radar/utils/language.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:event_radar/config.dart';
@@ -8,15 +10,71 @@ class CityService {
   CityService._internal();
   static final CityService instance = CityService._internal();
 
-  List<CityItem> knownCities = [];
-
+  List<CityItem> _knownCities = [];
   CityItem? locationCity;
   List<CityItem> nearbyCities = [];
 
+  final List<CityItem> _recentCities = [];
   final Map<String, List<CityItem>> _searchCache = {};
+  Position? _lastPosition;
+
+  CityItem? get defaultCity =>
+      _recentCities.firstOrNull ?? _knownCities.firstOrNull;
 
   Future<void> init() async {
-    knownCities = await _loadKnownCities();
+    _knownCities = await _loadKnownCities();
+  }
+
+  void markUsed(CityItem city) {
+    _recentCities.remove(city);
+    _recentCities.insert(0, city);
+    if (_recentCities.length > 5) _recentCities.removeLast();
+  }
+
+  Future<List<CityItem>> getItems(
+    String filter, {
+    String languageCode = 'en',
+  }) async {
+    final needle = filter.trim().toLowerCase();
+
+    if (needle.isEmpty) return _buildDefaultList();
+
+    final local = _knownCities
+        .where((c) => c.name.toLowerCase().startsWith(needle))
+        .toList();
+    if (local.isNotEmpty) return local;
+
+    if (_searchCache.containsKey(needle)) return _searchCache[needle]!;
+
+    final results = await _searchByPrefix(
+      filter.trim(),
+      languageCode: languageCode,
+    );
+    _searchCache[needle] = results;
+    return results;
+  }
+
+  Future<bool> resolveLocation({String languageCode = 'en'}) async {
+    final pos = await _getPosition();
+    if (pos == null) return false;
+    _lastPosition = pos;
+
+    final cities = await _fetchNearbyCities(
+      pos.latitude,
+      pos.longitude,
+      languageCode: languageCode,
+    );
+    if (cities.isEmpty) return false;
+
+    locationCity = cities.first;
+    nearbyCities = cities.skip(1).toList();
+    return true;
+  }
+
+  List<CityItem> _buildDefaultList() {
+    final pinned = <CityItem>{..._recentCities, ?locationCity, ...nearbyCities};
+    final rest = _knownCities.where((c) => !pinned.contains(c));
+    return [...pinned, ...rest];
   }
 
   Future<List<CityItem>> _loadKnownCities() async {
@@ -40,7 +98,6 @@ class CityService {
   CityItem? _parseIndexEntry(Map<String, dynamic> c) {
     final raw = c['city'] as String?;
     if (raw == null) return null;
-
     if (raw.contains(':')) {
       final parts = raw.split(':');
       return CityItem(parts[0].trim(), parts[1].trim());
@@ -48,55 +105,24 @@ class CityService {
     return CityItem(raw, '');
   }
 
-  Future<List<CityItem>> getItems(String filter) async {
-    if (filter.trim().isEmpty) {
-      if (locationCity != null) {
-        final nearby = [
-          locationCity!,
-          ...nearbyCities.where((c) => c != locationCity),
-        ];
-        final rest = knownCities.where((c) => !nearby.contains(c)).toList();
-        return [...nearby, ...rest];
-      }
-      return knownCities;
-    }
-
-    final needle = filter.trim().toLowerCase();
-    final local = knownCities
-        .where((c) => c.name.toLowerCase().startsWith(needle))
-        .toList();
-    if (local.isNotEmpty) return local;
-
-    final key = needle;
-    if (_searchCache.containsKey(key)) return _searchCache[key]!;
-    final results = await _searchByPrefix(filter.trim());
-    _searchCache[key] = results;
-    return results;
-  }
-
-  Future<bool> resolveLocation() async {
-    final pos = await _getPosition();
-    if (pos == null) return false;
-
-    locationCity = await _reverseGeocode(pos.latitude, pos.longitude);
-    nearbyCities = await _fetchNearby(pos.latitude, pos.longitude);
-    return locationCity != null;
-  }
-
   Uri _geoUri(String path, Map<String, String> params) => Uri.parse(
     '${AppConfig.vercelBase}/api/geodata',
   ).replace(queryParameters: {'path': path, ...params});
 
-  Future<List<CityItem>> _fetchNearby(double lat, double lon) async {
+  Future<List<CityItem>> _fetchNearbyCities(
+    double lat,
+    double lon, {
+    String languageCode = 'en',
+    int limit = 6,
+  }) async {
     try {
-      final latStr = '${lat >= 0 ? '+' : ''}${lat.toStringAsFixed(4)}';
-      final lonStr = '${lon >= 0 ? '+' : ''}${lon.toStringAsFixed(4)}';
       final r = await http.get(
-        _geoUri('/v1/geo/locations/$latStr$lonStr/nearbyCities', {
-          'radius': '150',
-          'limit': '8',
-          'minPopulation': '50000',
+        _geoUri('/v1/geo/locations/${_fmtLatLon(lat, lon)}/nearbyCities', {
+          'radius': '50',
+          'limit': '$limit',
           'sort': '-population',
+          'languageCode': resolveApiLanguage(languageCode),
+          'types': 'CITY',
         }),
       );
       if (r.statusCode != 200) return [];
@@ -106,45 +132,48 @@ class CityService {
     }
   }
 
-  Future<CityItem?> _reverseGeocode(double lat, double lon) async {
+  Future<List<CityItem>> _searchByPrefix(
+    String prefix, {
+    String languageCode = 'en',
+  }) async {
     try {
-      final latStr = '${lat >= 0 ? '+' : ''}${lat.toStringAsFixed(4)}';
-      final lonStr = '${lon >= 0 ? '+' : ''}${lon.toStringAsFixed(4)}';
-      final r = await http.get(
-        _geoUri('/v1/geo/locations/$latStr$lonStr/nearbyCities', {
-          'radius': '25',
-          'limit': '1',
-          'sort': '-population',
-        }),
-      );
-      if (r.statusCode != 200) return null;
-      final cities = _parseCities((json.decode(r.body) as Map)['data']);
-      return cities.isNotEmpty ? cities.first : null;
-    } catch (_) {
-      return null;
-    }
-  }
+      final params = <String, String>{
+        'namePrefix': prefix,
+        'limit': '10',
+        'sort': '-population',
+        'languageCode': resolveApiLanguage(languageCode),
+        'types': 'CITY',
+      };
 
-  Future<List<CityItem>> _searchByPrefix(String prefix) async {
-    try {
-      final r = await http.get(
-        _geoUri('/v1/geo/cities', {
-          'namePrefix': prefix,
-          'limit': '10',
-          'sort': '-population',
-        }),
-      );
+      if (_lastPosition != null) {
+        params['nearLocation'] = _fmtLatLon(
+          _lastPosition!.latitude,
+          _lastPosition!.longitude,
+        );
+        params['nearLocationRadius'] = '500';
+      }
+
+      final r = await http.get(_geoUri('/v1/geo/cities', params));
       if (r.statusCode != 200) return [];
       return _parseCities((json.decode(r.body) as Map)['data']);
     } catch (_) {
       return [];
     }
+  }
+
+  String _fmtLatLon(double lat, double lon) {
+    String s(double v) => '${v >= 0 ? '+' : ''}${v.toStringAsFixed(4)}';
+    return '${s(lat)}${s(lon)}';
   }
 
   List<CityItem> _parseCities(dynamic data) {
-    if (data is! List<Map>) return [];
+    if (data is! List) return [];
     return data
-        .map((c) => CityItem(c['name'] as String, c['countryCode'] as String))
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (c) =>
+              CityItem(c['name'] as String, c['countryCode'] as String? ?? ''),
+        )
         .toList();
   }
 
