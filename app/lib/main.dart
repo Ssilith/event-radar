@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'config.dart';
-import 'screens/home_screen.dart';
+import 'package:event_radar/config.dart';
+import 'package:event_radar/screens/home_screen.dart';
 
 void main() {
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   AppConfig.validate();
   FlutterNativeSplash.remove();
@@ -17,13 +17,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'EventRadar',
+      title: 'Event Radar',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
-        colorSchemeSeed: Colors.tealAccent,
+        colorSchemeSeed: const Color(0xFF00E5B4), //? 0xFF00E5B4
       ),
       home: const HomeScreen(),
     );

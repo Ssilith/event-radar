@@ -1,4 +1,4 @@
-import 'package:app/models/event.dart';
+import 'package:event_radar/models/event.dart';
 
 enum CityDataStatus {
   //* Data was served from cache or a fresh remote dataset - no scrape needed

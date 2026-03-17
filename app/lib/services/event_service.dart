@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:app/config.dart';
-import 'package:app/models/event.dart';
-import 'package:app/utils/data_freshness.dart';
+import 'package:event_radar/config.dart';
+import 'package:event_radar/models/event.dart';
+import 'package:event_radar/utils/data_freshness.dart';
 import 'package:http/http.dart' as http;
-import 'package:app/models/city_data_state.dart';
+import 'package:event_radar/models/city_data_state.dart';
 
 //* How long to wait between each poll attempt while a scrape is running
 const _pollInterval = Duration(seconds: 15);

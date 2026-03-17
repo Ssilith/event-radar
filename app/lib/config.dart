@@ -1,8 +1,5 @@
 class AppConfig {
-  static const vercelBase = String.fromEnvironment(
-    'VERCEL_BASE',
-    defaultValue: '',
-  );
+  static const vercelBase = String.fromEnvironment('VERCEL_BASE');
 
   static String get datasetsBase => '$vercelBase/api/datasets';
   static String get triggerUrl => '$vercelBase/api/trigger';

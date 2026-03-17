@@ -1,16 +1,16 @@
 import 'dart:async';
-import 'package:app/models/city_data_state.dart';
-import 'package:app/models/event.dart';
-import 'package:app/services/event_service.dart';
-import 'package:app/widgets/event_list.dart';
-import 'package:app/widgets/status_view.dart';
+import 'package:event_radar/models/city_data_state.dart';
+import 'package:event_radar/models/event.dart';
+import 'package:event_radar/models/event_category.dart';
+import 'package:event_radar/services/event_service.dart';
+import 'package:event_radar/widgets/event_list.dart';
+import 'package:event_radar/widgets/status_view.dart';
 import 'package:diacritic/diacritic.dart';
 import 'package:flutter/material.dart';
 
 class EventsScreen extends StatefulWidget {
   final String city;
   final String countryCode;
-
   const EventsScreen({
     super.key,
     required this.city,
@@ -25,7 +25,7 @@ class _EventsScreenState extends State<EventsScreen> {
   final _service = EventService.instance;
   StreamSubscription<CityDataState>? _sub;
   CityDataState _state = const CityDataState.triggered();
-  String? _selectedCategory;
+  EventCategory? _selectedCategory;
 
   @override
   void initState() {
@@ -57,13 +57,29 @@ class _EventsScreenState extends State<EventsScreen> {
     super.dispose();
   }
 
-  List<String> get _categories =>
-      _state.events.map((e) => e.category).whereType<String>().toSet().toList()
-        ..sort();
+  List<EventCategory> get _categories => _state.events
+      .map(
+        (e) => EventCategory.values.firstWhere(
+          (c) => c.value.toLowerCase() == e.category.value.toLowerCase(),
+          orElse: () => EventCategory.other,
+        ),
+      )
+      .toSet()
+      .toList();
 
   List<Event> get _filtered => _selectedCategory == null
       ? _state.events
-      : _state.events.where((e) => e.category == _selectedCategory).toList();
+      : _state.events
+            .where(
+              (e) =>
+                  EventCategory.values.firstWhere(
+                    (c) =>
+                        c.value.toLowerCase() == e.category.value.toLowerCase(),
+                    orElse: () => EventCategory.other,
+                  ) ==
+                  _selectedCategory,
+            )
+            .toList();
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +112,7 @@ class _EventsScreenState extends State<EventsScreen> {
           children: [
             if (_categories.isNotEmpty)
               _CategoryBar(
-                categories: _categories,
+                categories: EventCategory.values,
                 selected: _selectedCategory,
                 onSelected: (cat) => setState(
                   () =>
@@ -113,13 +129,13 @@ class _EventsScreenState extends State<EventsScreen> {
 
         CityDataStatus.timeout => StatusView.withRetry(
           icon: Icons.timer_off,
-          message: _state.message ?? 'Timed out.',
+          message: _state.message ?? 'Timed out',
           onRetry: _load,
         ),
 
         CityDataStatus.error => StatusView.withRetry(
           icon: Icons.error_outline,
-          message: _state.message ?? 'Something went wrong.',
+          message: _state.message ?? 'Something went wrong',
           onRetry: _load,
         ),
       },
@@ -128,33 +144,15 @@ class _EventsScreenState extends State<EventsScreen> {
 }
 
 class _CategoryBar extends StatelessWidget {
-  final List<String> categories;
-  final String? selected;
-  final ValueChanged<String> onSelected;
+  final List<EventCategory> categories;
+  final EventCategory? selected;
+  final ValueChanged<EventCategory> onSelected;
 
   const _CategoryBar({
     required this.categories,
     required this.selected,
     required this.onSelected,
   });
-
-  static const _icons = {
-    'Music': Icons.music_note,
-    'Theater': Icons.theater_comedy,
-    'Art': Icons.palette,
-    'Festival': Icons.festival,
-    'Food': Icons.restaurant,
-    'Sports': Icons.sports,
-    'Comedy': Icons.sentiment_very_satisfied,
-    'Dance': Icons.accessibility_new,
-    'Literature': Icons.menu_book,
-    'Education': Icons.school,
-    'Family': Icons.child_care,
-    'Film': Icons.movie,
-    'Market': Icons.storefront,
-    'Business': Icons.business,
-    'Social': Icons.people,
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -170,15 +168,15 @@ class _CategoryBar extends StatelessWidget {
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
               avatar: Icon(
-                _icons[cat] ?? Icons.event,
+                cat.iconData,
                 size: 16,
-                color: isSelected ? scheme.onPrimary : scheme.primary,
+                color: isSelected ? scheme.onPrimary : cat.color,
               ),
-              label: Text(cat),
+              label: Text(cat.value),
               selected: isSelected,
               onSelected: (_) => onSelected(cat),
               showCheckmark: false,
-              selectedColor: scheme.primary,
+              selectedColor: cat.color,
               labelStyle: TextStyle(
                 color: isSelected ? scheme.onPrimary : null,
               ),

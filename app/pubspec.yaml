@@ -1,4 +1,4 @@
-name: app
+name: event_radar
 description: "Event Radar"
 publish_to: "none"
 
@@ -11,12 +11,14 @@ dependencies:
   flutter:
     sdk: flutter
 
-  json_annotation: ^4.11.0
-
+  # text
   diacritic: ^0.1.6
 
+  # build utilities
   http: ^1.6.0
+  json_annotation: ^4.11.0
 
+  # mobile customizations
   flutter_native_splash: ^2.4.7
   flutter_launcher_icons: ^0.14.4
 

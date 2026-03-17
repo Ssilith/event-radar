@@ -1,4 +1,4 @@
-import 'package:app/screens/events_screen.dart';
+import 'package:event_radar/screens/events_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -9,7 +9,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('EventRadar'),
+        title: const Text('Event Radar'),
       ),
       body: Center(
         child: Column(

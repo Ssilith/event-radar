@@ -1,4 +1,5 @@
-import 'package:app/models/event.dart';
+import 'package:event_radar/models/event.dart';
+import 'package:event_radar/models/event_category.dart';
 import 'package:flutter/material.dart';
 
 class EventList extends StatelessWidget {
@@ -23,8 +24,6 @@ class _EventTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final hasTrailing = event.category != null || event.price != null;
-
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: scheme.primaryContainer,
@@ -43,28 +42,20 @@ class _EventTile extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             )
           : null,
-      trailing: hasTrailing
-          ? Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (event.category != null)
-                  Text(
-                    event.category!,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                if (event.price != null)
-                  Text(
-                    event.price!,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-              ],
-            )
-          : null,
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            event.category.value,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: scheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:event_radar/models/event_category.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'event.g.dart';
@@ -9,7 +10,8 @@ class Event {
   final String title;
   final String city;
 
-  final String? category;
+  @JsonKey(fromJson: _parseEventCategory)
+  final EventCategory category;
 
   @JsonKey(fromJson: _parseDate)
   final DateTime start;
@@ -33,7 +35,7 @@ class Event {
     required this.id,
     required this.title,
     required this.city,
-    this.category,
+    required this.category,
     required this.start,
     this.end,
     this.venue,
@@ -96,3 +98,12 @@ DateTime _parseDate(String raw) {
 }
 
 DateTime? _parseDateOrNull(String? raw) => raw == null ? null : _parseDate(raw);
+
+EventCategory _parseEventCategory(String? category) {
+  return EventCategory.values.firstWhere(
+    (s) =>
+        (s.value.toLowerCase() == category?.toLowerCase() ||
+        s.name.toLowerCase() == category?.toLowerCase()),
+    orElse: () => EventCategory.other,
+  );
+}
