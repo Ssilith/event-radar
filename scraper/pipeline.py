@@ -249,11 +249,12 @@ class DatasetPublisher:
             except Exception:
                 pass
 
-    def publish(self, city: str, events: list[NormalizedEvent]):
+    def publish(self, city: str, events: list[NormalizedEvent], country_code: str = ""):
         slug = city_to_slug(city)
         payload = {
             "city": city,
             "slug": slug,
+            "country_code": country_code,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "count": len(events),
             "events": [e.to_dict() for e in events],
@@ -267,6 +268,7 @@ class DatasetPublisher:
         self._index[slug] = {
             "city": city,
             "slug": slug,
+            "country_code": country_code,
             "count": len(events),
             "updated_at": payload["generated_at"],
             "url": f"{slug}.json",

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:event_radar/extensions/string_extensions.dart';
 import 'package:event_radar/utils/language.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
@@ -98,11 +99,16 @@ class CityService {
   CityItem? _parseIndexEntry(Map<String, dynamic> c) {
     final raw = c['city'] as String?;
     if (raw == null) return null;
+
+    final cc = c['country_code'] as String? ?? '';
+    if (cc.isNotEmpty) return CityItem(raw.capitalize(), cc);
+
     if (raw.contains(':')) {
       final parts = raw.split(':');
-      return CityItem(parts[0].trim(), parts[1].trim());
+      return CityItem(parts[0].trim().capitalize(), parts[1].trim());
     }
-    return CityItem(raw, '');
+
+    return CityItem(raw.capitalize(), '');
   }
 
   Uri _geoUri(String path, Map<String, String> params) => Uri.parse(
