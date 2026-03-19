@@ -63,7 +63,7 @@ async def run_city(
     log.info("Final: %d events", len(final))
 
     log.info("[5/5] Publishing...")
-    publisher.publish(city, final)
+    publisher.publish(city, final, country_code=country_code)
 
 
 def parse_city_arg(raw: str) -> tuple[str, str]:

@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:app_settings/app_settings.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:event_radar/utils/language.dart';
+import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:event_radar/models/city_item.dart';
 import 'package:event_radar/services/city_service.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CityPicker extends StatefulWidget {
   final CityItem? initialValue;
@@ -56,8 +59,6 @@ class _CityPickerState extends State<CityPicker> {
 
       popupProps: PopupProps.bottomSheet(
         showSearchBox: true,
-        // Location button lives in the title – completely outside the item
-        // selection mechanism so there's no race with onChanged.
         title: _PopupHeader(
           langCode: _langCode,
           onCityResolved: (city) {
@@ -82,10 +83,8 @@ class _CityPickerState extends State<CityPicker> {
           padding: EdgeInsets.all(16),
           child: Text('No cities found'),
         ),
-        loadingBuilder: (_, _) => const Padding(
-          padding: EdgeInsets.all(24),
-          child: Center(child: CircularProgressIndicator()),
-        ),
+        loadingBuilder: (_, _) =>
+            const Padding(padding: EdgeInsets.all(24), child: Loading()),
       ),
 
       decoratorProps: const DropDownDecoratorProps(
@@ -191,13 +190,18 @@ class _LocationRow extends StatelessWidget {
               width: 18,
               height: 18,
               child: loading
-                  ? CircularProgressIndicator(strokeWidth: 2, color: primary)
+                  ? SpinKitRipple(color: primary)
                   : Icon(Icons.my_location, size: 18, color: primary),
             ),
             const SizedBox(width: 12),
             Text(
               loading ? 'Getting location…' : 'Use my current location',
-              style: TextStyle(color: primary, fontWeight: FontWeight.w600),
+              style: GoogleFonts.syne(
+                textStyle: TextStyle(
+                  color: primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),

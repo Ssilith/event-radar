@@ -1,3 +1,4 @@
+import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
 
 class StatusView extends StatelessWidget {
@@ -25,7 +26,7 @@ class StatusView extends StatelessWidget {
   //* Empty result
   const StatusView.empty({super.key})
     : icon = Icons.search_off,
-      message = 'No upcoming events found for this city.',
+      message = 'No upcoming events found for this city',
       showSpinner = false,
       onRetry = null,
       retryLabel = null;
@@ -48,7 +49,7 @@ class StatusView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (showSpinner)
-              const CircularProgressIndicator()
+              const Loading()
             else if (icon != null)
               Icon(icon, size: 48, color: Colors.grey),
             const SizedBox(height: 16),

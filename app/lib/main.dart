@@ -7,6 +7,7 @@ void main() {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   AppConfig.validate();
+  // TODO: Remove when home screen is loaded
   FlutterNativeSplash.remove();
   runApp(const MyApp());
 }
