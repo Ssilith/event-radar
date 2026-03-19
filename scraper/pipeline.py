@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import json
+import math
 import re
 import time
 from datetime import datetime, timezone, timedelta
@@ -96,11 +97,14 @@ class PageFetcher:
 
 class Geocoder:
     URL = "https://photon.komoot.io/api/"
+    MAX_VENUE_RADIUS_KM = 80.0
 
     def __init__(self, session: aiohttp.ClientSession):
         self.session = session
         self._cache: dict[str, list] = {}
         self._path = Path(CACHE_DIR) / "geocache.json"
+        self._city_lat: Optional[float] = None
+        self._city_lon: Optional[float] = None
         self._load()
 
     def _load(self):
@@ -123,19 +127,27 @@ class Geocoder:
         address = re.sub(r",\s*,", ",", address)
         return address.strip(" ,")
 
-    async def resolve(self, address: str) -> tuple[Optional[float], Optional[float]]:
-        address = self._clean(address)
-        if not address:
-            return None, None
+    async def set_city(self, city: str) -> bool:
+        lat, lon = await self._raw_query(city)
+        if lat is not None:
+            self._city_lat, self._city_lon = lat, lon
+            return True
+        return False
 
-        key = address.lower()
-        if key in self._cache:
-            return tuple(self._cache[key])
-
+    async def _raw_query(
+        self,
+        q: str,
+        lat_bias: Optional[float] = None,
+        lon_bias: Optional[float] = None,
+    ) -> tuple[Optional[float], Optional[float]]:
+        params: dict[str, str] = {"q": q, "limit": "1", "lang": "en"}
+        if lat_bias is not None:
+            params["lat"] = str(lat_bias)
+            params["lon"] = str(lon_bias)
         try:
             async with self.session.get(
                 self.URL,
-                params={"q": address, "limit": 1, "lang": "en"},
+                params=params,
                 headers={"User-Agent": USER_AGENT},
                 timeout=aiohttp.ClientTimeout(total=8),
             ) as r:
@@ -143,14 +155,57 @@ class Geocoder:
                 features = data.get("features", [])
                 if features:
                     coords = features[0]["geometry"]["coordinates"]
-                    lon, lat = float(coords[0]), float(coords[1])
-                    self._cache[key] = [lat, lon]
-                    self._save()
-                    return lat, lon
+                    return float(coords[1]), float(coords[0])
         except Exception as exc:
-            log.debug("Geocoding failed for %r: %s", address, exc)
-
+            log.debug("Geocoding failed for %r: %s", q, exc)
         return None, None
+
+    async def resolve(
+        self, address: str, city_hint: str = ""
+    ) -> tuple[Optional[float], Optional[float]]:
+        address = self._clean(address)
+        if not address:
+            return None, None
+
+        if city_hint and city_hint.lower() not in address.lower():
+            query = f"{address}, {city_hint}"
+        else:
+            query = address
+
+        key = query.lower()
+        if key in self._cache:
+            lat, lon = self._cache[key]
+            if self._too_far(lat, lon):
+                del self._cache[key]
+            else:
+                return lat, lon
+
+        lat, lon = await self._raw_query(query, self._city_lat, self._city_lon)
+
+        if lat is None or self._too_far(lat, lon):
+            return None, None
+
+        self._cache[key] = [lat, lon]
+        self._save()
+        return lat, lon
+
+    def _too_far(self, lat: float, lon: float) -> bool:
+        if self._city_lat is None:
+            return False
+        return _haversine(self._city_lat, self._city_lon, lat, lon) > self.MAX_VENUE_RADIUS_KM
+
+
+def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    r = 6371.0
+    d_lat = math.radians(lat2 - lat1)
+    d_lon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(d_lat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(d_lon / 2) ** 2
+    )
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
 class EventNormalizer:
@@ -170,7 +225,7 @@ class EventNormalizer:
             key = addr.lower().strip()
             if key in self._geo_cache:
                 return self._geo_cache[key]
-            result = await self.geocoder.resolve(addr)
+            result = await self.geocoder.resolve(addr, city_hint=self.city)
             self._geo_cache[key] = result
             if result[0]:
                 return result

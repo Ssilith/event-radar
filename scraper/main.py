@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import argparse
 import asyncio
 import os
@@ -34,11 +33,16 @@ async def run_city(
     normalizer = EventNormalizer(city, geocoder)
     deduplicator = Deduplicator()
 
-    log.info("[1/5] Discovering URLs...")
+    log.info("[1/6] Resolving city coordinates...")
+    resolved = await geocoder.set_city(city)
+    if not resolved:
+        log.warning("Could not geocode city %r — venue coords may be inaccurate", city)
+
+    log.info("[2/6] Discovering URLs...")
     urls = await discovery.discover_urls(city, country_code)
     log.info("Found %d URLs", len(urls))
 
-    log.info("[2/5] Scraping pages...")
+    log.info("[3/6] Scraping pages...")
     raw_events = []
     for i, url in enumerate(urls, 1):
         log.info("  [%d/%d] %s", i, len(urls), url[:80])
@@ -52,17 +56,17 @@ async def run_city(
     fetcher.flush()
     log.info("Raw events: %d", len(raw_events))
 
-    log.info("[3/5] Normalizing...")
+    log.info("[4/6] Normalizing...")
     normalized = [ev for raw in raw_events if (ev := await normalizer.normalize(raw))]
     log.info("Normalized: %d", len(normalized))
 
-    log.info("[4/5] Deduplicating...")
+    log.info("[5/6] Deduplicating...")
     for ev in normalized:
         deduplicator.add(ev)
     final = deduplicator.events
     log.info("Final: %d events", len(final))
 
-    log.info("[5/5] Publishing...")
+    log.info("[6/6] Publishing...")
     publisher.publish(city, final, country_code=country_code)
 
 
@@ -83,7 +87,6 @@ async def main():
     args = parser.parse_args()
 
     import config
-
     config.DAYS_AHEAD = args.days
 
     if args.city:
