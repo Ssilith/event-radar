@@ -4,6 +4,7 @@ import 'package:event_radar/services/city_service.dart';
 import 'package:event_radar/widgets/bottom_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:event_radar/models/city_item.dart';
+import 'package:motion_tab_bar_v2/motion-tab-controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,31 +13,28 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-  late PageController _pageController;
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  MotionTabBarController? _motionTabBarController;
 
   CityItem? _selectedCity;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: _selectedIndex);
+    _motionTabBarController = MotionTabBarController(length: 3, vsync: this);
     _loadDefaultCity();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _motionTabBarController?.dispose();
   }
 
   Future<void> _loadDefaultCity() async {
     await CityService.instance.init();
     if (!mounted) return;
-    setState(() {
-      _selectedCity = CityService.instance.defaultCity;
-    });
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+    setState(() => _selectedCity = CityService.instance.defaultCity);
   }
 
   void _onCitySelected(CityItem city) {
@@ -47,8 +45,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      body: PageView(
-        controller: _pageController,
+      body: TabBarView(
+        controller: _motionTabBarController,
         physics: const NeverScrollableScrollPhysics(),
         children: [
           DiscoverScreen(
@@ -60,11 +58,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       bottomNavigationBar: BottomNavigation(
-        selectedIndex: _selectedIndex,
-        onTap: (idx) => setState(() {
-          _selectedIndex = idx;
-          _pageController.jumpToPage(idx);
-        }),
+        controller: _motionTabBarController,
+        onTap: (index) =>
+            setState(() => _motionTabBarController?.index = index),
       ),
     );
   }

@@ -1,30 +1,38 @@
-import 'package:bnb_flutter/bnb_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_material_design_icons/flutter_material_design_icons.dart';
+import 'package:motion_tab_bar_v2/motion-tab-bar.dart';
+import 'package:motion_tab_bar_v2/motion-tab-controller.dart';
 
 class BottomNavigation extends StatelessWidget {
-  final int selectedIndex;
+  final MotionTabBarController? controller;
   final Function(int) onTap;
   const BottomNavigation({
     super.key,
-    required this.selectedIndex,
+    required this.controller,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return BnbWidget(
-      selectedIndex: selectedIndex,
-      style: BnbStyle(
-        iconSize: const Size(24, 24),
-        foregroundColor: Theme.of(context).scaffoldBackgroundColor,
+    final cs = Theme.of(context).colorScheme;
+    return MotionTabBar(
+      controller: controller,
+      initialSelectedTab: "Discover",
+      labels: const ["Discover", "Saved", "Map"],
+      icons: const [MdiIcons.compass, MdiIcons.heart, MdiIcons.mapMarker],
+      tabSize: 52,
+      tabBarHeight: 62,
+      textStyle: TextStyle(
+        fontSize: 11,
+        color: cs.primary,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.4,
       ),
-      items: [
-        BnbItem(iconData: MdiIcons.circleSlice8),
-        BnbItem(iconData: MdiIcons.heart),
-        BnbItem(iconData: MdiIcons.mapMarker),
-      ],
-      onTap: onTap,
+      tabBarColor: cs.surfaceContainerHigh,
+      tabSelectedColor: cs.primary,
+      tabIconColor: cs.onSurface.withValues(alpha: 0.5),
+      tabIconSelectedColor: cs.surfaceContainerHigh,
+      onTabItemSelected: onTap,
     );
   }
 }

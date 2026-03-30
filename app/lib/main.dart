@@ -7,7 +7,6 @@ void main() {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   AppConfig.validate();
-  // TODO: Remove when home screen is loaded
   FlutterNativeSplash.remove();
   runApp(const MyApp());
 }
@@ -24,7 +23,7 @@ class MyApp extends StatelessWidget {
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF00E5B4), //? 0xFF00E5B4
+        colorSchemeSeed: const Color(0xFF00E5B4),
       ),
       home: const HomeScreen(),
     );

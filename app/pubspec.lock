@@ -57,14 +57,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.0"
-  bnb_flutter:
-    dependency: "direct main"
-    description:
-      name: bnb_flutter
-      sha256: "9062716b9df6557e551911b8cc09b1025d5deead453ce5ee72f8fff6e733de7c"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.4"
   boolean_selector:
     dependency: transitive
     description:
@@ -489,7 +481,7 @@ packages:
     source: hosted
     version: "4.8.0"
   intl:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: intl
       sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
@@ -624,6 +616,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  motion_tab_bar_v2:
+    dependency: "direct main"
+    description:
+      name: motion_tab_bar_v2
+      sha256: b25e1e40c9d2d8478a19b42b6eace262117c2646162368c4d30ede800e65cf9e
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.0"
   native_toolchain_c:
     dependency: transitive
     description:

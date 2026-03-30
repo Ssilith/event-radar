@@ -146,6 +146,7 @@ class _MapScreenState extends State<MapScreen> {
         FlutterMap(
           mapController: _mapController,
           options: MapOptions(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             initialCenter: const LatLng(52.2297, 21.0122),
             initialZoom: 11,
             onTap: (_, _) => setState(() => _selected = null),
