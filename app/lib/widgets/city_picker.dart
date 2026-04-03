@@ -13,7 +13,6 @@ import 'package:google_fonts/google_fonts.dart';
 class CityPicker extends StatefulWidget {
   final CityItem? initialValue;
   final ValueChanged<CityItem> onCitySelected;
-
   const CityPicker({
     super.key,
     this.initialValue,

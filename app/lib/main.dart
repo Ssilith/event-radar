@@ -1,3 +1,4 @@
+import 'package:event_radar/services/event_cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:event_radar/config.dart';
@@ -7,6 +8,7 @@ void main() {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   AppConfig.validate();
+  EventCacheService.init();
   FlutterNativeSplash.remove();
   runApp(const MyApp());
 }

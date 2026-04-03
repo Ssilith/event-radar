@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:event_radar/extensions/string_extensions.dart';
 import 'package:event_radar/utils/language.dart';
+import 'package:extension_utils/string_utils.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:event_radar/config.dart';

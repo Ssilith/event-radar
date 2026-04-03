@@ -1,8 +1,9 @@
 import 'package:event_radar/screens/discover_screen.dart';
 import 'package:event_radar/screens/map_screen.dart';
 import 'package:event_radar/services/city_service.dart';
+import 'package:event_radar/utils/page.dart';
 import 'package:event_radar/widgets/bottom_navigation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Page;
 import 'package:event_radar/models/city_item.dart';
 import 'package:motion_tab_bar_v2/motion-tab-controller.dart';
 
@@ -21,7 +22,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _motionTabBarController = MotionTabBarController(length: 3, vsync: this);
+    _motionTabBarController = MotionTabBarController(
+      length: Page.values.length,
+      vsync: this,
+    );
     _loadDefaultCity();
   }
 
@@ -44,7 +48,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true,
       body: TabBarView(
         controller: _motionTabBarController,
         physics: const NeverScrollableScrollPhysics(),
@@ -59,8 +62,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
       bottomNavigationBar: BottomNavigation(
         controller: _motionTabBarController,
-        onTap: (index) =>
-            setState(() => _motionTabBarController?.index = index),
+        onTap: (index) {
+          if (_motionTabBarController?.index != index) {
+            setState(() => _motionTabBarController?.index = index);
+          }
+        },
       ),
     );
   }

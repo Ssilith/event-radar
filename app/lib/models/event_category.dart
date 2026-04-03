@@ -1,4 +1,4 @@
-import 'package:event_radar/extensions/string_extensions.dart';
+import 'package:extension_utils/string_utils.dart';
 import 'package:flutter/material.dart';
 
 enum EventCategory {
@@ -21,7 +21,7 @@ enum EventCategory {
   other,
 }
 
-const Map<EventCategory, IconData> eventCategoryIcons = {
+const Map<EventCategory, IconData> _eventCategoryIcons = {
   EventCategory.music: Icons.music_note,
   EventCategory.theater: Icons.theater_comedy,
   EventCategory.art: Icons.palette,
@@ -41,7 +41,7 @@ const Map<EventCategory, IconData> eventCategoryIcons = {
   EventCategory.other: Icons.category,
 };
 
-Map<EventCategory, Color> eventCategoryColors = {
+Map<EventCategory, Color> _eventCategoryColors = {
   EventCategory.music: Colors.pink.shade200,
   EventCategory.theater: Colors.blue.shade200,
   EventCategory.art: Colors.purple.shade200,
@@ -63,6 +63,6 @@ Map<EventCategory, Color> eventCategoryColors = {
 
 extension EventCategoryExt on EventCategory {
   String get value => name.capitalize();
-  IconData get iconData => eventCategoryIcons[this]!;
-  Color get color => eventCategoryColors[this]!;
+  IconData get iconData => _eventCategoryIcons[this]!;
+  Color get color => _eventCategoryColors[this]!;
 }

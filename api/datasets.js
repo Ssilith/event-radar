@@ -1,11 +1,5 @@
-const GITHUB_PAGES = () =>
-  `https://${process.env.GITHUB_OWNER}.github.io/${process.env.GITHUB_REPO}/datasets`;
-
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-}
+import { setCors } from "./cors.js";
+import { BASE_URL } from "./github.js";
 
 export default async function handler(req, res) {
   setCors(res);
@@ -19,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: ".json only" });
 
   try {
-    const r = await fetch(`${GITHUB_PAGES()}/${path}`);
+    const r = await fetch(`${BASE_URL()}/${path}`);
     if (!r.ok)
       return res.status(r.status).json({ error: `Upstream ${r.status}` });
 

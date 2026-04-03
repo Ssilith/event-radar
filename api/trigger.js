@@ -1,25 +1,10 @@
-const STALE_MS = 30 * 24 * 60 * 60 * 1000;
+import { setCors } from "./cors.js";
+import { BASE_URL, GITHUB_API, GH_HEADERS } from "./github.js";
 
-const BASE_URL = () =>
-  `https://${process.env.GITHUB_OWNER}.github.io/${process.env.GITHUB_REPO}/datasets`;
-const GITHUB_API = () =>
-  `https://api.github.com/repos/${process.env.GITHUB_OWNER}/${process.env.GITHUB_REPO}`;
-
-const GH_HEADERS = {
-  Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-  Accept: "application/vnd.github+json",
-  "Content-Type": "application/json",
-  "X-GitHub-Api-Version": "2022-11-28",
-};
-
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-}
+const STALE_MS = 30 * 24 * 60 * 60 * 1000; //* 30 days
 
 export default async function handler(req, res) {
-  setCors(res);
+  setCors(res, "POST, OPTIONS");
 
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST")

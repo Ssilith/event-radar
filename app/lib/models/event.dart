@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:event_radar/models/event_category.dart';
+import 'package:intl/intl.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'event.g.dart';
@@ -49,6 +50,7 @@ class Event {
   });
 
   factory Event.fromJson(Map<String, dynamic> json) => _$EventFromJson(json);
+
   Map<String, dynamic> toJson() => _$EventToJson(this);
 
   bool get hasLocation => latitude != null && longitude != null;
@@ -66,6 +68,23 @@ class Event {
     );
 
     return number == 0;
+  }
+
+  String? get durationLabel {
+    if (end == null) return 'All day';
+
+    final duration = end!.difference(start);
+
+    final days = duration.inDays;
+    if (days > 1) return '$days days';
+
+    if (days == 0) {
+      // final hours = duration.inHours;
+      // if (hours >= 4) return '$hours h';
+      return DateFormat('HH:mm').format(start);
+    }
+
+    return 'All day';
   }
 
   double? distanceTo(double lat, double lon) {

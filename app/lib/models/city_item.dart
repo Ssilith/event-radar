@@ -1,4 +1,4 @@
-import 'package:event_radar/extensions/string_extensions.dart';
+import 'package:extension_utils/string_utils.dart';
 
 class CityItem {
   final String name;

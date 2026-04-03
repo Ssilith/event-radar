@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_material_design_icons/flutter_material_design_icons.dart';
+import 'package:event_radar/utils/page.dart';
+import 'package:flutter/material.dart' hide Page;
 import 'package:motion_tab_bar_v2/motion-tab-bar.dart';
 import 'package:motion_tab_bar_v2/motion-tab-controller.dart';
 
@@ -17,13 +17,13 @@ class BottomNavigation extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return MotionTabBar(
       controller: controller,
-      initialSelectedTab: "Discover",
-      labels: const ["Discover", "Saved", "Map"],
-      icons: const [MdiIcons.compass, MdiIcons.heart, MdiIcons.mapMarker],
+      initialSelectedTab: Page.initialPage.value,
+      labels: Page.values.map((p) => p.value).toList(),
+      icons: Page.values.map((p) => p.iconData).toList(),
       tabSize: 52,
       tabBarHeight: 62,
       textStyle: TextStyle(
-        fontSize: 11,
+        fontSize: 14,
         color: cs.primary,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.4,
@@ -31,7 +31,9 @@ class BottomNavigation extends StatelessWidget {
       tabBarColor: cs.surfaceContainerHigh,
       tabSelectedColor: cs.primary,
       tabIconColor: cs.onSurface.withValues(alpha: 0.5),
+      tabIconSize: 30,
       tabIconSelectedColor: cs.surfaceContainerHigh,
+      tabIconSelectedSize: 30,
       onTabItemSelected: onTap,
     );
   }

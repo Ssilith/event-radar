@@ -1,10 +1,6 @@
-const GEODB_BASE = "https://wft-geo-db.p.rapidapi.com";
+import { setCors } from "./cors.js";
 
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-}
+const GEODB_BASE = "https://wft-geo-db.p.rapidapi.com";
 
 export default async function handler(req, res) {
   setCors(res);
@@ -29,7 +25,6 @@ export default async function handler(req, res) {
 
     const data = await r.text();
 
-    setCors(res);
     res.setHeader("Content-Type", "application/json");
     res.setHeader(
       "Cache-Control",
