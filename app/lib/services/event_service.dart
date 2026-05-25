@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:diacritic/diacritic.dart';
 import 'package:event_radar/config.dart';
+import 'package:event_radar/models/city_data_state.dart';
+import 'package:event_radar/models/city_item.dart';
 import 'package:event_radar/models/event.dart';
 import 'package:event_radar/utils/data_freshness.dart';
 import 'package:http/http.dart' as http;
-import 'package:event_radar/models/city_data_state.dart';
 
 //* How long to wait between each poll attempt while a scrape is running
 const _pollInterval = Duration(seconds: 15);
@@ -31,6 +33,9 @@ class EventService {
 
   static final EventService instance = EventService._internal();
 
+  static String slugFor(CityItem city) =>
+      removeDiacritics(city.name).toLowerCase().replaceAll(' ', '-');
+
   Stream<CityDataState> getEventsForCity(
     String slug, {
     String countryCode = '',
@@ -50,7 +55,9 @@ class EventService {
 
     //* Remote dataset exists and is within the staleness window
     final dataset = await _fetchDataset(slug);
-    if (dataset != null && !DataFreshness.isStale(dataset['generated_at'])) {
+    final datasetTimestamp =
+        dataset?['updated_at'] ?? dataset?['generated_at'];
+    if (dataset != null && !DataFreshness.isStale(datasetTimestamp)) {
       final events = _parseEvents(dataset);
       _setCache(slug, events);
       yield CityDataState(

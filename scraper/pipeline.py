@@ -213,7 +213,7 @@ class EventNormalizer:
         self.city = city
         self.slug = city_to_slug(city)
         self.geocoder = geocoder
-        self.cutoff = datetime.now() + timedelta(days=DAYS_AHEAD)
+        self.cutoff = datetime.now(timezone.utc) + timedelta(days=DAYS_AHEAD)
         self._geo_cache: dict[str, tuple] = {}
 
     async def _resolve(
@@ -231,15 +231,30 @@ class EventNormalizer:
                 return result
         return None, None
 
-    async def normalize(self, raw: RawEvent) -> Optional[NormalizedEvent]:
+    @staticmethod
+    def _to_utc(raw: Optional[str]) -> Optional[datetime]:
+        if not raw:
+            return None
         try:
-            start_dt = datetime.fromisoformat(raw.start.replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
         except Exception:
             return None
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+        return dt
 
-        start_naive = start_dt.replace(tzinfo=None)
-        if start_naive < datetime.now() or start_naive > self.cutoff:
+    async def normalize(self, raw: RawEvent) -> Optional[NormalizedEvent]:
+        start_dt = self._to_utc(raw.start)
+        if start_dt is None:
             return None
+
+        now_utc = datetime.now(timezone.utc)
+        if start_dt < now_utc or start_dt > self.cutoff:
+            return None
+
+        end_dt = self._to_utc(raw.end)
 
         lat, lon = raw.latitude, raw.longitude
         if not lat:
@@ -255,7 +270,7 @@ class EventNormalizer:
             title=re.sub(r"\s+", " ", raw.title.strip()),
             city=self.slug,
             start=start_dt.isoformat(),
-            end=raw.end,
+            end=end_dt.isoformat() if end_dt else None,
             venue=raw.venue,
             latitude=round(lat, 6) if lat else None,
             longitude=round(lon, 6) if lon else None,

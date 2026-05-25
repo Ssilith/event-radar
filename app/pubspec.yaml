@@ -5,7 +5,8 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.12.0
+  flutter: ">=3.44.0"
 
 dependencies:
   flutter:
@@ -28,7 +29,7 @@ dependencies:
   app_settings: ^7.0.0
 
   # dropdown
-  dropdown_search: ^6.0.2
+  dropdown_search: ^7.0.0
 
   # navigation bar
   motion_tab_bar_v2: ^0.4.0
@@ -41,7 +42,7 @@ dependencies:
   url_launcher: ^6.3.2
 
   # map
-  flutter_map: ^8.2.2
+  flutter_map: ^8.3.0
   latlong2: ^0.9.1
 
   # build utilities

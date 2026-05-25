@@ -53,21 +53,27 @@ class Event {
 
   Map<String, dynamic> toJson() => _$EventToJson(this);
 
-  bool get hasLocation => latitude != null && longitude != null;
+  bool get hasLocation =>
+      latitude != null &&
+      longitude != null &&
+      latitude!.isFinite &&
+      longitude!.isFinite;
 
   bool get isUpcoming => start.isAfter(DateTime.now());
 
+  bool get hasPrice {
+    final p = price?.trim();
+    return p != null && p.isNotEmpty;
+  }
+
   bool get isFree {
     final p = price?.trim().toLowerCase();
-    if (p == null) return false;
-
+    if (p == null || p.isEmpty) return false;
     if (p.contains('free')) return true;
-
-    final number = double.tryParse(
+    final asNumber = double.tryParse(
       p.replaceAll(RegExp(r'[^0-9.,]'), '').replaceAll(',', '.'),
     );
-
-    return number == 0;
+    return asNumber == 0;
   }
 
   String? get durationLabel {
@@ -108,12 +114,23 @@ class Event {
 double _toRad(double deg) => deg * pi / 180;
 
 DateTime _parseDate(String raw) {
-  final dt = DateTime.tryParse(raw);
-  if (dt != null) return dt.toLocal();
-
-  final stripped = raw.replaceFirst(RegExp(r'[+-]\d{2}:\d{2}$'), '');
-  return DateTime.tryParse(stripped)?.toLocal() ??
-      (throw FormatException('Cannot parse date: $raw'));
+  // The scraper always emits UTC (tz-aware). Naive strings — coming from old
+  // datasets — are interpreted as UTC too. Final value is local for display.
+  var dt = DateTime.tryParse(raw);
+  if (dt == null) throw FormatException('Cannot parse date: $raw');
+  if (!dt.isUtc) {
+    dt = DateTime.utc(
+      dt.year,
+      dt.month,
+      dt.day,
+      dt.hour,
+      dt.minute,
+      dt.second,
+      dt.millisecond,
+      dt.microsecond,
+    );
+  }
+  return dt.toLocal();
 }
 
 DateTime? _parseDateOrNull(String? raw) => raw == null ? null : _parseDate(raw);

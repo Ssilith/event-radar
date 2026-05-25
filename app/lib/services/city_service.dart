@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:diacritic/diacritic.dart';
 import 'package:event_radar/utils/language.dart';
 import 'package:extension_utils/string_utils.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:event_radar/config.dart';
 import 'package:event_radar/models/city_item.dart';
@@ -11,6 +13,10 @@ class CityService {
   CityService._internal();
   static final CityService instance = CityService._internal();
 
+  static const _recentsBoxName = 'recent_cities';
+  static const _recentsKey = 'list';
+  static const _recentsCap = 5;
+
   List<CityItem> _knownCities = [];
   CityItem? locationCity;
   List<CityItem> nearbyCities = [];
@@ -18,18 +24,74 @@ class CityService {
   final List<CityItem> _recentCities = [];
   final Map<String, List<CityItem>> _searchCache = {};
   Position? _lastPosition;
+  Box<String>? _recentsBox;
+  Future<void>? _initFuture;
+  Future<bool>? _resolveFuture;
 
   CityItem? get defaultCity =>
       _recentCities.firstOrNull ?? _knownCities.firstOrNull;
 
-  Future<void> init() async {
+  Position? get lastPosition => _lastPosition;
+
+  static String _normalize(String s) =>
+      removeDiacritics(s).toLowerCase().replaceAll(RegExp(r'[\s_-]+'), '-');
+
+  String displayCityName(String raw) {
+    if (raw.trim().isEmpty) return raw;
+    final key = _normalize(raw);
+    for (final c in [..._recentCities, ..._knownCities]) {
+      if (_normalize(c.name) == key) return c.name;
+    }
+    return raw
+        .split(RegExp(r'[\s_-]+'))
+        .where((s) => s.isNotEmpty)
+        .map((s) => s.capitalize())
+        .join(' ');
+  }
+
+  bool sameCity(String a, String b) => _normalize(a) == _normalize(b);
+
+  Future<void> init() => _initFuture ??= _doInit();
+
+  Future<void> _doInit() async {
+    await Hive.initFlutter();
+    _recentsBox = await Hive.openBox<String>(_recentsBoxName);
+    _loadRecents();
     _knownCities = await _loadKnownCities();
   }
 
   void markUsed(CityItem city) {
     _recentCities.remove(city);
     _recentCities.insert(0, city);
-    if (_recentCities.length > 5) _recentCities.removeLast();
+    if (_recentCities.length > _recentsCap) _recentCities.removeLast();
+    _persistRecents();
+  }
+
+  void _loadRecents() {
+    final raw = _recentsBox?.get(_recentsKey);
+    if (raw == null) return;
+    try {
+      final list = jsonDecode(raw) as List;
+      _recentCities.addAll(
+        list.whereType<Map>().map(
+          (m) => CityItem(
+            m['name'] as String? ?? '',
+            m['countryCode'] as String? ?? '',
+          ),
+        ).where((c) => c.name.isNotEmpty),
+      );
+    } catch (_) {}
+  }
+
+  void _persistRecents() {
+    final box = _recentsBox;
+    if (box == null) return;
+    final encoded = jsonEncode(
+      _recentCities
+          .map((c) => {'name': c.name, 'countryCode': c.countryCode})
+          .toList(),
+    );
+    box.put(_recentsKey, encoded);
   }
 
   Future<List<CityItem>> getItems(
@@ -55,21 +117,40 @@ class CityService {
     return results;
   }
 
-  Future<bool> resolveLocation({String languageCode = 'en'}) async {
-    final pos = await _getPosition();
-    if (pos == null) return false;
-    _lastPosition = pos;
+  Future<bool> resolveLocation({
+    String languageCode = 'en',
+    bool force = false,
+  }) {
+    if (force) _resolveFuture = null;
+    return _resolveFuture ??= _doResolveLocation(languageCode: languageCode);
+  }
 
-    final cities = await _fetchNearbyCities(
-      pos.latitude,
-      pos.longitude,
-      languageCode: languageCode,
-    );
-    if (cities.isEmpty) return false;
+  Future<bool> _doResolveLocation({String languageCode = 'en'}) async {
+    try {
+      final pos = await _getPosition();
+      if (pos == null) {
+        _resolveFuture = null;
+        return false;
+      }
+      _lastPosition = pos;
 
-    locationCity = cities.first;
-    nearbyCities = cities.skip(1).toList();
-    return true;
+      final cities = await _fetchNearbyCities(
+        pos.latitude,
+        pos.longitude,
+        languageCode: languageCode,
+      );
+      if (cities.isEmpty) {
+        _resolveFuture = null;
+        return false;
+      }
+
+      locationCity = cities.first;
+      nearbyCities = cities.skip(1).toList();
+      return true;
+    } catch (_) {
+      _resolveFuture = null;
+      return false;
+    }
   }
 
   List<CityItem> _buildDefaultList() {
@@ -184,18 +265,22 @@ class CityService {
   }
 
   Future<Position?> _getPosition() async {
-    if (!await Geolocator.isLocationServiceEnabled()) return null;
-    var perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) {
-      perm = await Geolocator.requestPermission();
-    }
-    if (perm == LocationPermission.denied ||
-        perm == LocationPermission.deniedForever) {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return null;
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        return null;
+      }
+      return await Geolocator.getCurrentPosition(
+        locationSettings: AndroidSettings(accuracy: LocationAccuracy.low),
+      );
+    } catch (_) {
       return null;
     }
-    return Geolocator.getCurrentPosition(
-      locationSettings: AndroidSettings(accuracy: LocationAccuracy.low),
-    );
   }
 }
 

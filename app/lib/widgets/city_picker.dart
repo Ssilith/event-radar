@@ -95,7 +95,7 @@ class _CityPickerState extends State<CityPicker> {
         ),
       ),
 
-      onChanged: (city) {
+      onSelected: (city) {
         if (city == null) return;
         _service.markUsed(city);
         widget.onCitySelected(city);
@@ -123,6 +123,7 @@ class _PopupHeaderState extends State<_PopupHeader> {
 
     final ok = await CityService.instance.resolveLocation(
       languageCode: widget.langCode,
+      force: true,
     );
 
     if (!mounted) return;

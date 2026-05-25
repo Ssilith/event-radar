@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:diacritic/diacritic.dart';
 import 'package:event_radar/models/city_data_state.dart';
 import 'package:event_radar/models/city_item.dart';
 import 'package:event_radar/models/event.dart';
 import 'package:event_radar/models/event_category.dart';
 import 'package:event_radar/services/city_service.dart';
 import 'package:event_radar/services/event_cache_service.dart';
+import 'package:event_radar/screens/event_details_screen.dart';
 import 'package:event_radar/services/event_service.dart';
 import 'package:event_radar/utils/date_filter.dart';
 import 'package:event_radar/utils/language.dart';
@@ -15,8 +15,8 @@ import 'package:event_radar/widgets/status_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class DiscoverScreen extends StatefulWidget {
   final CityItem? selectedCity;
@@ -42,10 +42,22 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   DateFilter _dateFilter = DateFilter.all;
   EventCategory? _selectedCategory;
 
+  Set<String> _bookmarked = {};
+  StreamSubscription<BoxEvent>? _bookmarkSub;
+
   @override
   void initState() {
     super.initState();
+    _bookmarked = EventCacheService.bookmarkedIds();
+    _bookmarkSub = EventCacheService.watchBookmarks()?.listen((_) {
+      if (!mounted) return;
+      setState(() => _bookmarked = EventCacheService.bookmarkedIds());
+    });
     _initCity();
+  }
+
+  Future<void> _toggleBookmark(Event event) async {
+    await EventCacheService.toggleBookmark(event);
   }
 
   @override
@@ -85,7 +97,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       _state = const CityDataState.triggered();
       _selectedCategory = null;
     });
-    final slug = removeDiacritics(city.name).toLowerCase().replaceAll(' ', '-');
+    final slug = EventService.slugFor(city);
     _sub = _eventService
         .getEventsForCity(slug, countryCode: city.countryCode)
         .listen(
@@ -97,6 +109,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   void dispose() {
     _sub?.cancel();
+    _bookmarkSub?.cancel();
     super.dispose();
   }
 
@@ -152,9 +165,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   List<Event> get _featuredEvents {
     final seen = <String>{};
     final result = <Event>[];
+    final today = DateUtils.dateOnly(DateTime.now());
 
     // _filtered is already sorted by date, so first occurrence = soonest
     for (final e in _filtered) {
+      if (e.start.isBefore(today)) continue;
       final key = '${e.title.toLowerCase()}|${(e.venue ?? '').toLowerCase()}';
       if (seen.add(key)) result.add(e);
       if (result.length >= 5) break;
@@ -262,8 +277,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             SliverToBoxAdapter(
               child: _FeaturedCarousel(
                 events: _featuredEvents.take(5).toList(),
-                bookmarked: const {},
-                // onToggleBookmark:,
+                bookmarked: _bookmarked,
+                onToggleBookmark: _toggleBookmark,
               ),
             ),
           ],
@@ -282,8 +297,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               delegate: SliverChildBuilderDelegate(
                 (ctx, i) => _EventRow(
                   event: _filtered[i],
-                  // isSaved: _bookmarked.contains(_filtered[i].id),
-                  // onToggleSave: () => _toggleBookmark(_filtered[i]),
+                  isSaved: _bookmarked.contains(_filtered[i].id),
+                  onToggleSave: () => _toggleBookmark(_filtered[i]),
                 ),
                 childCount: _filtered.length,
               ),
@@ -382,85 +397,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 ),
               ),
             ),
-            Row(
-              children: [
-                _IconBtn(
-                  icon: Icons.bookmarks_outlined,
-                  onTap: () => _showSavedSheet(context),
-                  tooltip: 'Saved events',
-                ),
-                _IconBtn(
-                  icon: Icons.language_outlined,
-                  onTap: () {},
-                  tooltip: 'Region',
-                ),
-              ],
+            _IconBtn(
+              icon: Icons.language_outlined,
+              onTap: () {},
+              tooltip: 'Region',
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Saved events bottom sheet ─────────────────────────────────────────────
-
-  void _showSavedSheet(BuildContext context) {
-    final saved = EventCacheService.getBookmarks();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF111111),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        builder: (_, _) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _BottomSheetHandle(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Saved Events',
-                    style: GoogleFonts.syne(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    '${saved.length} saved',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (saved.isEmpty)
-              const Expanded(child: StatusView.empty())
-            else
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  itemCount: saved.length,
-                  itemBuilder: (_, i) => _EventRow(
-                    event: saved[i],
-                    // isSaved: true,
-                    // onToggleSave: () async {
-                    //   // await EventCacheService.removeBookmark(saved[i].id);
-                    //   // setState(() => _bookmarked.remove(saved[i].id));
-                    //   // if (ctx.mounted) Navigator.of(ctx).pop();
-                    // },
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -660,25 +601,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _BottomSheetHandle extends StatelessWidget {
-  const _BottomSheetHandle();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.only(top: 12, bottom: 4),
-        width: 36,
-        height: 4,
-        decoration: BoxDecoration(
-          color: Colors.white24,
-          borderRadius: BorderRadius.circular(2),
-        ),
-      ),
-    );
-  }
-}
-
 class _IconBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -699,11 +621,11 @@ class _IconBtn extends StatelessWidget {
 class _FeaturedCarousel extends StatelessWidget {
   final List<Event> events;
   final Set<String> bookmarked;
-  // final ValueChanged<Event> onToggleBookmark;
+  final ValueChanged<Event> onToggleBookmark;
   const _FeaturedCarousel({
     required this.events,
     required this.bookmarked,
-    // required this.onToggleBookmark,
+    required this.onToggleBookmark,
   });
 
   @override
@@ -717,7 +639,7 @@ class _FeaturedCarousel extends StatelessWidget {
         itemBuilder: (ctx, i) => _FeaturedCard(
           event: events[i],
           isSaved: bookmarked.contains(events[i].id),
-          // onToggleSave: () => onToggleBookmark(events[i]),
+          onToggleSave: () => onToggleBookmark(events[i]),
         ),
       ),
     );
@@ -727,12 +649,12 @@ class _FeaturedCarousel extends StatelessWidget {
 class _FeaturedCard extends StatelessWidget {
   final Event event;
   final bool isSaved;
-  // final VoidCallback onToggleSave;
+  final VoidCallback onToggleSave;
 
   const _FeaturedCard({
     required this.event,
     required this.isSaved,
-    // required this.onToggleSave,
+    required this.onToggleSave,
   });
 
   Color get _catColor {
@@ -759,7 +681,7 @@ class _FeaturedCard extends StatelessWidget {
     final isPast = !event.isUpcoming;
 
     return GestureDetector(
-      onTap: () => _launchUrl(event.url),
+      onTap: () => _openDetails(context, event),
       child: Container(
         width: 295,
         margin: const EdgeInsets.only(right: 14, bottom: 4),
@@ -809,16 +731,20 @@ class _FeaturedCard extends StatelessWidget {
                         color: _catColor,
                       ),
                       GestureDetector(
-                        // onTap: onToggleSave,
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          child: Icon(
-                            isSaved
-                                ? Icons.bookmark_rounded
-                                : Icons.bookmark_outline_rounded,
-                            key: ValueKey(isSaved),
-                            size: 20,
-                            color: isSaved ? primary : const Color(0xFF666666),
+                        behavior: HitTestBehavior.opaque,
+                        onTap: onToggleSave,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
+                              isSaved
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_outline_rounded,
+                              key: ValueKey(isSaved),
+                              size: 20,
+                              color: isSaved ? primary : const Color(0xFF666666),
+                            ),
                           ),
                         ),
                       ),
@@ -902,7 +828,7 @@ class _FeaturedCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      if (event.price != null)
+                      if (event.isFree || event.hasPrice)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -928,7 +854,7 @@ class _FeaturedCard extends StatelessWidget {
                         const SizedBox.shrink(),
                       if (event.url != null)
                         GestureDetector(
-                          onTap: () => _launchUrl(event.url),
+                          onTap: () => _openDetails(context, event),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -973,13 +899,12 @@ class _FeaturedCard extends StatelessWidget {
     );
   }
 
-  void _launchUrl(String? url) async {
-    if (url == null) return;
-    final uri = Uri.tryParse(url);
-    if (uri != null && await canLaunchUrl(uri)) {
-      launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-    }
-  }
+}
+
+void _openDetails(BuildContext context, Event event) {
+  Navigator.of(context).push<void>(
+    MaterialPageRoute(builder: (_) => EventDetailsScreen(event: event)),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -988,12 +913,12 @@ class _FeaturedCard extends StatelessWidget {
 
 class _EventRow extends StatelessWidget {
   final Event event;
-  // final bool isSaved;
-  // final VoidCallback onToggleSave;
+  final bool isSaved;
+  final VoidCallback onToggleSave;
   const _EventRow({
     required this.event,
-    // required this.isSaved,
-    // required this.onToggleSave,
+    required this.isSaved,
+    required this.onToggleSave,
   });
 
   @override
@@ -1008,10 +933,7 @@ class _EventRow extends StatelessWidget {
         .color;
 
     return InkWell(
-      onTap: () async {
-        final uri = Uri.tryParse(event.url ?? '');
-        if (uri != null && await canLaunchUrl(uri)) launchUrl(uri);
-      },
+      onTap: () => _openDetails(context, event),
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
         decoration: const BoxDecoration(
@@ -1098,18 +1020,20 @@ class _EventRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 GestureDetector(
-                  onTap: () async =>
-                      await EventCacheService.toggleBookmark(event),
-                  child: const AnimatedSwitcher(
-                    duration: Duration(milliseconds: 200),
-                    child: Icon(
-                      // isSaved
-                      //     ? Icons.bookmark_rounded
-                      // :
-                      Icons.bookmark_outline_rounded,
-                      // key: ValueKey(isSaved),
-                      size: 19,
-                      // color: isSaved ? primary : const Color(0xFF444444),
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onToggleSave,
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        isSaved
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_outline_rounded,
+                        key: ValueKey(isSaved),
+                        size: 19,
+                        color: isSaved ? primary : const Color(0xFF444444),
+                      ),
                     ),
                   ),
                 ),

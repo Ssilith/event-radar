@@ -1,5 +1,6 @@
 import 'package:event_radar/screens/discover_screen.dart';
 import 'package:event_radar/screens/map_screen.dart';
+import 'package:event_radar/screens/saved_screen.dart';
 import 'package:event_radar/services/city_service.dart';
 import 'package:event_radar/utils/page.dart';
 import 'package:event_radar/widgets/bottom_navigation.dart';
@@ -56,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             selectedCity: _selectedCity,
             onCitySelected: _onCitySelected,
           ),
-          const Placeholder(),
+          SavedScreen(currentCity: _selectedCity),
           MapScreen(city: _selectedCity),
         ],
       ),

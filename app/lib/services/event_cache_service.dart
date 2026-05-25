@@ -35,6 +35,9 @@ class EventCacheService {
   static Set<String> bookmarkedIds() =>
       _bookmarks?.keys.cast<String>().toSet() ?? {};
 
+  //* Stream of changes to the bookmarks box
+  static Stream<BoxEvent>? watchBookmarks() => _bookmarks?.watch();
+
   //* Get bookmarked events sorted newest-start first
   static List<Event> getBookmarks() {
     if (_bookmarks == null) return [];
