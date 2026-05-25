@@ -30,7 +30,7 @@ async def run_city(
     fetcher = PageFetcher(session)
     extractor = SchemaOrgExtractor()
     geocoder = Geocoder(session)
-    normalizer = EventNormalizer(city, geocoder)
+    normalizer = EventNormalizer(city, geocoder, country_code=country_code)
     deduplicator = Deduplicator()
 
     log.info("[1/6] Resolving city coordinates...")
