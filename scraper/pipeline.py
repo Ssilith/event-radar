@@ -16,10 +16,6 @@ from models import NormalizedEvent, RawEvent
 
 
 def _tz_for_country(country_code: str) -> Optional[str]:
-    # pytz.country_timezones is the IANA country -> [tz] mapping. For
-    # multi-zone countries it returns several; we pick the first (good enough
-    # for single-zone countries, and a reasonable default elsewhere). For
-    # finer-grained accuracy you'd resolve from lat/lon instead.
     cc = (country_code or "").upper()
     if not cc:
         return None
@@ -262,17 +258,15 @@ class EventNormalizer:
         return None, None
 
     def _to_utc(self, raw: Optional[str]) -> Optional[datetime]:
-        # Returns a tz-aware UTC datetime. Naive inputs are assumed to be the
-        # venue's local wall-clock time and localized to its timezone before
-        # conversion. Falls back to UTC when no tz is known for the venue.
         if not raw:
             return None
         try:
             dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
         except Exception:
             return None
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=self.local_tz or timezone.utc)
+        if dt.tzinfo is not None:
+            dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+        dt = dt.replace(tzinfo=self.local_tz or timezone.utc)
         return dt.astimezone(timezone.utc)
 
     async def normalize(self, raw: RawEvent) -> Optional[NormalizedEvent]:

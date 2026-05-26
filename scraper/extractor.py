@@ -131,8 +131,7 @@ class SchemaOrgExtractor:
         from datetime import datetime
 
         try:
-            dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-            return dt.replace(tzinfo=None).isoformat()
+            return datetime.fromisoformat(raw.replace("Z", "+00:00")).isoformat()
         except ValueError:
             pass
 
