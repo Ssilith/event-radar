@@ -130,9 +130,15 @@ class SchemaOrgExtractor:
         raw = raw.strip()
         from datetime import datetime
 
+        try:
+            dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            return dt.replace(tzinfo=None).isoformat()
+        except ValueError:
+            pass
+
         for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d"):
             try:
-                return datetime.strptime(raw[: len(fmt)], fmt).isoformat()
+                return datetime.strptime(raw, fmt).isoformat()
             except ValueError:
                 pass
         return raw
