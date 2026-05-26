@@ -21,6 +21,7 @@ Event _$EventFromJson(Map<String, dynamic> json) => Event(
   source: json['source'] as String?,
   price: json['price'] as String?,
   updatedAt: _parseDateOrNull(json['updated_at'] as String?),
+  timezone: json['timezone'] as String? ?? '',
 );
 
 Map<String, dynamic> _$EventToJson(Event instance) => <String, dynamic>{
@@ -38,6 +39,7 @@ Map<String, dynamic> _$EventToJson(Event instance) => <String, dynamic>{
   'source': instance.source,
   'price': instance.price,
   'updated_at': instance.updatedAt?.toIso8601String(),
+  'timezone': instance.timezone,
 };
 
 const _$EventCategoryEnumMap = {

@@ -164,10 +164,20 @@ class EventService {
         .firstOrNull;
   }
 
-  List<Event> _parseEvents(Map<String, dynamic> data) =>
-      (data['events'] as List? ?? [])
-          .map((e) => Event.fromJson(e as Map<String, dynamic>))
-          .toList();
+  List<Event> _parseEvents(Map<String, dynamic> data) {
+    final tzName = (data['timezone'] as String?)?.trim() ?? '';
+    return (data['events'] as List? ?? [])
+        .map((e) {
+          final raw = e as Map<String, dynamic>;
+          // Inject dataset-level IANA timezone so each Event knows the venue's
+          // tz for display, without Flutter maintaining a country→tz map.
+          return Event.fromJson({
+            ...raw,
+            if (tzName.isNotEmpty) 'timezone': tzName,
+          });
+        })
+        .toList();
+  }
 
   List<Event> _filter(
     List<Event> events,

@@ -8,12 +8,12 @@ import 'package:event_radar/models/event_category.dart';
 import 'package:event_radar/screens/event_details_screen.dart';
 import 'package:event_radar/services/city_service.dart';
 import 'package:event_radar/services/event_service.dart';
+import 'package:event_radar/utils/event_time.dart';
 import 'package:event_radar/utils/language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -307,7 +307,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   static bool _isToday(Event e) =>
-      DateUtils.isSameDay(e.start, DateTime.now());
+      DateUtils.isSameDay(eventWallClock(e), nowInVenueTz(e.timezone));
 
   List<Event> get _drawerEvents {
     final list = [..._events];
@@ -992,7 +992,7 @@ class _SelectedEventCard extends StatelessWidget {
                   Icon(Icons.schedule_rounded, size: 12, color: primary),
                   const SizedBox(width: 4),
                   Text(
-                    DateFormat('EEE d MMM, HH:mm').format(event.start),
+                    formatEventTime(event, 'EEE d MMM, HH:mm'),
                     style: const TextStyle(
                       color: Color(0xFFAAAAAA),
                       fontSize: 11,
@@ -1281,8 +1281,8 @@ class _NearbyEventRow extends StatelessWidget {
                       const SizedBox(width: 3),
                       Text(
                         isToday
-                            ? DateFormat('HH:mm').format(event.start)
-                            : DateFormat('d MMM • HH:mm').format(event.start),
+                            ? formatEventTime(event, 'HH:mm')
+                            : formatEventTime(event, 'd MMM • HH:mm'),
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFF888888),

@@ -9,6 +9,7 @@ import 'package:event_radar/services/event_cache_service.dart';
 import 'package:event_radar/screens/event_details_screen.dart';
 import 'package:event_radar/services/event_service.dart';
 import 'package:event_radar/utils/date_filter.dart';
+import 'package:event_radar/utils/event_time.dart';
 import 'package:event_radar/utils/language.dart';
 import 'package:event_radar/widgets/city_picker.dart';
 import 'package:event_radar/widgets/status_view.dart';
@@ -138,21 +139,18 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   );
 
   List<Event> get _dateFiltered {
-    final now = DateTime.now();
-    return _state.events
-        .where(
-          (e) => switch (_dateFilter) {
-            DateFilter.today => DateUtils.isSameDay(e.start, now),
-            DateFilter.week =>
-              e.start.isAfter(now) &&
-                  e.start.isBefore(now.add(const Duration(days: 7))),
-            DateFilter.month =>
-              e.start.isAfter(now) &&
-                  e.start.isBefore(now.add(const Duration(days: 30))),
-            DateFilter.all => true,
-          },
-        )
-        .toList();
+    return _state.events.where((e) {
+      final start = eventWallClock(e);
+      final now = nowInVenueTz(e.timezone);
+      return switch (_dateFilter) {
+        DateFilter.today => DateUtils.isSameDay(start, now),
+        DateFilter.week =>
+          start.isAfter(now) && start.isBefore(now.add(const Duration(days: 7))),
+        DateFilter.month =>
+          start.isAfter(now) && start.isBefore(now.add(const Duration(days: 30))),
+        DateFilter.all => true,
+      };
+    }).toList();
   }
 
   List<Event> get _filtered {
@@ -165,11 +163,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   List<Event> get _featuredEvents {
     final seen = <String>{};
     final result = <Event>[];
-    final today = DateUtils.dateOnly(DateTime.now());
 
     // _filtered is already sorted by date, so first occurrence = soonest
     for (final e in _filtered) {
-      if (e.start.isBefore(today)) continue;
+      final start = eventWallClock(e);
+      final today = DateUtils.dateOnly(nowInVenueTz(e.timezone));
+      if (start.isBefore(today)) continue;
       final key = '${e.title.toLowerCase()}|${(e.venue ?? '').toLowerCase()}';
       if (seen.add(key)) result.add(e);
       if (result.length >= 5) break;
@@ -924,7 +923,8 @@ class _EventRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
-    final isPast = event.start.isBefore(DateTime.now());
+    final isPast = event.start.isBefore(DateTime.now().toUtc());
+    final eventLocal = eventWallClock(event);
     final catColor = EventCategory.values
         .firstWhere(
           (c) => c.value.toLowerCase() == event.category.value.toLowerCase(),
@@ -961,7 +961,7 @@ class _EventRow extends StatelessWidget {
                   Text(
                     isPast
                         ? 'PAS'
-                        : DateFormat('MMM').format(event.start).toUpperCase(),
+                        : DateFormat('MMM').format(eventLocal).toUpperCase(),
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -970,7 +970,7 @@ class _EventRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${event.start.day}',
+                    '${eventLocal.day}',
                     style: GoogleFonts.syne(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,

@@ -1,6 +1,7 @@
 import 'package:event_radar/models/event.dart';
 import 'package:event_radar/models/event_category.dart';
 import 'package:event_radar/services/event_cache_service.dart';
+import 'package:event_radar/utils/event_time.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -100,12 +101,17 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   _InfoRow(
                     icon: Icons.calendar_today_rounded,
                     label: 'Date',
-                    value: _formatDate(event.start, event.end),
+                    value: _formatDate(event),
                   ),
                   _InfoRow(
                     icon: Icons.schedule_rounded,
                     label: 'Time',
-                    value: _formatTime(event.start, event.end),
+                    value: venueTzDiffersFromPhone(event.timezone)
+                        ? '${_formatTime(event)}  ·  ${venueTzShortName(event.timezone)} time'
+                        : _formatTime(event),
+                    subValue: venueTzDiffersFromPhone(event.timezone)
+                        ? '${_formatTimePhone(event)}  ·  ${phoneTzShortName() ?? 'your'} time'
+                        : null,
                   ),
                   if (event.venue != null)
                     _InfoRow(
@@ -184,18 +190,42 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     );
   }
 
-  String _formatDate(DateTime start, DateTime? end) {
-    final fmt = DateFormat('EEE, MMM d, yyyy');
-    if (end == null || DateUtils.isSameDay(start, end)) return fmt.format(start);
-    return '${fmt.format(start)}  →  ${fmt.format(end)}';
+  String _formatDate(Event event) {
+    const pattern = 'EEE, MMM d, yyyy';
+    final start = eventWallClock(event);
+    if (event.end == null) return formatEventTime(event, pattern);
+    final end = eventWallClock(event, when: event.end);
+    if (DateUtils.isSameDay(start, end)) return formatEventTime(event, pattern);
+    return '${formatEventTime(event, pattern)}  →  ${formatEventTime(event, pattern, when: event.end)}';
   }
 
-  String _formatTime(DateTime start, DateTime? end) {
-    if (end == null) return DateFormat('HH:mm').format(start);
+  String _formatTime(Event event) {
+    final startStr = formatEventTime(event, 'HH:mm');
+    if (event.end == null) return startStr;
+    final start = eventWallClock(event);
+    final end = eventWallClock(event, when: event.end);
     if (DateUtils.isSameDay(start, end)) {
-      return '${DateFormat('HH:mm').format(start)} – ${DateFormat('HH:mm').format(end)}';
+      return '$startStr – ${formatEventTime(event, 'HH:mm', when: event.end)}';
     }
-    return DateFormat('HH:mm').format(start);
+    return startStr;
+  }
+
+  String _formatTimePhone(Event event) {
+    // Same shape as _formatTime but always in the phone's tz.
+    const fmt = 'HH:mm';
+    const fmtWithDate = 'd MMM, HH:mm';
+    final startLocal = event.start.toLocal();
+    final venueStart = eventWallClock(event);
+    final crossesDayVenue =
+        !DateUtils.isSameDay(startLocal, venueStart);
+    final startPattern = crossesDayVenue ? fmtWithDate : fmt;
+    final startStr = DateFormat(startPattern).format(startLocal);
+    if (event.end == null) return startStr;
+    final endLocal = event.end!.toLocal();
+    if (DateUtils.isSameDay(startLocal, endLocal)) {
+      return '$startStr – ${DateFormat(fmt).format(endLocal)}';
+    }
+    return startStr;
   }
 }
 

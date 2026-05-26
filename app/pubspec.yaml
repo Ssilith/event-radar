@@ -18,6 +18,7 @@ dependencies:
 
   # dates
   intl: ^0.20.2
+  timezone: ^0.11.0
 
   # icons
   flutter_material_design_icons: ^3.0.0+7447
@@ -56,6 +57,7 @@ dependencies:
   # hive
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  flutter_timezone: ^5.0.2
 
 dev_dependencies:
   flutter_test:

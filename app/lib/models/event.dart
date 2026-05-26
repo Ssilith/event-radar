@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:event_radar/models/event_category.dart';
-import 'package:intl/intl.dart';
+import 'package:event_radar/utils/event_time.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'event.g.dart';
@@ -32,6 +32,13 @@ class Event {
   @JsonKey(name: 'updated_at', fromJson: _parseDateOrNull)
   final DateTime? updatedAt;
 
+  // IANA timezone name of the venue, e.g. "Europe/Warsaw". Injected at parse
+  // time from the dataset wrapper (not present on individual event payloads).
+  // Resolved by the scraper from country_code via pytz, so Flutter has no
+  // country→tz mapping to maintain.
+  @JsonKey(defaultValue: '')
+  final String timezone;
+
   const Event({
     required this.id,
     required this.title,
@@ -47,6 +54,7 @@ class Event {
     this.source,
     this.price,
     this.updatedAt,
+    this.timezone = '',
   });
 
   factory Event.fromJson(Map<String, dynamic> json) => _$EventFromJson(json);
@@ -59,7 +67,7 @@ class Event {
       latitude!.isFinite &&
       longitude!.isFinite;
 
-  bool get isUpcoming => start.isAfter(DateTime.now());
+  bool get isUpcoming => start.isAfter(DateTime.now().toUtc());
 
   bool get hasPrice {
     final p = price?.trim();
@@ -85,9 +93,7 @@ class Event {
     if (days > 1) return '$days days';
 
     if (days == 0) {
-      // final hours = duration.inHours;
-      // if (hours >= 4) return '$hours h';
-      return DateFormat('HH:mm').format(start);
+      return formatEventTime(this, 'HH:mm');
     }
 
     return 'All day';
@@ -114,8 +120,8 @@ class Event {
 double _toRad(double deg) => deg * pi / 180;
 
 DateTime _parseDate(String raw) {
-  // The scraper always emits UTC (tz-aware). Naive strings — coming from old
-  // datasets — are interpreted as UTC too. Final value is local for display.
+  // Scraper emits UTC. We keep it UTC here — formatting happens in the venue's
+  // timezone via formatEventTime(), so .toLocal() (phone tz) is no longer used.
   var dt = DateTime.tryParse(raw);
   if (dt == null) throw FormatException('Cannot parse date: $raw');
   if (!dt.isUtc) {
@@ -130,7 +136,7 @@ DateTime _parseDate(String raw) {
       dt.microsecond,
     );
   }
-  return dt.toLocal();
+  return dt;
 }
 
 DateTime? _parseDateOrNull(String? raw) => raw == null ? null : _parseDate(raw);

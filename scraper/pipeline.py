@@ -345,10 +345,12 @@ class DatasetPublisher:
 
     def publish(self, city: str, events: list[NormalizedEvent], country_code: str = ""):
         slug = city_to_slug(city)
+        tz_name = _tz_for_country(country_code) or ""
         payload = {
             "city": city,
             "slug": slug,
             "country_code": country_code,
+            "timezone": tz_name,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "count": len(events),
             "events": [e.to_dict() for e in events],
@@ -363,6 +365,7 @@ class DatasetPublisher:
             "city": city,
             "slug": slug,
             "country_code": country_code,
+            "timezone": tz_name,
             "count": len(events),
             "updated_at": payload["generated_at"],
             "url": f"{slug}.json",

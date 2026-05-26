@@ -6,6 +6,7 @@ import 'package:event_radar/models/event_category.dart';
 import 'package:event_radar/screens/event_details_screen.dart';
 import 'package:event_radar/services/city_service.dart';
 import 'package:event_radar/services/event_cache_service.dart';
+import 'package:event_radar/utils/event_time.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -73,13 +74,13 @@ class _SavedScreenState extends State<SavedScreen> {
         return a.key.toLowerCase().compareTo(b.key.toLowerCase());
       });
 
-    final now = DateTime.now();
+    final nowUtc = DateTime.now().toUtc();
     return entries.map((e) {
       final isCurrent =
           current != null && cityService.sameCity(e.key, current);
       e.value.sort((x, y) {
-        final xPast = x.start.isBefore(now);
-        final yPast = y.start.isBefore(now);
+        final xPast = x.start.isBefore(nowUtc);
+        final yPast = y.start.isBefore(nowUtc);
         if (xPast != yPast) return xPast ? 1 : -1;
         if (xPast) return y.start.compareTo(x.start);
         return x.start.compareTo(y.start);
@@ -89,11 +90,7 @@ class _SavedScreenState extends State<SavedScreen> {
   }
 
   List<_Group> _groupByDate() {
-    final now = DateTime.now();
-    final today = DateUtils.dateOnly(now);
-    final tomorrow = today.add(const Duration(days: 1));
-    final weekEnd = today.add(const Duration(days: 7));
-    final monthEnd = today.add(const Duration(days: 30));
+    final nowUtc = DateTime.now().toUtc();
 
     final buckets = <String, List<Event>>{
       'Today': [],
@@ -105,15 +102,23 @@ class _SavedScreenState extends State<SavedScreen> {
     };
 
     for (final e in _saved) {
-      if (e.start.isBefore(today)) {
+      // Bucket by the event's own venue-local date, not the phone's date.
+      final start = eventWallClock(e);
+      final venueNow = nowInVenueTz(e.timezone);
+      final today = DateUtils.dateOnly(venueNow);
+      final tomorrow = today.add(const Duration(days: 1));
+      final weekEnd = today.add(const Duration(days: 7));
+      final monthEnd = today.add(const Duration(days: 30));
+
+      if (start.isBefore(today)) {
         buckets['Past']!.add(e);
-      } else if (DateUtils.isSameDay(e.start, now)) {
+      } else if (DateUtils.isSameDay(start, venueNow)) {
         buckets['Today']!.add(e);
-      } else if (DateUtils.isSameDay(e.start, tomorrow)) {
+      } else if (DateUtils.isSameDay(start, tomorrow)) {
         buckets['Tomorrow']!.add(e);
-      } else if (e.start.isBefore(weekEnd)) {
+      } else if (start.isBefore(weekEnd)) {
         buckets['This week']!.add(e);
-      } else if (e.start.isBefore(monthEnd)) {
+      } else if (start.isBefore(monthEnd)) {
         buckets['This month']!.add(e);
       } else {
         buckets['Later']!.add(e);
@@ -125,8 +130,8 @@ class _SavedScreenState extends State<SavedScreen> {
         entry.value.sort((a, b) => b.start.compareTo(a.start));
       } else if (entry.key == 'Today') {
         entry.value.sort((a, b) {
-          final aPast = a.start.isBefore(now);
-          final bPast = b.start.isBefore(now);
+          final aPast = a.start.isBefore(nowUtc);
+          final bPast = b.start.isBefore(nowUtc);
           if (aPast != bPast) return aPast ? 1 : -1;
           if (aPast) return b.start.compareTo(a.start);
           return a.start.compareTo(b.start);
@@ -422,7 +427,8 @@ class _SavedEventRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
-    final isPast = event.start.isBefore(DateTime.now());
+    final isPast = event.start.isBefore(DateTime.now().toUtc());
+    final eventLocal = eventWallClock(event);
     final catColor = EventCategory.values
         .firstWhere(
           (c) => c.value.toLowerCase() == event.category.value.toLowerCase(),
@@ -460,7 +466,7 @@ class _SavedEventRow extends StatelessWidget {
                   Text(
                     isPast
                         ? 'PAS'
-                        : DateFormat('MMM').format(event.start).toUpperCase(),
+                        : DateFormat('MMM').format(eventLocal).toUpperCase(),
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -469,7 +475,7 @@ class _SavedEventRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${event.start.day}',
+                    '${eventLocal.day}',
                     style: GoogleFonts.syne(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
