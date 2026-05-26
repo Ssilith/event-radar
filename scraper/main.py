@@ -87,6 +87,7 @@ async def main():
     args = parser.parse_args()
 
     import config
+
     config.DAYS_AHEAD = args.days
 
     if args.city:

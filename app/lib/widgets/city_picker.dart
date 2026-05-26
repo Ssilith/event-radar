@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:app_settings/app_settings.dart';
 import 'package:dropdown_search/dropdown_search.dart';
-import 'package:event_radar/utils/language.dart';
+import 'package:event_radar/core/utils/language.dart';
 import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
-import 'package:event_radar/models/city_item.dart';
-import 'package:event_radar/services/city_service.dart';
+import 'package:event_radar/core/models/city_item.dart';
+import 'package:event_radar/core/services/city_service.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
 

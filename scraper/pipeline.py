@@ -15,17 +15,6 @@ from categories import infer_category
 from models import NormalizedEvent, RawEvent
 
 
-def _tz_for_country(country_code: str) -> Optional[str]:
-    cc = (country_code or "").upper()
-    if not cc:
-        return None
-    try:
-        zones = pytz.country_timezones.get(cc)
-    except KeyError:
-        zones = None
-    return zones[0] if zones else None
-
-
 class PageFetcher:
     def __init__(self, session: aiohttp.ClientSession):
         self.session = session
@@ -205,7 +194,10 @@ class Geocoder:
     def _too_far(self, lat: float, lon: float) -> bool:
         if self._city_lat is None:
             return False
-        return _haversine(self._city_lat, self._city_lon, lat, lon) > self.MAX_VENUE_RADIUS_KM
+        return (
+            _haversine(self._city_lat, self._city_lon, lat, lon)
+            > self.MAX_VENUE_RADIUS_KM
+        )
 
 
 def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -304,6 +296,17 @@ class EventNormalizer:
             price=raw.price,
             category=infer_category(raw.title, raw.description, raw.category),
         )
+
+
+def _tz_for_country(country_code: str) -> Optional[str]:
+    cc = (country_code or "").upper()
+    if not cc:
+        return None
+    try:
+        zones = pytz.country_timezones.get(cc)
+    except KeyError:
+        zones = None
+    return zones[0] if zones else None
 
 
 class Deduplicator:

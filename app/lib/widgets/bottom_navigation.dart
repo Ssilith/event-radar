@@ -1,4 +1,5 @@
-import 'package:event_radar/utils/page.dart';
+import 'package:event_radar/core/utils/page.dart';
+import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart' hide Page;
 import 'package:motion_tab_bar_v2/motion-tab-bar.dart';
 import 'package:motion_tab_bar_v2/motion-tab-controller.dart';
@@ -15,10 +16,11 @@ class BottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l = AppL10n.of(context);
     return MotionTabBar(
       controller: controller,
-      initialSelectedTab: Page.initialPage.value,
-      labels: Page.values.map((p) => p.value).toList(),
+      initialSelectedTab: Page.initialPage.label(l),
+      labels: Page.values.map((p) => p.label(l)).toList(),
       icons: Page.values.map((p) => p.iconData).toList(),
       tabSize: 52,
       tabBarHeight: 62,

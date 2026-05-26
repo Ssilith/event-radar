@@ -1,9 +1,11 @@
-import 'package:event_radar/services/event_cache_service.dart';
-import 'package:event_radar/utils/event_time.dart';
+import 'package:event_radar/core/config.dart';
+import 'package:event_radar/core/services/event_cache_service.dart';
+import 'package:event_radar/core/theme/app_colors.dart';
+import 'package:event_radar/core/utils/event_time.dart';
+import 'package:event_radar/features/home/home_screen.dart';
+import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:event_radar/config.dart';
-import 'package:event_radar/screens/home_screen.dart';
 
 void main() {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -21,14 +23,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Event Radar',
+      onGenerateTitle: (ctx) => AppL10n.of(ctx).appTitle,
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF00E5B4),
+        colorSchemeSeed: AppColors.primary,
       ),
+      localizationsDelegates: AppL10n.localizationsDelegates,
+      supportedLocales: AppL10n.supportedLocales,
       home: const HomeScreen(),
     );
   }

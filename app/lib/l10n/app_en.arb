@@ -1,0 +1,312 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Event Radar",
+  "@appTitle": { "description": "App name shown in the launcher/title bar." },
+
+  "discoveringEventsIn": "DISCOVERING EVENTS IN",
+  "@discoveringEventsIn": { "description": "Overline above the current city on the Discover header." },
+
+  "chooseCity": "Choose a city",
+  "@chooseCity": { "description": "Placeholder text shown when no city is selected." },
+
+  "chooseCityTitle": "Choose City",
+  "@chooseCityTitle": { "description": "Title of the city picker page." },
+
+  "chooseCityToDiscoverEvents": "Choose a city to\ndiscover events",
+  "@chooseCityToDiscoverEvents": { "description": "Empty-state heading on Discover when no city is selected." },
+
+  "pickACity": "Pick a city",
+  "@pickACity": { "description": "Label on the call-to-action button to open the city picker." },
+
+  "regionTooltip": "Region",
+  "@regionTooltip": { "description": "Tooltip on the language/region icon button." },
+
+  "featuredSection": "Featured",
+  "@featuredSection": { "description": "Section header for the featured-events carousel." },
+
+  "allEventsSection": "All Events",
+  "@allEventsSection": { "description": "Section header for the full events list." },
+
+  "eventsFound": "{count} found",
+  "@eventsFound": {
+    "description": "Trailing label on the All Events header showing how many events match.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "eventsAutoDiscoveredFrom": "{count, plural, =1{1 event} other{{count} events}} auto-discovered from",
+  "@eventsAutoDiscoveredFrom": {
+    "description": "Leading text in the stats card before the schema.org link.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "schemaOrg": "schema.org",
+  "@schemaOrg": { "description": "Brand name of the structured-data source." },
+
+  "discoveringEventsLoading": "Discovering events…",
+  "@discoveringEventsLoading": { "description": "Inline loading text inside the stats card." },
+
+  "stillDiscoveringEventsLoading": "Still discovering events…",
+  "@stillDiscoveringEventsLoading": { "description": "Same as above but after the first poll cycle." },
+
+  "showingOfflineData": "Showing offline data",
+  "@showingOfflineData": { "description": "Tooltip on the offline-cloud icon when cached data is shown." },
+
+  "savedForLater": "SAVED FOR LATER",
+  "@savedForLater": { "description": "Overline above the Bookmarks header." },
+
+  "bookmarks": "Bookmarks",
+  "@bookmarks": { "description": "Title of the Saved screen." },
+
+  "savedCount": "{count} saved",
+  "@savedCount": {
+    "description": "Trailing label on the Saved header.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "byLocation": "By location",
+  "@byLocation": { "description": "Group-by-city toggle label on Saved." },
+
+  "byDate": "By date",
+  "@byDate": { "description": "Group-by-date toggle label on Saved." },
+
+  "bucketToday": "Today",
+  "@bucketToday": { "description": "Header for events happening today." },
+
+  "bucketTomorrow": "Tomorrow",
+  "@bucketTomorrow": { "description": "Header for events happening tomorrow." },
+
+  "bucketThisWeek": "This week",
+  "@bucketThisWeek": { "description": "Header for events later in the current week." },
+
+  "bucketThisMonth": "This month",
+  "@bucketThisMonth": { "description": "Header for events later in the current month." },
+
+  "bucketLater": "Later",
+  "@bucketLater": { "description": "Header for events beyond the current month." },
+
+  "bucketPast": "Past",
+  "@bucketPast": { "description": "Header for past events." },
+
+  "groupUnknown": "Unknown",
+  "@groupUnknown": { "description": "Group header when city data is missing." },
+
+  "groupCurrent": "CURRENT",
+  "@groupCurrent": { "description": "Small badge highlighting the user's currently-selected city group." },
+
+  "noSavedEvents": "No saved events yet",
+  "@noSavedEvents": { "description": "Empty-state heading on the Saved screen." },
+
+  "noSavedEventsBody": "Tap the bookmark icon on an event\nin Discover to save it here.",
+  "@noSavedEventsBody": { "description": "Empty-state body text on the Saved screen." },
+
+  "mapTitle": "Map",
+  "@mapTitle": { "description": "Fallback app-bar title on the Map screen when no city is selected." },
+
+  "mapNoCitySelected": "Select a city on the Discover tab to see events on the map.",
+  "@mapNoCitySelected": { "description": "Empty-state body on the Map when no city is selected." },
+
+  "mapNoEvents": "No events to show.",
+  "@mapNoEvents": { "description": "Empty-state body inside the expanded events panel on the Map." },
+
+  "fitToEvents": "Fit to events",
+  "@fitToEvents": { "description": "Tooltip on the fit-to-events FAB." },
+
+  "myLocation": "My location",
+  "@myLocation": { "description": "Tooltip on the recenter-on-user FAB." },
+
+  "today": "today",
+  "@today": { "description": "Lowercase \"today\" used as suffix in counts." },
+
+  "events": "Events",
+  "@events": { "description": "Title of the expanded events panel on the Map." },
+
+  "upcomingCount": "{count} upcoming",
+  "@upcomingCount": {
+    "description": "Trailing label on the events panel when no events are happening today.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "todayCount": "{count} today",
+  "@todayCount": {
+    "description": "Badge on the events chip / panel showing today-only event count.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "eventCount": "{count, plural, =1{1 event} other{{count} events}}",
+  "@eventCount": {
+    "description": "Pluralized event count, e.g. on the events chip and map app-bar.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "loadingEvents": "Loading events…",
+  "@loadingEvents": { "description": "Inline pill shown while events load on the Map." },
+
+  "collapse": "Collapse",
+  "@collapse": { "description": "Tooltip on the minimize button on a draggable overlay." },
+
+  "dismiss": "Dismiss",
+  "@dismiss": { "description": "Tooltip on the close button on a draggable overlay." },
+
+  "directions": "Directions",
+  "@directions": { "description": "Button that opens Google Maps directions to the event." },
+
+  "details": "Details",
+  "@details": { "description": "Button that opens the event details screen." },
+
+  "locationPermissionDenied": "Location permission denied",
+  "@locationPermissionDenied": { "description": "Snackbar shown when the user declines location permission once." },
+
+  "locationPermissionDeniedForever": "Location permission permanently denied",
+  "@locationPermissionDeniedForever": { "description": "Snackbar shown when location permission is hard-denied; pairs with a Settings action." },
+
+  "settings": "Settings",
+  "@settings": { "description": "Action label on snackbars that should deep-link to OS app settings." },
+
+  "couldNotGetLocation": "Could not get your location",
+  "@couldNotGetLocation": { "description": "Snackbar shown when the geolocation call throws." },
+
+  "couldNotOpenMaps": "Could not open Google Maps",
+  "@couldNotOpenMaps": { "description": "Snackbar shown when launchUrl to Google Maps fails." },
+
+  "dateLabel": "Date",
+  "@dateLabel": { "description": "InfoRow label on the event details screen." },
+
+  "timeLabel": "Time",
+  "@timeLabel": { "description": "InfoRow label on the event details screen." },
+
+  "venueLabel": "Venue",
+  "@venueLabel": { "description": "InfoRow label on the event details screen." },
+
+  "priceLabel": "Price",
+  "@priceLabel": { "description": "InfoRow label on the event details screen." },
+
+  "free": "Free",
+  "@free": { "description": "Price value shown for free events." },
+
+  "unknown": "Unknown",
+  "@unknown": { "description": "Price value shown when the source doesn't provide one." },
+
+  "aboutSection": "About",
+  "@aboutSection": { "description": "Heading above the event description on the details screen." },
+
+  "viewPage": "View page",
+  "@viewPage": { "description": "Button label that opens the source page in the in-app browser." },
+
+  "viaSource": "via {host}",
+  "@viaSource": {
+    "description": "Attribution line under cards/buttons (\"via wroclawguide.com\").",
+    "placeholders": { "host": { "type": "String" } }
+  },
+
+  "timeYour": "your",
+  "@timeYour": { "description": "Fallback name used in timeSuffix when the phone IANA zone can't be resolved." },
+
+  "timeSuffix": "{name} time",
+  "@timeSuffix": {
+    "description": "Time-zone label suffix, e.g. \"Warsaw time\" or \"your time\".",
+    "placeholders": { "name": { "type": "String" } }
+  },
+
+  "past": "PAST",
+  "@past": { "description": "Badge on past events." },
+
+  "upcoming": "UPCOMING",
+  "@upcoming": { "description": "Badge on upcoming events." },
+
+  "pasShort": "PAS",
+  "@pasShort": { "description": "Compact three-letter \"past\" badge used inside small date squares." },
+
+  "allDay": "All day",
+  "@allDay": { "description": "Duration label for events with no end or that span multiple days." },
+
+  "daysCount": "{count} days",
+  "@daysCount": {
+    "description": "Duration label for multi-day events.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "filterToday": "Today",
+  "@filterToday": { "description": "Date-filter chip label on Discover." },
+
+  "filterWeek": "This week",
+  "@filterWeek": { "description": "Date-filter chip label on Discover." },
+
+  "filterMonth": "This month",
+  "@filterMonth": { "description": "Date-filter chip label on Discover." },
+
+  "filterAll": "All",
+  "@filterAll": { "description": "Date-filter chip label on Discover." },
+
+  "categoryAll": "All",
+  "@categoryAll": { "description": "Category-filter chip label for showing every category." },
+
+  "categoryMusic": "Music",
+  "@categoryMusic": { "description": "Event category." },
+  "categoryTheater": "Theater",
+  "@categoryTheater": { "description": "Event category." },
+  "categoryArt": "Art",
+  "@categoryArt": { "description": "Event category." },
+  "categoryFestival": "Festival",
+  "@categoryFestival": { "description": "Event category." },
+  "categoryFood": "Food",
+  "@categoryFood": { "description": "Event category." },
+  "categorySports": "Sports",
+  "@categorySports": { "description": "Event category." },
+  "categoryComedy": "Comedy",
+  "@categoryComedy": { "description": "Event category." },
+  "categoryDance": "Dance",
+  "@categoryDance": { "description": "Event category." },
+  "categoryLiterature": "Literature",
+  "@categoryLiterature": { "description": "Event category." },
+  "categoryEducation": "Education",
+  "@categoryEducation": { "description": "Event category." },
+  "categoryFamily": "Family",
+  "@categoryFamily": { "description": "Event category." },
+  "categoryFilm": "Film",
+  "@categoryFilm": { "description": "Event category." },
+  "categoryMarket": "Market",
+  "@categoryMarket": { "description": "Event category." },
+  "categoryBusiness": "Business",
+  "@categoryBusiness": { "description": "Event category." },
+  "categorySocial": "Social",
+  "@categorySocial": { "description": "Event category." },
+  "categoryTour": "Tour",
+  "@categoryTour": { "description": "Event category." },
+  "categoryOther": "Other",
+  "@categoryOther": { "description": "Event category." },
+
+  "pageDiscover": "Discover",
+  "@pageDiscover": { "description": "Bottom-tab label for the Discover page." },
+  "pageSaved": "Saved",
+  "@pageSaved": { "description": "Bottom-tab label for the Saved page." },
+  "pageMap": "Map",
+  "@pageMap": { "description": "Bottom-tab label for the Map page." },
+
+  "statusErrorGeneric": "Something went wrong",
+  "@statusErrorGeneric": { "description": "Default error message in StatusView when none is supplied." },
+
+  "statusTimedOut": "Timed out",
+  "@statusTimedOut": { "description": "Default timeout message in StatusView when none is supplied." },
+
+  "statusLoading": "Loading…",
+  "@statusLoading": { "description": "Default loading message in StatusView when none is supplied." },
+
+  "statusEmpty": "No upcoming events found for this city",
+  "@statusEmpty": { "description": "Empty-list message used by StatusView.empty()." },
+
+  "retry": "Retry",
+  "@retry": { "description": "Default retry button label." },
+
+  "scrapeStartedMessage": "Discovering events - usually takes about 2 minutes the first time.",
+  "@scrapeStartedMessage": { "description": "Status message shown while the first scrape kicks off." },
+
+  "scrapePollingMessage": "Still discovering events…",
+  "@scrapePollingMessage": { "description": "Status message shown on subsequent polls while waiting for results." },
+
+  "scrapeErrorMessage": "Could not start event discovery. Try again later.",
+  "@scrapeErrorMessage": { "description": "Status message shown when the trigger call fails." },
+
+  "scrapeTimeoutMessage": "Discovery is taking longer than expected. Check back in a few minutes.",
+  "@scrapeTimeoutMessage": { "description": "Status message shown when polling exceeds the deadline." }
+}

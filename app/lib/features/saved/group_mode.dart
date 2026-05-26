@@ -1,0 +1,1 @@
+enum GroupMode { location, date }
