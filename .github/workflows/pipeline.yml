@@ -41,14 +41,14 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install -r scraper/requirements.txt
+        run: pip install -r indexer/requirements.txt
 
       - name: Restore geocode cache
         uses: actions/cache@v4
         with:
-          path: scraper/.cache/
-          key: scraper-cache-${{ runner.os }}
-          restore-keys: scraper-cache-${{ runner.os }}
+          path: indexer/.cache/
+          key: indexer-cache-${{ runner.os }}
+          restore-keys: indexer-cache-${{ runner.os }}
 
       - name: Resolve cities to scrape
         run: |
@@ -83,29 +83,29 @@ jobs:
 
       - name: Restore existing datasets index
         run: |
-          mkdir -p scraper/datasets
+          mkdir -p indexer/datasets
           OWNER="${{ github.repository_owner }}"
           REPO="${{ github.event.repository.name }}"
           URL="https://${OWNER}.github.io/${REPO}/datasets/index.json"
           echo "Fetching $URL"
-          if curl -sf "$URL" -o scraper/datasets/index.json; then
-            COUNT=$(python3 -c "import json; d=json.load(open('scraper/datasets/index.json')); print(len(d.get('cities',[])))")
+          if curl -sf "$URL" -o indexer/datasets/index.json; then
+            COUNT=$(python3 -c "import json; d=json.load(open('indexer/datasets/index.json')); print(len(d.get('cities',[])))")
             echo "Restored index.json — $COUNT existing cities"
           else
             echo "No existing index found, starting fresh"
           fi
 
-      - name: Run scraper
+      - name: Run indexer
         env:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           DAYS_AHEAD: ${{ github.event.inputs.days_ahead || '90' }}
         run: python main.py
-        working-directory: scraper/
+        working-directory: indexer/
 
       - name: Prepare GitHub Pages output
         run: |
           mkdir -p _site
-          cp -r scraper/datasets/ _site/
+          cp -r indexer/datasets/ _site/
 
           cat > _site/index.html << 'HTML'
           <!DOCTYPE html>

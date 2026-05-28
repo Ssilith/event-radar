@@ -33,7 +33,7 @@ class Event {
 
   // IANA timezone name of the venue, e.g. "Europe/Warsaw". Injected at parse
   // time from the dataset wrapper (not present on individual event payloads).
-  // Resolved by the scraper from country_code via pytz, so Flutter has no
+  // Resolved by the indexer from country_code via pytz, so Flutter has no
   // country→tz mapping to maintain.
   @JsonKey(defaultValue: '')
   final String timezone;
@@ -104,7 +104,7 @@ class Event {
 double _toRad(double deg) => deg * pi / 180;
 
 DateTime _parseDate(String raw) {
-  // Scraper emits UTC. We keep it UTC here — formatting happens in the venue's
+  // Indexer emits UTC. We keep it UTC here — formatting happens in the venue's
   // timezone via formatEventTime(), so .toLocal() (phone tz) is no longer used.
   var dt = DateTime.tryParse(raw);
   if (dt == null) throw FormatException('Cannot parse date: $raw');

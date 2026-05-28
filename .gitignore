@@ -11,9 +11,9 @@ venv/
 env/
 ENV/
 
-# Scraper runtime files
-scraper/.cache/
-scraper/datasets/
+# Indexer runtime files
+indexer/.cache/
+indexer/datasets/
 
 # Secrets
 .env
