@@ -56,6 +56,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   DateFilter _dateFilter = DateFilter.all;
   EventCategory? _selectedCategory;
   EventSort _sort = EventSort.date;
+  bool _freeOnly = false;
   String _searchQuery = '';
   final _searchController = TextEditingController();
 
@@ -212,6 +213,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     var events = _selectedCategory == null
         ? _dateFiltered
         : _dateFiltered.where((e) => e.category == _selectedCategory).toList();
+    if (_freeOnly) {
+      events = events.where((e) => e.isFree).toList();
+    }
     final q = removeDiacritics(_searchQuery.trim().toLowerCase());
     if (q.isNotEmpty) {
       // Match against title + venue, diacritic-folded so "wroclaw" finds
@@ -356,9 +360,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         SliverToBoxAdapter(child: _buildHeader(context, compact: true)),
         SliverToBoxAdapter(child: _buildStatsCard(context)),
         if (_hasData) ...[
-          SliverToBoxAdapter(child: _buildSearchField(context)),
-          SliverToBoxAdapter(child: _buildDateFilter(context)),
-          SliverToBoxAdapter(child: _buildCategoryBar(context)),
           if (_featuredEvents.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: SectionHeader(
@@ -384,6 +385,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               trailing: l.eventsFound(_filtered.length),
             ),
           ),
+          SliverToBoxAdapter(child: _buildSearchField(context)),
+          SliverToBoxAdapter(child: _buildDateFilter(context)),
+          SliverToBoxAdapter(child: _buildCategoryBar(context)),
           SliverToBoxAdapter(child: _buildSortBar(context)),
           if (_filtered.isEmpty)
             const SliverToBoxAdapter(child: StatusView.empty())
@@ -596,38 +600,90 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
       child: Row(
-        children: DateFilter.values.map((f) {
-          final sel = _dateFilter == f;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => setState(() => _dateFilter = f),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: sel ? primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: sel ? primary : AppColors.borderStrong,
+        children: [
+          ...DateFilter.values.map((f) {
+            final sel = _dateFilter == f;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () => setState(() => _dateFilter = f),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
                   ),
-                  boxShadow: sel ? AppShadows.subtle : null,
-                ),
-                child: Text(
-                  f.label(l),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-                    color: sel ? Colors.black : AppColors.textMuted,
+                  decoration: BoxDecoration(
+                    color: sel ? primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: sel ? primary : AppColors.borderStrong,
+                    ),
+                    boxShadow: sel ? AppShadows.subtle : null,
+                  ),
+                  child: Text(
+                    f.label(l),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
+                      color: sel ? Colors.black : AppColors.textMuted,
+                    ),
                   ),
                 ),
               ),
+            );
+          }),
+          // Separator + Free-only toggle. Lives in the same scroll row so
+          // mobile users don't get another vertical band of chips.
+          Container(
+            width: 1,
+            height: 18,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            color: AppColors.borderStrong,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: GestureDetector(
+              onTap: () => setState(() => _freeOnly = !_freeOnly),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: _freeOnly ? primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: _freeOnly ? primary : AppColors.borderStrong,
+                  ),
+                  boxShadow: _freeOnly ? AppShadows.subtle : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.savings_rounded,
+                      size: 14,
+                      color: _freeOnly ? Colors.black : AppColors.textMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      l.filterFreeOnly,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight:
+                            _freeOnly ? FontWeight.w700 : FontWeight.w400,
+                        color:
+                            _freeOnly ? Colors.black : AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          );
-        }).toList(),
+          ),
+        ],
       ),
     );
   }
@@ -639,62 +695,86 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     // makes the option discoverable so the user knows enabling location will
     // unlock it, instead of hiding the chip silently.
     final available = _nearbySortAvailable;
+    // Segmented-control style — single rounded shell with one filled segment
+    // at a time. Reads as "which lens am I looking through" instead of two
+    // independent toggles.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
       child: Row(
         children: [
+          Icon(Icons.sort_rounded, size: 16, color: AppColors.textMuted),
+          const SizedBox(width: 8),
           Text(
-            '${l.sortByLabel}:',
+            l.sortByLabel,
             style: TextStyle(
               fontSize: 12,
+              letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
               color: AppColors.textMuted,
             ),
           ),
-          const SizedBox(width: 10),
-          for (final s in EventSort.values) ...[
-            Builder(
-              builder: (_) {
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceHigh,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.surfacePill),
+            ),
+            child: Row(
+              children: EventSort.values.map((s) {
                 final enabled = s == EventSort.date || available;
                 final selected = _sort == s;
+                final icon = s == EventSort.date
+                    ? Icons.event_rounded
+                    : Icons.near_me_rounded;
                 return GestureDetector(
                   onTap: enabled ? () => setState(() => _sort = s) : null,
+                  behavior: HitTestBehavior.opaque,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
+                      horizontal: 12,
+                      vertical: 7,
                     ),
                     decoration: BoxDecoration(
                       color: selected ? primary : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: selected
-                            ? primary
-                            : AppColors.borderStrong.withValues(
-                                alpha: enabled ? 1 : 0.4,
-                              ),
-                      ),
                       boxShadow: selected ? AppShadows.subtle : null,
                     ),
-                    child: Text(
-                      s.label(l),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                        color: selected
-                            ? Colors.black
-                            : enabled
-                                ? AppColors.textBody
-                                : AppColors.textFaint,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          icon,
+                          size: 13,
+                          color: selected
+                              ? Colors.black
+                              : enabled
+                                  ? AppColors.textBody
+                                  : AppColors.textFaint,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          s.label(l),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight:
+                                selected ? FontWeight.w700 : FontWeight.w500,
+                            color: selected
+                                ? Colors.black
+                                : enabled
+                                    ? AppColors.textBody
+                                    : AppColors.textFaint,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
-              },
+              }).toList(),
             ),
-            const SizedBox(width: 8),
-          ],
+          ),
         ],
       ),
     );

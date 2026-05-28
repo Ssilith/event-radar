@@ -3,6 +3,7 @@ import 'package:event_radar/core/services/bookmark_actions.dart';
 import 'package:event_radar/core/services/event_cache_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/utils/event_time.dart';
+import 'package:event_radar/core/utils/html_text.dart';
 import 'package:event_radar/core/utils/maps_launcher.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:event_radar/features/event_details/widgets/event_hero.dart';
@@ -154,7 +155,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     ),
                     const SizedBox(height: 8),
                     Html(
-                      data: event.description!,
+                      data: unescapeHtmlIfNeeded(event.description!),
                       // Style only the body so the package's per-tag defaults
                       // (b → bold, i → italic, etc.) keep working; padding +
                       // margins zeroed so it sits flush with the section head.

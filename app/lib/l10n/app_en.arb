@@ -319,6 +319,9 @@
   "filterAll": "All",
   "@filterAll": { "description": "Date-filter chip label on Discover." },
 
+  "filterFreeOnly": "Free only",
+  "@filterFreeOnly": { "description": "Toggle chip on Discover that hides events with a known non-zero price." },
+
   "filterPast": "Past",
   "@filterPast": { "description": "Date-filter chip on Discover that shows only events whose start has already passed." },
 

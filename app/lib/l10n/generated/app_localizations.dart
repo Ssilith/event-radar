@@ -661,6 +661,12 @@ abstract class AppL10n {
   /// **'All'**
   String get filterAll;
 
+  /// Toggle chip on Discover that hides events with a known non-zero price.
+  ///
+  /// In en, this message translates to:
+  /// **'Free only'**
+  String get filterFreeOnly;
+
   /// Date-filter chip on Discover that shows only events whose start has already passed.
   ///
   /// In en, this message translates to:

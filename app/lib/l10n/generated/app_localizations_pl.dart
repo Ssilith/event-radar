@@ -341,6 +341,9 @@ class AppL10nPl extends AppL10n {
   String get filterAll => 'Wszystkie';
 
   @override
+  String get filterFreeOnly => 'Tylko darmowe';
+
+  @override
   String get filterPast => 'Minione';
 
   @override

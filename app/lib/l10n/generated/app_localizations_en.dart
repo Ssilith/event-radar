@@ -328,6 +328,9 @@ class AppL10nEn extends AppL10n {
   String get filterAll => 'All';
 
   @override
+  String get filterFreeOnly => 'Free only';
+
+  @override
   String get filterPast => 'Past';
 
   @override
