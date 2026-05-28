@@ -50,36 +50,39 @@ class AppText {
       );
 
   // ── Body (system) ──────────────────────────────────────────────────────
+  // Body styles that pick up theme-aware colours from AppColors must be
+  // non-const getters, otherwise the const-evaluator chokes on the non-const
+  // brightness lookup.
 
-  static const TextStyle bodyLarge = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w600,
-    color: AppColors.textPrimary,
-    height: 1.3,
-  );
+  static TextStyle get bodyLarge => TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        height: 1.3,
+      );
 
-  static const TextStyle bodyMedium = TextStyle(
-    fontSize: 14,
-    color: AppColors.textPrimary,
-    height: 1.3,
-  );
+  static TextStyle get bodyMedium => TextStyle(
+        fontSize: 14,
+        color: AppColors.textPrimary,
+        height: 1.3,
+      );
 
-  static const TextStyle bodyMediumBold = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    color: AppColors.textPrimary,
-    height: 1.3,
-  );
+  static TextStyle get bodyMediumBold => TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        height: 1.3,
+      );
 
-  static const TextStyle bodyMutedSmall = TextStyle(
-    fontSize: 12,
-    color: AppColors.textHint,
-  );
+  static TextStyle get bodyMutedSmall => TextStyle(
+        fontSize: 12,
+        color: AppColors.textHint,
+      );
 
-  static const TextStyle caption = TextStyle(
-    fontSize: 11,
-    color: AppColors.textPlaceholder,
-  );
+  static TextStyle get caption => TextStyle(
+        fontSize: 11,
+        color: AppColors.textPlaceholder,
+      );
 
   static const TextStyle micro = TextStyle(
     fontSize: 9,
@@ -95,10 +98,10 @@ class AppText {
   );
 
   // Used by InfoRow on the event details screen.
-  static const TextStyle fieldLabel = TextStyle(
-    fontSize: 10,
-    letterSpacing: 1.4,
-    color: AppColors.textHint,
-    fontWeight: FontWeight.w700,
-  );
+  static TextStyle get fieldLabel => TextStyle(
+        fontSize: 10,
+        letterSpacing: 1.4,
+        color: AppColors.textHint,
+        fontWeight: FontWeight.w700,
+      );
 }

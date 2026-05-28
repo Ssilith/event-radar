@@ -2,13 +2,15 @@ import 'dart:convert';
 
 import 'package:diacritic/diacritic.dart';
 import 'package:event_radar/core/utils/language.dart';
-import 'package:event_radar/core/utils/log.dart';
 import 'package:extension_utils/string_utils.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:logging/logging.dart';
 import 'package:event_radar/core/config.dart';
 import 'package:event_radar/core/models/city_item.dart';
+
+final _log = Logger('CityService');
 
 class CityService {
   CityService._internal();
@@ -84,7 +86,7 @@ class CityService {
         ).where((c) => c.name.isNotEmpty),
       );
     } catch (e, s) {
-      Log.warn('CityService', 'corrupted recents entry', e, s);
+      _log.warning('corrupted recents entry', e, s);
     }
   }
 
@@ -153,7 +155,7 @@ class CityService {
       nearbyCities = cities.skip(1).toList();
       return true;
     } catch (e, s) {
-      Log.warn('CityService', 'resolveLocation failed', e, s);
+      _log.warning('resolveLocation failed', e, s);
       _resolveFuture = null;
       return false;
     }
@@ -179,7 +181,7 @@ class CityService {
           .toList();
       return cities.isNotEmpty ? cities : _fallbackCities;
     } catch (e, s) {
-      Log.warn('CityService', 'loadKnownCities failed; using fallback', e, s);
+      _log.warning('loadKnownCities failed; using fallback', e, s);
       return _fallbackCities;
     }
   }
@@ -222,7 +224,7 @@ class CityService {
       if (r.statusCode != 200) return [];
       return _parseCities((json.decode(r.body) as Map)['data']);
     } catch (e, s) {
-      Log.warn('CityService', 'fetchNearbyCities failed', e, s);
+      _log.warning('fetchNearbyCities failed', e, s);
       return [];
     }
   }
@@ -252,7 +254,7 @@ class CityService {
       if (r.statusCode != 200) return [];
       return _parseCities((json.decode(r.body) as Map)['data']);
     } catch (e, s) {
-      Log.warn('CityService', 'searchByPrefix failed', e, s);
+      _log.warning('searchByPrefix failed', e, s);
       return [];
     }
   }
@@ -288,7 +290,7 @@ class CityService {
         locationSettings: AndroidSettings(accuracy: LocationAccuracy.low),
       );
     } catch (e, s) {
-      Log.warn('CityService', 'getPosition failed', e, s);
+      _log.warning('getPosition failed', e, s);
       return null;
     }
   }

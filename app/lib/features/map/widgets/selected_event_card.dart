@@ -3,6 +3,7 @@ import 'package:event_radar/core/models/event_category.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
+import 'package:event_radar/widgets/html_text.dart';
 import 'package:flutter/material.dart';
 
 // Compact info card shown over the map when a marker (or nearby event) is
@@ -65,11 +66,11 @@ class SelectedEventCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
+                    child: HtmlText(
                       event.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -78,10 +79,10 @@ class SelectedEventCard extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.remove_rounded,
                       size: 18,
-                      color: Colors.white70,
+                      color: AppColors.textSecondary,
                     ),
                     onPressed: onCollapse,
                     padding: EdgeInsets.zero,
@@ -91,10 +92,10 @@ class SelectedEventCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.close,
                       size: 16,
-                      color: Colors.white54,
+                      color: AppColors.textMuted,
                     ),
                     onPressed: onClose,
                     padding: EdgeInsets.zero,
@@ -111,7 +112,7 @@ class SelectedEventCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     formatEventTime(event, 'EEE d MMM, HH:mm', locale: locale),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 11,
                     ),
@@ -125,7 +126,7 @@ class SelectedEventCard extends StatelessWidget {
                         event.venue!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 11,
                         ),

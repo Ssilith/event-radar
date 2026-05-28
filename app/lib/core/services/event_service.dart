@@ -7,8 +7,10 @@ import 'package:event_radar/core/models/city_data_state.dart';
 import 'package:event_radar/core/models/city_item.dart';
 import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/core/utils/data_freshness.dart';
-import 'package:event_radar/core/utils/log.dart';
 import 'package:http/http.dart' as http;
+import 'package:logging/logging.dart';
+
+final _log = Logger('EventService');
 
 //* How long to wait between each poll attempt while a scrape is running
 const _pollInterval = Duration(seconds: 15);
@@ -110,14 +112,18 @@ class EventService {
           (json.decode(r.body) as Map<String, dynamic>)['cities'] ?? [],
         );
       }
-      Log.warn('EventService', 'fetchIndex: status ${r.statusCode}');
+      _log.warning('fetchIndex: status ${r.statusCode}');
     } catch (e, s) {
-      Log.warn('EventService', 'fetchIndex failed', e, s);
+      _log.warning('fetchIndex failed', e, s);
     }
     return [];
   }
 
   void dispose() => _client.close();
+
+  // Drops the in-memory cache for `slug` so the next getEventsForCity call
+  // re-fetches the dataset. Used by pull-to-refresh.
+  void invalidateCache(String slug) => _cache.remove(slug);
 
   bool _isCacheFresh(String slug) {
     final entry = _cache[slug];
@@ -136,9 +142,9 @@ class EventService {
       if (r.statusCode == 200) {
         return json.decode(r.body) as Map<String, dynamic>;
       }
-      Log.warn('EventService', 'fetchDataset($slug): status ${r.statusCode}');
+      _log.warning('fetchDataset($slug): status ${r.statusCode}');
     } catch (e, s) {
-      Log.warn('EventService', 'fetchDataset($slug) failed', e, s);
+      _log.warning('fetchDataset($slug) failed', e, s);
     }
     return null;
   }
@@ -159,9 +165,9 @@ class EventService {
         };
         return acceptedTriggerStatuses.contains(body['status']);
       }
-      Log.warn('EventService', 'triggerScrape: status ${r.statusCode}');
+      _log.warning('triggerScrape: status ${r.statusCode}');
     } catch (e, s) {
-      Log.warn('EventService', 'triggerScrape failed', e, s);
+      _log.warning('triggerScrape failed', e, s);
     }
     return false;
   }

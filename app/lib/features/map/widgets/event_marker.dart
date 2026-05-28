@@ -17,18 +17,23 @@ class EventMarker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = category.color;
-    final filled = isSelected || isToday;
+    // In light mode the toned-down "not today" marker style barely shows on
+    // light map tiles, so we apply the today decoration to every marker. Dark
+    // mode keeps the distinction so today events stand out against bg.
+    final showTodayStyle =
+        isToday || AppColors.brightness == Brightness.light;
+    final filled = isSelected || showTodayStyle;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       decoration: BoxDecoration(
         color: filled ? color : AppColors.surfaceHigh,
         shape: BoxShape.circle,
         border: Border.all(
-          color: isToday ? Colors.white : color,
-          width: isSelected ? 2.5 : (isToday ? 2 : 1.5),
+          color: showTodayStyle ? Colors.white : color,
+          width: isSelected ? 2.5 : (showTodayStyle ? 2 : 1.5),
         ),
         boxShadow: [
-          if (isToday)
+          if (showTodayStyle)
             BoxShadow(
               blurRadius: 12,
               spreadRadius: 1,
@@ -40,7 +45,7 @@ class EventMarker extends StatelessWidget {
       ),
       child: Icon(
         category.iconData,
-        size: isSelected ? 22 : (isToday ? 20 : 16),
+        size: isSelected ? 22 : (showTodayStyle ? 20 : 16),
         color: filled ? Colors.black : color,
       ),
     );

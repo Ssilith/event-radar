@@ -4,11 +4,16 @@ import 'package:event_radar/core/models/city_data_state.dart';
 import 'package:event_radar/core/models/city_item.dart';
 import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/core/models/event_category.dart';
+import 'package:event_radar/core/services/bookmark_actions.dart';
 import 'package:event_radar/core/services/city_service.dart';
 import 'package:event_radar/core/services/event_cache_service.dart';
 import 'package:event_radar/core/services/event_service.dart';
+import 'package:event_radar/core/services/settings_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
+import 'package:event_radar/core/theme/app_shadows.dart';
+import 'package:diacritic/diacritic.dart';
 import 'package:event_radar/core/utils/date_filter.dart';
+import 'package:event_radar/core/utils/event_sort.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/core/utils/language.dart';
 import 'package:event_radar/features/discover/widgets/city_picker_page.dart';
@@ -16,6 +21,7 @@ import 'package:event_radar/features/discover/widgets/event_row.dart';
 import 'package:event_radar/features/discover/widgets/featured_carousel.dart';
 import 'package:event_radar/features/discover/widgets/icon_btn.dart';
 import 'package:event_radar/features/discover/widgets/section_header.dart';
+import 'package:event_radar/features/discover/widgets/settings_sheet.dart';
 import 'package:event_radar/features/event_details/event_details_screen.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:event_radar/widgets/async_state_view.dart';
@@ -49,6 +55,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
   DateFilter _dateFilter = DateFilter.all;
   EventCategory? _selectedCategory;
+  EventSort _sort = EventSort.date;
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
 
   Set<String> _bookmarked = {};
   StreamSubscription<BoxEvent>? _bookmarkSub;
@@ -61,7 +70,15 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       if (!mounted) return;
       setState(() => _bookmarked = EventCacheService.bookmarkedIds());
     });
+    // EventRow reads SettingsService.distanceUnit statically, so when the
+    // user flips the unit from the bottom sheet we need a parent rebuild to
+    // re-render the pill text.
+    SettingsService.instance.distanceUnit.addListener(_onSettingsChanged);
     _initCity();
+  }
+
+  void _onSettingsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -74,6 +91,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   void dispose() {
     _sub?.cancel();
     _bookmarkSub?.cancel();
+    _searchController.dispose();
+    SettingsService.instance.distanceUnit.removeListener(_onSettingsChanged);
     super.dispose();
   }
 
@@ -100,25 +119,53 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     if (widget.selectedCity != null) _loadEvents();
   }
 
-  void _loadEvents() {
+  Future<void> _loadEvents() {
     final city = widget.selectedCity;
-    if (city == null) return;
+    if (city == null) return Future.value();
     _sub?.cancel();
     setState(() {
       _state = const CityDataState.triggered();
       _selectedCategory = null;
     });
     final slug = EventService.slugFor(city);
+    // Resolved when the stream emits a terminal status — gives callers like
+    // RefreshIndicator a Future to await that mirrors the round trip.
+    final done = Completer<void>();
     _sub = _eventService
         .getEventsForCity(slug, countryCode: city.countryCode)
         .listen(
-          (s) => setState(() => _state = s),
-          onError: (_) => setState(() => _state = const CityDataState.error()),
+          (s) {
+            setState(() => _state = s);
+            if (_isTerminal(s.status) && !done.isCompleted) done.complete();
+          },
+          onError: (_) {
+            setState(() => _state = const CityDataState.error());
+            if (!done.isCompleted) done.complete();
+          },
+          onDone: () {
+            if (!done.isCompleted) done.complete();
+          },
         );
+    return done.future;
   }
 
+  Future<void> _refresh() {
+    final city = widget.selectedCity;
+    if (city == null) return Future.value();
+    // Drop the in-memory cache so the next subscription hits the network
+    // instead of replaying the still-fresh cached copy.
+    _eventService.invalidateCache(EventService.slugFor(city));
+    return _loadEvents();
+  }
+
+  static bool _isTerminal(CityDataStatus status) =>
+      status == CityDataStatus.fresh ||
+      status == CityDataStatus.ready ||
+      status == CityDataStatus.error ||
+      status == CityDataStatus.timeout;
+
   Future<void> _toggleBookmark(Event event) =>
-      EventCacheService.toggleBookmark(event);
+      BookmarkActions.toggle(event, AppL10n.of(context));
 
   void _openCityPicker() {
     Navigator.of(context).push<void>(
@@ -156,29 +203,69 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         DateFilter.month =>
           start.isAfter(now) && start.isBefore(now.add(const Duration(days: 30))),
         DateFilter.all => true,
+        DateFilter.past => start.isBefore(now),
       };
     }).toList();
   }
 
   List<Event> get _filtered {
-    if (_selectedCategory == null) return _dateFiltered;
-    return _dateFiltered.where((e) => e.category == _selectedCategory).toList();
+    var events = _selectedCategory == null
+        ? _dateFiltered
+        : _dateFiltered.where((e) => e.category == _selectedCategory).toList();
+    final q = removeDiacritics(_searchQuery.trim().toLowerCase());
+    if (q.isNotEmpty) {
+      // Match against title + venue, diacritic-folded so "wroclaw" finds
+      // "Wrocław". Title may still carry HTML tags from the raw feed; strip
+      // them for the search index but not for display.
+      events = events.where((e) {
+        final hay = removeDiacritics(
+          '${e.title} ${e.venue ?? ''}'.toLowerCase(),
+        );
+        return hay.contains(q);
+      }).toList();
+    }
+    return _applySort(events);
   }
+
+  // Sorts the post-filter list. Date sort uses venue wall-clock so all-day
+  // entries lead their day. Nearby sort falls back to date when the user has
+  // no location fix, or for events without coordinates (pushed to the end).
+  List<Event> _applySort(List<Event> events) {
+    if (_sort == EventSort.nearby && _nearbySortAvailable) {
+      final pos = _cityService.lastPosition!;
+      final ranked = events
+          .map((e) => (e, e.distanceTo(pos.latitude, pos.longitude)))
+          .toList()
+        ..sort((a, b) {
+          final da = a.$2;
+          final db = b.$2;
+          if (da == null && db == null) return 0;
+          if (da == null) return 1;
+          if (db == null) return -1;
+          return da.compareTo(db);
+        });
+      return ranked.map((r) => r.$1).toList();
+    }
+    return [...events]
+      ..sort((a, b) => eventWallClock(a).compareTo(eventWallClock(b)));
+  }
+
+  bool get _nearbySortAvailable => _cityService.lastPosition != null;
 
   List<Event> get _featuredEvents {
     final seen = <String>{};
+    // Today-only, sorted chronologically by venue wall-clock so all-day
+    // entries (parsed to 00:00) lead and timed events follow in hour order.
+    // _state.events isn't reliably chronological (it may be sorted by distance
+    // from the user when location is known), so sort here explicitly.
+    final todays = _state.events.where(isEventToday).toList()
+      ..sort((a, b) => eventWallClock(a).compareTo(eventWallClock(b)));
     final result = <Event>[];
-
-    // _filtered is already sorted by date, so first occurrence = soonest.
-    for (final e in _filtered) {
-      final start = eventWallClock(e);
-      final today = DateUtils.dateOnly(nowInVenueTz(e.timezone));
-      if (start.isBefore(today)) continue;
+    for (final e in todays) {
       final key = '${e.title.toLowerCase()}|${(e.venue ?? '').toLowerCase()}';
       if (seen.add(key)) result.add(e);
       if (result.length >= 5) break;
     }
-
     return result;
   }
 
@@ -260,14 +347,19 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
   Widget _buildEventFeed(BuildContext context) {
     final l = AppL10n.of(context);
-    return CustomScrollView(
-      slivers: [
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: CustomScrollView(
+        // Always allow overscroll so pull-to-refresh works when the list is short.
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
         SliverToBoxAdapter(child: _buildHeader(context, compact: true)),
         SliverToBoxAdapter(child: _buildStatsCard(context)),
         if (_hasData) ...[
+          SliverToBoxAdapter(child: _buildSearchField(context)),
           SliverToBoxAdapter(child: _buildDateFilter(context)),
           SliverToBoxAdapter(child: _buildCategoryBar(context)),
-          if (_filtered.isNotEmpty) ...[
+          if (_featuredEvents.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: SectionHeader(
                 title: l.featuredSection,
@@ -279,7 +371,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             ),
             SliverToBoxAdapter(
               child: FeaturedCarousel(
-                events: _featuredEvents.take(5).toList(),
+                events: _featuredEvents,
                 bookmarked: _bookmarked,
                 onToggleBookmark: _toggleBookmark,
                 onOpenDetails: _openDetails,
@@ -292,6 +384,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               trailing: l.eventsFound(_filtered.length),
             ),
           ),
+          SliverToBoxAdapter(child: _buildSortBar(context)),
           if (_filtered.isEmpty)
             const SliverToBoxAdapter(child: StatusView.empty())
           else
@@ -302,6 +395,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   isSaved: _bookmarked.contains(_filtered[i].id),
                   onToggleSave: () => _toggleBookmark(_filtered[i]),
                   onOpen: () => _openDetails(_filtered[i]),
+                  userPosition: _cityService.lastPosition,
                 ),
                 childCount: _filtered.length,
               ),
@@ -315,7 +409,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               dataBuilder: (_) => const SizedBox.shrink(),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -379,9 +474,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               ),
             ),
             IconBtn(
-              icon: Icons.language_outlined,
-              onTap: () {},
-              tooltip: l.regionTooltip,
+              icon: Icons.tune_rounded,
+              onTap: () => SettingsSheet.show(context),
+              tooltip: l.settingsTitle,
             ),
           ],
         ),
@@ -401,6 +496,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         color: primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: primary.withValues(alpha: 0.22)),
+        boxShadow: AppShadows.subtle,
       ),
       child: Row(
         children: [
@@ -414,7 +510,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   )
                 : RichText(
                     text: TextSpan(
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
                       ),
@@ -429,7 +525,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         const TextSpan(text: ' '),
                         TextSpan(
                           text: l.schemaOrg,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w600,
                           ),
@@ -445,6 +541,50 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               child: CircularProgressIndicator(strokeWidth: 2, color: primary),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchField(BuildContext context) {
+    final l = AppL10n.of(context);
+    final primary = Theme.of(context).colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) => setState(() => _searchQuery = value),
+        textInputAction: TextInputAction.search,
+        style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: l.searchHint,
+          hintStyle: TextStyle(color: AppColors.textHint, fontSize: 14),
+          prefixIcon: Icon(Icons.search, size: 18, color: AppColors.textHint),
+          suffixIcon: _searchQuery.isEmpty
+              ? null
+              : IconButton(
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: AppColors.textHint,
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                ),
+          filled: true,
+          fillColor: AppColors.surfaceHigh,
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.borderStrong),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: primary, width: 1.5),
+          ),
+        ),
       ),
     );
   }
@@ -474,6 +614,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   border: Border.all(
                     color: sel ? primary : AppColors.borderStrong,
                   ),
+                  boxShadow: sel ? AppShadows.subtle : null,
                 ),
                 child: Text(
                   f.label(l),
@@ -487,6 +628,74 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSortBar(BuildContext context) {
+    final l = AppL10n.of(context);
+    final primary = Theme.of(context).colorScheme.primary;
+    // Nearby chip is shown but disabled when the user's GPS fix isn't known —
+    // makes the option discoverable so the user knows enabling location will
+    // unlock it, instead of hiding the chip silently.
+    final available = _nearbySortAvailable;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Row(
+        children: [
+          Text(
+            '${l.sortByLabel}:',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(width: 10),
+          for (final s in EventSort.values) ...[
+            Builder(
+              builder: (_) {
+                final enabled = s == EventSort.date || available;
+                final selected = _sort == s;
+                return GestureDetector(
+                  onTap: enabled ? () => setState(() => _sort = s) : null,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected ? primary : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: selected
+                            ? primary
+                            : AppColors.borderStrong.withValues(
+                                alpha: enabled ? 1 : 0.4,
+                              ),
+                      ),
+                      boxShadow: selected ? AppShadows.subtle : null,
+                    ),
+                    child: Text(
+                      s.label(l),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                        color: selected
+                            ? Colors.black
+                            : enabled
+                                ? AppColors.textBody
+                                : AppColors.textFaint,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
+        ],
       ),
     );
   }

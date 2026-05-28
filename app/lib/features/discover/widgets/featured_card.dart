@@ -1,9 +1,11 @@
 import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/core/models/event_category.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
+import 'package:event_radar/core/theme/app_shadows.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:event_radar/widgets/category_chip.dart';
+import 'package:event_radar/widgets/html_text.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -27,10 +29,7 @@ class FeaturedCard extends StatelessWidget {
     final l = AppL10n.of(context);
     final isPast = !event.isUpcoming;
     final catColor = event.category.color;
-    final durationLabels = DurationLabels(
-      allDay: l.allDay,
-      daysCount: l.daysCount,
-    );
+    final durationLabels = DurationLabels(allDay: l.allDay);
 
     return GestureDetector(
       onTap: onOpenDetails,
@@ -50,6 +49,7 @@ class FeaturedCard extends StatelessWidget {
             stops: const [0.0, 0.45, 1.0],
           ),
           border: Border.all(color: catColor.withValues(alpha: 0.28)),
+          boxShadow: AppShadows.card,
         ),
         child: Stack(
           children: [
@@ -131,11 +131,11 @@ class FeaturedCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  HtmlText(
                     event.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
@@ -157,7 +157,7 @@ class FeaturedCard extends StatelessWidget {
                             event.venue!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               color: AppColors.textPlaceholder,
                             ),
@@ -187,7 +187,7 @@ class FeaturedCard extends StatelessWidget {
                             if (event.source != null)
                               Text(
                                 l.viaSource(Uri.tryParse(event.source ?? '')?.host ?? event.source ?? ''),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 9,
                                   color: AppColors.textDisabled,
                                 ),

@@ -22,6 +22,78 @@
   "regionTooltip": "Region",
   "@regionTooltip": { "description": "Tooltip on the language/region icon button." },
 
+  "settingsTitle": "Settings",
+  "@settingsTitle": { "description": "Title of the settings bottom sheet." },
+
+  "themeLabel": "Theme",
+  "@themeLabel": { "description": "Section label for the theme-mode segmented control." },
+
+  "themeSystem": "System",
+  "@themeSystem": { "description": "Theme-mode option that follows the OS setting." },
+
+  "themeLight": "Light",
+  "@themeLight": { "description": "Light theme-mode option." },
+
+  "themeDark": "Dark",
+  "@themeDark": { "description": "Dark theme-mode option." },
+
+  "languageLabel": "Language",
+  "@languageLabel": { "description": "Section label for the language segmented control." },
+
+  "languageSystem": "System",
+  "@languageSystem": { "description": "Language option that follows the device locale." },
+
+  "languageEnglish": "English",
+  "@languageEnglish": { "description": "English-language option." },
+
+  "languagePolish": "Polski",
+  "@languagePolish": { "description": "Polish-language option (shown in Polish so users can recognise it regardless of current locale)." },
+
+  "distanceUnitLabel": "Distance",
+  "@distanceUnitLabel": { "description": "Section label for the distance-unit segmented control." },
+
+  "distanceUnitKm": "Kilometres",
+  "@distanceUnitKm": { "description": "Distance-unit option (km)." },
+
+  "distanceUnitMi": "Miles",
+  "@distanceUnitMi": { "description": "Distance-unit option (mi)." },
+
+  "notificationsLabel": "Reminders",
+  "@notificationsLabel": { "description": "Section label for the saved-event notification toggle." },
+
+  "notificationsHint": "Notify the day before saved events.",
+  "@notificationsHint": { "description": "Helper text describing what the notifications toggle does." },
+
+  "notificationsTitle": "{title} is tomorrow",
+  "@notificationsTitle": {
+    "description": "Reminder notification title shown the day before a saved event.",
+    "placeholders": { "title": { "type": "String" } }
+  },
+
+  "notificationsBody": "Starts at {time}{venuePart}",
+  "@notificationsBody": {
+    "description": "Reminder notification body. venuePart is empty or ' at <venue>'.",
+    "placeholders": {
+      "time": { "type": "String" },
+      "venuePart": { "type": "String" }
+    }
+  },
+
+  "nearbySection": "Nearby",
+  "@nearbySection": { "description": "Section header for events closest to the user's location." },
+
+  "sortByLabel": "Sort",
+  "@sortByLabel": { "description": "Label preceding the sort chips above the All Events list." },
+
+  "sortByDate": "Date",
+  "@sortByDate": { "description": "Sort option that orders events chronologically." },
+
+  "sortByNearby": "Nearby",
+  "@sortByNearby": { "description": "Sort option that orders events by distance from the user." },
+
+  "searchHint": "Search events",
+  "@searchHint": { "description": "Placeholder text in the search field on Discover." },
+
   "featuredSection": "Featured",
   "@featuredSection": { "description": "Section header for the featured-events carousel." },
 
@@ -237,6 +309,9 @@
 
   "filterAll": "All",
   "@filterAll": { "description": "Date-filter chip label on Discover." },
+
+  "filterPast": "Past",
+  "@filterPast": { "description": "Date-filter chip on Discover that shows only events whose start has already passed." },
 
   "categoryAll": "All",
   "@categoryAll": { "description": "Category-filter chip label for showing every category." },

@@ -31,6 +31,74 @@ class AppL10nPl extends AppL10n {
   String get regionTooltip => 'Region';
 
   @override
+  String get settingsTitle => 'Ustawienia';
+
+  @override
+  String get themeLabel => 'Motyw';
+
+  @override
+  String get themeSystem => 'Systemowy';
+
+  @override
+  String get themeLight => 'Jasny';
+
+  @override
+  String get themeDark => 'Ciemny';
+
+  @override
+  String get languageLabel => 'Język';
+
+  @override
+  String get languageSystem => 'Systemowy';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languagePolish => 'Polski';
+
+  @override
+  String get distanceUnitLabel => 'Odległość';
+
+  @override
+  String get distanceUnitKm => 'Kilometry';
+
+  @override
+  String get distanceUnitMi => 'Mile';
+
+  @override
+  String get notificationsLabel => 'Przypomnienia';
+
+  @override
+  String get notificationsHint =>
+      'Powiadom dzień przed zapisanymi wydarzeniami.';
+
+  @override
+  String notificationsTitle(String title) {
+    return '$title jutro';
+  }
+
+  @override
+  String notificationsBody(String time, String venuePart) {
+    return 'Początek: $time$venuePart';
+  }
+
+  @override
+  String get nearbySection => 'W pobliżu';
+
+  @override
+  String get sortByLabel => 'Sortuj';
+
+  @override
+  String get sortByDate => 'Data';
+
+  @override
+  String get sortByNearby => 'Najbliższe';
+
+  @override
+  String get searchHint => 'Szukaj wydarzeń';
+
+  @override
   String get featuredSection => 'Polecane';
 
   @override
@@ -262,6 +330,9 @@ class AppL10nPl extends AppL10n {
 
   @override
   String get filterAll => 'Wszystkie';
+
+  @override
+  String get filterPast => 'Minione';
 
   @override
   String get categoryAll => 'Wszystkie';

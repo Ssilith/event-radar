@@ -9,6 +9,39 @@
   "chooseCityToDiscoverEvents": "Wybierz miasto, aby\nodkryć wydarzenia",
   "pickACity": "Wybierz miasto",
   "regionTooltip": "Region",
+  "settingsTitle": "Ustawienia",
+  "themeLabel": "Motyw",
+  "themeSystem": "Systemowy",
+  "themeLight": "Jasny",
+  "themeDark": "Ciemny",
+  "languageLabel": "Język",
+  "languageSystem": "Systemowy",
+  "languageEnglish": "English",
+  "languagePolish": "Polski",
+
+  "distanceUnitLabel": "Odległość",
+  "distanceUnitKm": "Kilometry",
+  "distanceUnitMi": "Mile",
+
+  "notificationsLabel": "Przypomnienia",
+  "notificationsHint": "Powiadom dzień przed zapisanymi wydarzeniami.",
+  "notificationsTitle": "{title} jutro",
+  "@notificationsTitle": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "notificationsBody": "Początek: {time}{venuePart}",
+  "@notificationsBody": {
+    "placeholders": {
+      "time": { "type": "String" },
+      "venuePart": { "type": "String" }
+    }
+  },
+
+  "nearbySection": "W pobliżu",
+  "sortByLabel": "Sortuj",
+  "sortByDate": "Data",
+  "sortByNearby": "Najbliższe",
+  "searchHint": "Szukaj wydarzeń",
   "featuredSection": "Polecane",
   "allEventsSection": "Wszystkie wydarzenia",
   "eventsFound": "znaleziono {count}",
@@ -77,6 +110,7 @@
   "filterWeek": "W tym tygodniu",
   "filterMonth": "W tym miesiącu",
   "filterAll": "Wszystkie",
+  "filterPast": "Minione",
   "categoryAll": "Wszystkie",
 
   "categoryMusic": "Muzyka",

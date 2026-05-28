@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:event_radar/core/models/event_category.dart';
+import 'package:event_radar/core/utils/html_text.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'event.g.dart';
@@ -7,7 +8,13 @@ part 'event.g.dart';
 @JsonSerializable()
 class Event {
   final String id;
+
+  // Title keeps its raw HTML so display sites can render <b>/<i>/<u>/<br>
+  // via HtmlText. Dedupe / sort code reads it case-insensitively so leftover
+  // tag chars don't cause false splits.
   final String title;
+
+  @JsonKey(fromJson: _cleanText)
   final String city;
 
   @JsonKey(fromJson: _parseEventCategory)
@@ -18,14 +25,19 @@ class Event {
   @JsonKey(fromJson: _parseDateOrNull)
   final DateTime? end;
 
+  @JsonKey(fromJson: htmlToTextOrNull)
   final String? venue;
   final double? latitude;
   final double? longitude;
 
+  // Description keeps its raw HTML so the details screen can render <b>/<i>/
+  // <p>/<br>/<a> with flutter_html. Other text fields are pre-cleaned because
+  // rich markup in them is rare and breaks line-wrapping in compact rows.
   final String? description;
   final String? url;
   final String? source;
 
+  @JsonKey(fromJson: htmlToTextOrNull)
   final String? price;
 
   @JsonKey(name: 'updated_at', fromJson: _parseDateOrNull)
@@ -124,6 +136,11 @@ DateTime _parseDate(String raw) {
 }
 
 DateTime? _parseDateOrNull(String? raw) => raw == null ? null : _parseDate(raw);
+
+// Non-nullable counterpart used for required text fields. The shared helper
+// is in html_text.dart; this thin wrapper exists because json_serializable's
+// fromJson hook for a non-nullable field must itself be non-nullable.
+String _cleanText(String raw) => htmlToText(raw);
 
 EventCategory _parseEventCategory(String? category) {
   final needle = category?.toLowerCase();

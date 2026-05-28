@@ -30,6 +30,73 @@ class AppL10nEn extends AppL10n {
   String get regionTooltip => 'Region';
 
   @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get themeLabel => 'Theme';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get languageLabel => 'Language';
+
+  @override
+  String get languageSystem => 'System';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languagePolish => 'Polski';
+
+  @override
+  String get distanceUnitLabel => 'Distance';
+
+  @override
+  String get distanceUnitKm => 'Kilometres';
+
+  @override
+  String get distanceUnitMi => 'Miles';
+
+  @override
+  String get notificationsLabel => 'Reminders';
+
+  @override
+  String get notificationsHint => 'Notify the day before saved events.';
+
+  @override
+  String notificationsTitle(String title) {
+    return '$title is tomorrow';
+  }
+
+  @override
+  String notificationsBody(String time, String venuePart) {
+    return 'Starts at $time$venuePart';
+  }
+
+  @override
+  String get nearbySection => 'Nearby';
+
+  @override
+  String get sortByLabel => 'Sort';
+
+  @override
+  String get sortByDate => 'Date';
+
+  @override
+  String get sortByNearby => 'Nearby';
+
+  @override
+  String get searchHint => 'Search events';
+
+  @override
   String get featuredSection => 'Featured';
 
   @override
@@ -250,6 +317,9 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get filterAll => 'All';
+
+  @override
+  String get filterPast => 'Past';
 
   @override
   String get categoryAll => 'All';

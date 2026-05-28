@@ -33,7 +33,7 @@ class EventsChip extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 l.eventCount(total),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,

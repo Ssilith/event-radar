@@ -1,3 +1,4 @@
+import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
@@ -54,7 +55,7 @@ class StatusView extends StatelessWidget {
             if (showSpinner)
               const Loading()
             else if (icon != null)
-              Icon(icon, size: 48, color: Colors.grey),
+              Icon(icon, size: 48, color: AppColors.textHint),
             const SizedBox(height: 16),
             Text(
               message ?? l.statusEmpty,

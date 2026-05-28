@@ -66,10 +66,10 @@ class EventsPanel extends StatelessWidget {
                       style: TextStyle(color: primary, fontSize: 12),
                     ),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.remove_rounded,
                         size: 18,
-                        color: Colors.white70,
+                        color: AppColors.textSecondary,
                       ),
                       onPressed: onCollapse,
                       padding: EdgeInsets.zero,
@@ -80,14 +80,14 @@ class EventsPanel extends StatelessWidget {
                   ],
                 ),
               ),
-              const Divider(color: AppColors.surfacePill, height: 1),
+              Divider(color: AppColors.surfacePill, height: 1),
               if (events.isEmpty)
                 Padding(
                   padding: const EdgeInsets.all(28),
                   child: Center(
                     child: Text(
                       l.mapNoEvents,
-                      style: const TextStyle(color: AppColors.textPlaceholder),
+                      style: TextStyle(color: AppColors.textPlaceholder),
                     ),
                   ),
                 )

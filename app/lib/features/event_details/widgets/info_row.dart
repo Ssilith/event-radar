@@ -56,7 +56,7 @@ class InfoRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subValue!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textPlaceholder,
                     ),

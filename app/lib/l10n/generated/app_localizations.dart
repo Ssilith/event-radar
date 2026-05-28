@@ -139,6 +139,132 @@ abstract class AppL10n {
   /// **'Region'**
   String get regionTooltip;
 
+  /// Title of the settings bottom sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// Section label for the theme-mode segmented control.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get themeLabel;
+
+  /// Theme-mode option that follows the OS setting.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// Light theme-mode option.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// Dark theme-mode option.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// Section label for the language segmented control.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageLabel;
+
+  /// Language option that follows the device locale.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get languageSystem;
+
+  /// English-language option.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// Polish-language option (shown in Polish so users can recognise it regardless of current locale).
+  ///
+  /// In en, this message translates to:
+  /// **'Polski'**
+  String get languagePolish;
+
+  /// Section label for the distance-unit segmented control.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get distanceUnitLabel;
+
+  /// Distance-unit option (km).
+  ///
+  /// In en, this message translates to:
+  /// **'Kilometres'**
+  String get distanceUnitKm;
+
+  /// Distance-unit option (mi).
+  ///
+  /// In en, this message translates to:
+  /// **'Miles'**
+  String get distanceUnitMi;
+
+  /// Section label for the saved-event notification toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get notificationsLabel;
+
+  /// Helper text describing what the notifications toggle does.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify the day before saved events.'**
+  String get notificationsHint;
+
+  /// Reminder notification title shown the day before a saved event.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} is tomorrow'**
+  String notificationsTitle(String title);
+
+  /// Reminder notification body. venuePart is empty or ' at <venue>'.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts at {time}{venuePart}'**
+  String notificationsBody(String time, String venuePart);
+
+  /// Section header for events closest to the user's location.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get nearbySection;
+
+  /// Label preceding the sort chips above the All Events list.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get sortByLabel;
+
+  /// Sort option that orders events chronologically.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get sortByDate;
+
+  /// Sort option that orders events by distance from the user.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get sortByNearby;
+
+  /// Placeholder text in the search field on Discover.
+  ///
+  /// In en, this message translates to:
+  /// **'Search events'**
+  String get searchHint;
+
   /// Section header for the featured-events carousel.
   ///
   /// In en, this message translates to:
@@ -516,6 +642,12 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'All'**
   String get filterAll;
+
+  /// Date-filter chip on Discover that shows only events whose start has already passed.
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get filterPast;
 
   /// Category-filter chip label for showing every category.
   ///

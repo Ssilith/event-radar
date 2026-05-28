@@ -1,11 +1,15 @@
 import 'package:event_radar/core/models/event.dart';
+import 'package:event_radar/core/services/bookmark_actions.dart';
 import 'package:event_radar/core/services/event_cache_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/utils/event_time.dart';
+import 'package:event_radar/core/utils/maps_launcher.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:event_radar/features/event_details/widgets/event_hero.dart';
 import 'package:event_radar/features/event_details/widgets/info_row.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:event_radar/widgets/category_chip.dart';
+import 'package:event_radar/widgets/html_text.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -29,7 +33,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   Future<void> _toggleSave() async {
-    final saved = await EventCacheService.toggleBookmark(widget.event);
+    final saved = await BookmarkActions.toggle(widget.event, AppL10n.of(context));
     if (!mounted) return;
     setState(() => _isSaved = saved);
   }
@@ -40,6 +44,15 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     if (uri == null) return;
     if (await canLaunchUrl(uri)) {
       launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+    }
+  }
+
+  Future<void> _openDirections() async {
+    final ok = await openDirectionsToEvent(widget.event);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppL10n.of(context).couldNotOpenMaps)),
+      );
     }
   }
 
@@ -70,7 +83,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   _isSaved
                       ? Icons.bookmark_rounded
                       : Icons.bookmark_outline_rounded,
-                  color: _isSaved ? primary : Colors.white70,
+                  color: _isSaved ? primary : AppColors.textSecondary,
                 ),
                 onPressed: _toggleSave,
               ),
@@ -88,7 +101,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                 children: [
                   CategoryChip(category: cat, large: true),
                   const SizedBox(height: 14),
-                  Text(
+                  HtmlText(
                     event.title,
                     style: GoogleFonts.syne(
                       fontSize: 26,
@@ -140,23 +153,31 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      event.description!,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textBodyAlt,
-                        height: 1.5,
-                      ),
+                    Html(
+                      data: event.description!,
+                      // Style only the body so the package's per-tag defaults
+                      // (b → bold, i → italic, etc.) keep working; padding +
+                      // margins zeroed so it sits flush with the section head.
+                      style: {
+                        'body': Style(
+                          margin: Margins.zero,
+                          padding: HtmlPaddings.zero,
+                          fontSize: FontSize(14),
+                          lineHeight: const LineHeight(1.5),
+                          color: AppColors.textBodyAlt,
+                        ),
+                        'a': Style(color: primary),
+                      },
                     ),
                   ],
-                  if (event.url != null) ...[
+                  if (event.hasLocation) ...[
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
-                        onPressed: () => _openUrl(event.url),
-                        icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                        label: Text(l.viewPage),
+                        onPressed: _openDirections,
+                        icon: const Icon(Icons.directions_rounded, size: 18),
+                        label: Text(l.directions),
                         style: FilledButton.styleFrom(
                           backgroundColor: primary,
                           foregroundColor: Colors.black,
@@ -168,12 +189,51 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                         ),
                       ),
                     ),
+                  ],
+                  if (event.url != null) ...[
+                    SizedBox(height: event.hasLocation ? 10 : 24),
+                    SizedBox(
+                      width: double.infinity,
+                      // Demote to outlined when Directions is the primary CTA;
+                      // otherwise keep the filled emphasis the page used to have.
+                      child: event.hasLocation
+                          ? OutlinedButton.icon(
+                              onPressed: () => _openUrl(event.url),
+                              icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                              label: Text(l.viewPage),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: primary,
+                                side: BorderSide(
+                                  color: primary.withValues(alpha: 0.5),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                textStyle: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            )
+                          : FilledButton.icon(
+                              onPressed: () => _openUrl(event.url),
+                              icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                              label: Text(l.viewPage),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: primary,
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                textStyle: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                    ),
                     if (event.source != null) ...[
                       const SizedBox(height: 10),
                       Center(
                         child: Text(
                           l.viaSource(Uri.tryParse(event.source!)?.host ?? event.source!),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             color: AppColors.textHint,
                           ),

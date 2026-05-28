@@ -1,9 +1,11 @@
 import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/core/models/event_category.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
+import 'package:event_radar/core/theme/app_shadows.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/features/event_details/event_details_screen.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
+import 'package:event_radar/widgets/html_text.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -28,7 +30,7 @@ class SavedEventRow extends StatelessWidget {
       ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
         child: Row(
@@ -46,6 +48,7 @@ class SavedEventRow extends StatelessWidget {
                       ? Colors.red.withValues(alpha: 0.25)
                       : primary.withValues(alpha: 0.25),
                 ),
+                boxShadow: AppShadows.subtle,
               ),
               child: Column(
                 children: [
@@ -77,11 +80,11 @@ class SavedEventRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  HtmlText(
                     event.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
@@ -94,7 +97,7 @@ class SavedEventRow extends StatelessWidget {
                       event.venue!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textHint,
                       ),
@@ -126,7 +129,7 @@ class SavedEventRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
                   size: 17,
                   color: AppColors.textFainter,

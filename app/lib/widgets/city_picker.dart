@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:app_settings/app_settings.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import 'package:event_radar/core/theme/app_colors.dart';
+import 'package:event_radar/core/theme/app_shadows.dart';
 import 'package:event_radar/core/utils/language.dart';
 import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
@@ -183,6 +185,7 @@ class _LocationRow extends StatelessWidget {
             context,
           ).colorScheme.primaryContainer.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(10),
+          boxShadow: AppShadows.subtle,
         ),
         child: Row(
           children: [
@@ -223,9 +226,10 @@ class _CityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return ListTile(
       leading: isCurrent
-          ? const Icon(Icons.location_on, size: 18, color: Colors.blue)
+          ? Icon(Icons.location_on, size: 18, color: primary)
           : const SizedBox(width: 18),
       title: Text(
         item.name,
@@ -239,15 +243,11 @@ class _CityTile extends StatelessWidget {
               item.countryCode,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
             ),
           if (isSelected) ...[
             const SizedBox(width: 8),
-            Icon(
-              Icons.check,
-              size: 16,
-              color: Theme.of(context).colorScheme.primary,
-            ),
+            Icon(Icons.check, size: 16, color: primary),
           ],
         ],
       ),

@@ -56,10 +56,14 @@ class CollapsedEventBubble extends StatelessWidget {
             child: InkWell(
               customBorder: const CircleBorder(),
               onTap: onClose,
-              child: const SizedBox(
+              child: SizedBox(
                 width: 20,
                 height: 20,
-                child: Icon(Icons.close, size: 12, color: Colors.white70),
+                child: Icon(
+                  Icons.close,
+                  size: 12,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
           ),

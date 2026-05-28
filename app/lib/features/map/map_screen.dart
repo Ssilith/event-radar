@@ -6,10 +6,10 @@ import 'package:event_radar/core/models/city_item.dart';
 import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/core/services/city_service.dart';
 import 'package:event_radar/core/services/event_service.dart';
+import 'package:event_radar/core/services/settings_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/utils/event_time.dart';
-import 'package:event_radar/core/utils/language.dart';
-import 'package:event_radar/core/utils/log.dart';
+import 'package:event_radar/core/utils/maps_launcher.dart';
 import 'package:event_radar/features/event_details/event_details_screen.dart';
 import 'package:event_radar/features/map/widgets/collapsed_event_bubble.dart';
 import 'package:event_radar/features/map/widgets/event_marker.dart';
@@ -22,10 +22,13 @@ import 'package:event_radar/features/map/widgets/user_dot.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:logging/logging.dart';
+
+final _log = Logger('MapScreen');
 
 class MapScreen extends StatefulWidget {
   final CityItem? city;
@@ -67,11 +70,27 @@ class _MapScreenState extends State<MapScreen> {
   final _cardKey = GlobalKey();
   Offset? _dragStart;
 
+  // Snap-side hint captured at the moment of an expanded→collapsed toggle.
+  // Without this, _settle() would pick the corner from the just-shrunk box,
+  // which lives at the expanded widget's left edge — so a panel that visibly
+  // occupied the right half snaps to the left after collapsing.
+  // x/y are -1.0 (left/top) or 1.0 (right/bottom). Consumed by _settle().
+  ({double x, double y})? _chipSnapHint;
+  ({double x, double y})? _cardSnapHint;
+
   @override
   void initState() {
     super.initState();
     _seedUserPosition();
     if (widget.city != null) _loadEvents(widget.city!);
+    // NearbyEventRow reads SettingsService.distanceUnit statically; without
+    // this listener, switching units in the bottom sheet leaves the open
+    // events panel showing stale pill text.
+    SettingsService.instance.distanceUnit.addListener(_onSettingsChanged);
+  }
+
+  void _onSettingsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -86,6 +105,7 @@ class _MapScreenState extends State<MapScreen> {
   void dispose() {
     _sub?.cancel();
     _mapController.dispose();
+    SettingsService.instance.distanceUnit.removeListener(_onSettingsChanged);
     super.dispose();
   }
 
@@ -159,7 +179,7 @@ class _MapScreenState extends State<MapScreen> {
       );
       if (mounted) setState(() => _userPosition = pos);
     } catch (e, s) {
-      Log.warn('MapScreen', 'loadUserPosition failed', e, s);
+      _log.warning('loadUserPosition failed', e, s);
       if (interactive && mounted) {
         _showLocationError(AppL10n.of(context).couldNotGetLocation);
       }
@@ -198,9 +218,8 @@ class _MapScreenState extends State<MapScreen> {
     final points = _events
         .map((e) => LatLng(e.latitude!, e.longitude!))
         .toList();
-    if (_userPosition != null) {
-      points.add(LatLng(_userPosition!.latitude, _userPosition!.longitude));
-    }
+    final userLatLng = _userLatLng;
+    if (userLatLng != null) points.add(userLatLng);
     final bounds = LatLngBounds.fromPoints(points);
     _mapController.fitCamera(
       CameraFit.bounds(
@@ -214,9 +233,20 @@ class _MapScreenState extends State<MapScreen> {
     if (_userPosition == null) {
       await _loadUserPosition(interactive: true);
     }
-    final pos = _userPosition;
-    if (pos == null) return;
-    _mapController.move(LatLng(pos.latitude, pos.longitude), 14);
+    final ll = _userLatLng;
+    if (ll == null) return;
+    _mapController.move(ll, 14);
+  }
+
+  // Tapping the empty map: if a card is currently expanded, collapse it into
+  // the corner bubble. If it's already collapsed, do nothing — the user has
+  // to use the bubble's explicit close button to actually dismiss. This way
+  // an accidental tap can't lose the selection.
+  void _onMapTap() {
+    if (_selected == null || _cardCollapsed) return;
+    _cardSnapHint = _readSnapSide(_cardKey, _cardOffset);
+    setState(() => _cardCollapsed = true);
+    _settleCardPosition();
   }
 
   void _panTo(Event event) {
@@ -229,24 +259,9 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _openDirections(Event event) async {
-    final lat = event.latitude!;
-    final lon = event.longitude!;
-    final uri = Uri.https('www.google.com', '/maps/dir/', {
-      'api': '1',
-      'destination': '$lat,$lon',
-      if (event.venue != null) 'destination_place': event.venue!,
-      'travelmode': 'driving',
-      'hl': deviceLanguageCode,
-    });
-
-    try {
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok && mounted) {
-        _showLocationError(AppL10n.of(context).couldNotOpenMaps);
-      }
-    } catch (e, s) {
-      Log.warn('MapScreen', 'openDirections failed', e, s);
-      if (mounted) _showLocationError(AppL10n.of(context).couldNotOpenMaps);
+    final ok = await openDirectionsToEvent(event);
+    if (!ok && mounted) {
+      _showLocationError(AppL10n.of(context).couldNotOpenMaps);
     }
   }
 
@@ -271,27 +286,91 @@ class _MapScreenState extends State<MapScreen> {
 
   int get _todayCount => _events.where(isEventToday).length;
 
+  // Geolocator can hand back a Position with NaN coords on simulators and
+  // some Android quirks. flutter_map throws when fed a non-finite LatLng, so
+  // funnel every conversion through this guarded getter — null when there's
+  // no fix OR the values aren't usable.
+  LatLng? get _userLatLng {
+    final pos = _userPosition;
+    if (pos == null) return null;
+    if (!pos.latitude.isFinite || !pos.longitude.isFinite) return null;
+    return LatLng(pos.latitude, pos.longitude);
+  }
+
+  // Builds the visible pin for a single event. Extracted so the clustering
+  // layer (unselected events) and the always-on-top selected-event layer can
+  // share the same gesture + sizing logic.
+  Marker _buildEventMarker(Event event) {
+    final isSelected = event.id == _selected?.id;
+    final today = isEventToday(event);
+    final size = isSelected ? 46 : (today ? 40 : 32);
+    return Marker(
+      point: LatLng(event.latitude!, event.longitude!),
+      width: size.toDouble(),
+      height: size.toDouble(),
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selected = isSelected ? null : event;
+            if (!isSelected) _cardCollapsed = false;
+          });
+          if (!isSelected) _settleCardPosition();
+        },
+        child: EventMarker(
+          category: event.category,
+          isSelected: isSelected,
+          isToday: today,
+        ),
+      ),
+    );
+  }
+
   // ── Draggable overlays ──────────────────────────────────────────────────
 
-  void _settleChipPosition() => _settle(
-        key: _chipKey,
-        getOffset: () => _chipOffset,
-        snapToCorner: !_chipExpanded,
-        apply: (o) => setState(() {
-          _chipOffset = o;
-          _chipAnimating = true;
-        }),
-      );
+  void _settleChipPosition() {
+    final hint = _chipSnapHint;
+    _chipSnapHint = null;
+    _settle(
+      key: _chipKey,
+      getOffset: () => _chipOffset,
+      snapToCorner: !_chipExpanded,
+      cornerHint: hint,
+      apply: (o) => setState(() {
+        _chipOffset = o;
+        _chipAnimating = true;
+      }),
+    );
+  }
 
-  void _settleCardPosition() => _settle(
-        key: _cardKey,
-        getOffset: () => _cardOffset,
-        snapToCorner: _cardCollapsed,
-        apply: (o) => setState(() {
-          _cardOffset = o;
-          _cardAnimating = true;
-        }),
-      );
+  void _settleCardPosition() {
+    final hint = _cardSnapHint;
+    _cardSnapHint = null;
+    _settle(
+      key: _cardKey,
+      getOffset: () => _cardOffset,
+      snapToCorner: _cardCollapsed,
+      cornerHint: hint,
+      apply: (o) => setState(() {
+        _cardOffset = o;
+        _cardAnimating = true;
+      }),
+    );
+  }
+
+  // Reads the rendered bounds of `key` synchronously and returns which half of
+  // the screen its center sits in. Call BEFORE the setState that swaps the
+  // widget out for its collapsed form, otherwise the box has already shrunk.
+  ({double x, double y})? _readSnapSide(GlobalKey key, Offset? offset) {
+    if (offset == null) return null;
+    final box = key.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return null;
+    final size = box.size;
+    final screen = MediaQuery.of(context).size;
+    return (
+      x: (offset.dx + size.width / 2) < screen.width / 2 ? -1.0 : 1.0,
+      y: (offset.dy + size.height / 2) < screen.height / 2 ? -1.0 : 1.0,
+    );
+  }
 
   // Re-positions an overlay once we know its rendered size: collapsed widgets
   // snap to the nearest corner; expanded ones just stay clamped on-screen.
@@ -300,6 +379,7 @@ class _MapScreenState extends State<MapScreen> {
     required Offset? Function() getOffset,
     required bool snapToCorner,
     required ValueChanged<Offset> apply,
+    ({double x, double y})? cornerHint,
   }) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -319,12 +399,18 @@ class _MapScreenState extends State<MapScreen> {
 
       final Offset target;
       if (snapToCorner) {
-        final centerX = cur.dx + size.width / 2;
-        final centerY = cur.dy + size.height / 2;
-        target = Offset(
-          centerX < screen.width / 2 ? 16.0 : maxX,
-          centerY < screen.height / 2 ? minY : maxY,
-        );
+        final double targetX;
+        final double targetY;
+        if (cornerHint != null) {
+          targetX = cornerHint.x < 0 ? 16.0 : maxX;
+          targetY = cornerHint.y < 0 ? minY : maxY;
+        } else {
+          final centerX = cur.dx + size.width / 2;
+          final centerY = cur.dy + size.height / 2;
+          targetX = centerX < screen.width / 2 ? 16.0 : maxX;
+          targetY = centerY < screen.height / 2 ? minY : maxY;
+        }
+        target = Offset(targetX, targetY);
       } else {
         target = Offset(
           cur.dx.clamp(16.0, maxX).toDouble(),
@@ -454,12 +540,16 @@ class _MapScreenState extends State<MapScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.map_outlined, size: 48, color: Colors.grey),
+                Icon(
+                  Icons.map_outlined,
+                  size: 48,
+                  color: AppColors.textHint,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   l.mapNoCitySelected,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70),
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -476,59 +566,64 @@ class _MapScreenState extends State<MapScreen> {
             backgroundColor: AppColors.bg,
             initialCenter: const LatLng(52.2297, 21.0122),
             initialZoom: 11,
-            onTap: (_, _) => setState(() => _selected = null),
+            onTap: (_, _) => _onMapTap(),
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.eventradar.app',
             ),
-            if (_userPosition != null)
+            if (_userLatLng != null)
               MarkerLayer(
                 markers: [
                   Marker(
-                    point: LatLng(
-                      _userPosition!.latitude,
-                      _userPosition!.longitude,
-                    ),
+                    point: _userLatLng!,
                     width: 22,
                     height: 22,
                     child: const UserDot(),
                   ),
                 ],
               ),
-            MarkerLayer(
-              markers: [
-                // Selected marker is rendered last so it stacks on top.
-                ..._events.where((e) => e.id != _selected?.id),
-                if (_selected != null &&
-                    _events.any((e) => e.id == _selected!.id))
-                  _selected!,
-              ].map((event) {
-                final isSelected = event.id == _selected?.id;
-                final today = isEventToday(event);
-                final size = isSelected ? 46 : (today ? 40 : 32);
-                return Marker(
-                  point: LatLng(event.latitude!, event.longitude!),
-                  width: size.toDouble(),
-                  height: size.toDouble(),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selected = isSelected ? null : event;
-                        if (!isSelected) _cardCollapsed = false;
-                      });
-                      if (!isSelected) _settleCardPosition();
-                    },
-                    child: EventMarker(
-                      category: event.category,
-                      isSelected: isSelected,
-                      isToday: today,
+            // Clustered layer holds every UNSELECTED event. The selected event
+            // is rendered separately below so it stays visible at any zoom —
+            // otherwise zooming out would swallow it into a cluster bubble.
+            MarkerClusterLayerWidget(
+              options: MarkerClusterLayerOptions(
+                maxClusterRadius: 60,
+                disableClusteringAtZoom: 16,
+                size: const Size(44, 44),
+                markers: _events
+                    .where((e) => e.id != _selected?.id)
+                    .map(_buildEventMarker)
+                    .toList(),
+                builder: (ctx, markers) {
+                  final primary = Theme.of(ctx).colorScheme.primary;
+                  return Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: primary,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: const [
+                        BoxShadow(blurRadius: 6, color: Colors.black54),
+                      ],
                     ),
-                  ),
-                );
-              }).toList(),
+                    child: Center(
+                      child: Text(
+                        '${markers.length}',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
+            if (_selected != null &&
+                _events.any((e) => e.id == _selected!.id))
+              MarkerLayer(markers: [_buildEventMarker(_selected!)]),
           ],
         ),
         if (_status == CityDataStatus.polling ||
@@ -576,15 +671,18 @@ class _MapScreenState extends State<MapScreen> {
                     todayCount: _todayCount,
                     userPosition: _userPosition,
                     onCollapse: () {
+                      _chipSnapHint = _readSnapSide(_chipKey, _chipOffset);
                       setState(() => _chipExpanded = false);
                       _settleChipPosition();
                     },
                     onSelect: (e) {
+                      _chipSnapHint = _readSnapSide(_chipKey, _chipOffset);
                       setState(() => _chipExpanded = false);
                       _settleChipPosition();
                       _panTo(e);
                     },
                     onOpenDetails: (e) {
+                      _chipSnapHint = _readSnapSide(_chipKey, _chipOffset);
                       setState(() => _chipExpanded = false);
                       _settleChipPosition();
                       _openDetails(e);
@@ -630,6 +728,7 @@ class _MapScreenState extends State<MapScreen> {
                     child: SelectedEventCard(
                       event: _selected!,
                       onCollapse: () {
+                        _cardSnapHint = _readSnapSide(_cardKey, _cardOffset);
                         setState(() => _cardCollapsed = true);
                         _settleCardPosition();
                       },

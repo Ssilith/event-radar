@@ -1,9 +1,11 @@
 import 'package:event_radar/core/models/event.dart';
-import 'package:event_radar/core/utils/log.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:intl/intl.dart';
+import 'package:logging/logging.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
+
+final _log = Logger('EventTime');
 
 bool _tzInitialized = false;
 String? _phoneIanaName;
@@ -22,7 +24,7 @@ Future<void> _loadPhoneTz() async {
     final info = await FlutterTimezone.getLocalTimezone();
     _phoneIanaName = info.identifier;
   } catch (e, s) {
-    Log.warn('EventTime', 'phone tz lookup failed', e, s);
+    _log.warning('phone tz lookup failed', e, s);
     _phoneIanaName = null;
   }
 }
@@ -101,14 +103,13 @@ bool venueTzDiffersFromPhone(String? tzName) {
   return venueOffset != DateTime.now().timeZoneOffset;
 }
 
-// Short human label for the event's duration: hour:minute for single-day,
-// "N days" for multi-day, "All day" when there's no end. Lives here (not on
-// the Event model) so the model stays free of UI dependencies.
-// Tiny helper that consults AppL10n is provided by callers via [labels].
+// Short human label for the event's start: hour:minute when the source
+// carried a wall-clock time, "All day" otherwise. Lives here (not on the
+// Event model) so the model stays free of UI dependencies. Callers pass the
+// localised "All day" string via [labels].
 class DurationLabels {
   final String allDay;
-  final String Function(int days) daysCount;
-  const DurationLabels({required this.allDay, required this.daysCount});
+  const DurationLabels({required this.allDay});
 }
 
 String? eventDurationLabel(
@@ -116,13 +117,13 @@ String? eventDurationLabel(
   required DurationLabels labels,
   String? locale,
 }) {
-  final end = event.end;
-  if (end == null) return labels.allDay;
-
-  final days = end.difference(event.start).inDays;
-  if (days > 1) return labels.daysCount(days);
-  if (days == 0) return formatEventTime(event, 'HH:mm', locale: locale);
-  return labels.allDay;
+  // Time-or-all-day, regardless of multi-day spans. A festival that starts
+  // 20:00 still reads as "20:00" — duration is conveyed elsewhere (date
+  // range on the details screen). Date-only feeds parse to midnight in the
+  // venue tz, which we treat as "all day".
+  final wall = eventWallClock(event);
+  if (wall.hour == 0 && wall.minute == 0) return labels.allDay;
+  return formatEventTime(event, 'HH:mm', locale: locale);
 }
 
 String venueTzShortName(String? tzName) {

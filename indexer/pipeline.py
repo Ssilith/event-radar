@@ -290,7 +290,7 @@ class EventNormalizer:
             venue=raw.venue,
             latitude=round(lat, 6) if lat else None,
             longitude=round(lon, 6) if lon else None,
-            description=raw.description[:500] if raw.description else None,
+            description=raw.description if raw.description else None,
             url=raw.url,
             source=raw.source,
             price=raw.price,

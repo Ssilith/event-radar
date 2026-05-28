@@ -1,9 +1,14 @@
+import 'package:event_radar/core/models/distance_unit.dart';
 import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/core/models/event_category.dart';
+import 'package:event_radar/core/services/settings_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
+import 'package:event_radar/core/theme/app_shadows.dart';
 import 'package:event_radar/core/utils/event_time.dart';
+import 'package:event_radar/widgets/html_text.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -14,6 +19,10 @@ class EventRow extends StatelessWidget {
   final bool isSaved;
   final VoidCallback onToggleSave;
   final VoidCallback onOpen;
+  // When set and the event has coordinates, a distance pill replaces the
+  // chevron trailing the row. Pass null (or unset) to hide the pill — used
+  // by Saved screen which doesn't always carry a location.
+  final Position? userPosition;
 
   const EventRow({
     super.key,
@@ -21,7 +30,43 @@ class EventRow extends StatelessWidget {
     required this.isSaved,
     required this.onToggleSave,
     required this.onOpen,
+    this.userPosition,
   });
+
+  String? _distanceLabel() {
+    final pos = userPosition;
+    if (pos == null) return null;
+    final km = event.distanceTo(pos.latitude, pos.longitude);
+    if (km == null) return null;
+    return SettingsService.instance.distanceUnit.value.format(km);
+  }
+
+  Widget _buildTrailing(Color primary) {
+    final distance = _distanceLabel();
+    if (distance == null) {
+      return Icon(
+        Icons.chevron_right_rounded,
+        size: 17,
+        color: AppColors.textFainter,
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: primary.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        distance,
+        style: TextStyle(
+          color: primary,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +81,7 @@ class EventRow extends StatelessWidget {
       onTap: onOpen,
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
         child: Row(
@@ -54,6 +99,7 @@ class EventRow extends StatelessWidget {
                       ? Colors.red.withValues(alpha: 0.25)
                       : primary.withValues(alpha: 0.25),
                 ),
+                boxShadow: AppShadows.subtle,
               ),
               child: Column(
                 children: [
@@ -85,11 +131,11 @@ class EventRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  HtmlText(
                     event.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
@@ -102,7 +148,7 @@ class EventRow extends StatelessWidget {
                       event.venue!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textHint,
                       ),
@@ -144,11 +190,7 @@ class EventRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  size: 17,
-                  color: AppColors.textFainter,
-                ),
+                _buildTrailing(primary),
               ],
             ),
           ],

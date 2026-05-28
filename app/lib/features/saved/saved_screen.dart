@@ -4,10 +4,11 @@ import 'package:event_radar/core/models/city_item.dart';
 import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/core/services/city_service.dart';
 import 'package:event_radar/core/services/event_cache_service.dart';
+import 'package:event_radar/core/services/notification_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/utils/event_time.dart';
-import 'package:event_radar/features/saved/group_mode.dart';
 import 'package:event_radar/features/saved/models/group.dart';
+import 'package:event_radar/features/saved/models/group_mode.dart';
 import 'package:event_radar/features/saved/widgets/empty_bookmarks.dart';
 import 'package:event_radar/features/saved/widgets/group_section.dart';
 import 'package:event_radar/features/saved/widgets/group_toggle.dart';
@@ -47,8 +48,10 @@ class _SavedScreenState extends State<SavedScreen> {
     setState(() => _saved = EventCacheService.getBookmarks());
   }
 
-  Future<void> _remove(Event event) =>
-      EventCacheService.removeBookmark(event.id);
+  Future<void> _remove(Event event) async {
+    await EventCacheService.removeBookmark(event.id);
+    await NotificationService.instance.cancelEventReminder(event.id);
+  }
 
   List<Group> _groups(AppL10n l) => switch (_groupMode) {
         GroupMode.location => _groupByLocation(l),

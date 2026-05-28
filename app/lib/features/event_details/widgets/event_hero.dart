@@ -43,7 +43,10 @@ class EventHero extends StatelessWidget {
             child: Icon(
               category.iconData,
               size: 88,
-              color: Colors.white.withValues(alpha: 0.85),
+              // textPrimary so the silhouette stays visible on either palette:
+              // white-on-dark, black-on-light. Pure white disappeared against
+              // the light-mode gradient's end stop.
+              color: AppColors.textPrimary.withValues(alpha: 0.85),
             ),
           ),
           Positioned(

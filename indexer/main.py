@@ -42,7 +42,7 @@ async def run_city(
     urls = await discovery.discover_urls(city, country_code)
     log.info("Found %d URLs", len(urls))
 
-    log.info("[3/6] Scraping pages...")
+    log.info("[3/6] Indexing pages...")
     raw_events = []
     for i, url in enumerate(urls, 1):
         log.info("  [%d/%d] %s", i, len(urls), url[:80])

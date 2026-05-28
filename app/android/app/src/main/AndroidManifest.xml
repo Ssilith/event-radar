@@ -3,6 +3,13 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- Saved-event reminders. POST_NOTIFICATIONS is runtime-prompted on
+         API 33+; ScheduleEventNotificationReceiver is required so reminders
+         survive device reboots. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <application
         android:label="Event Radar"
         android:name="${applicationName}"

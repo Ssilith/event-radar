@@ -37,7 +37,7 @@ class EmptyBookmarks extends StatelessWidget {
             Text(
               l.noSavedEventsBody,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textPlaceholder, fontSize: 13),
+              style: TextStyle(color: AppColors.textPlaceholder, fontSize: 13),
             ),
           ],
         ),

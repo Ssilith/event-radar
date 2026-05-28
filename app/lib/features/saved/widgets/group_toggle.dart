@@ -1,5 +1,6 @@
 import 'package:event_radar/core/theme/app_colors.dart';
-import 'package:event_radar/features/saved/group_mode.dart';
+import 'package:event_radar/core/theme/app_shadows.dart';
+import 'package:event_radar/features/saved/models/group_mode.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
@@ -57,6 +58,7 @@ class GroupToggle extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? primary : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
+            boxShadow: selected ? AppShadows.subtle : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
