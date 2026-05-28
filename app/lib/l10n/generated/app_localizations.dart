@@ -121,6 +121,24 @@ abstract class AppL10n {
   /// **'Choose City'**
   String get chooseCityTitle;
 
+  /// Small badge on a city picker row that's been picked before.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get cityBadgeRecent;
+
+  /// Small badge on a city picker row close to the user's current location.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get cityBadgeNearby;
+
+  /// Small badge on a city picker row that already has an indexed dataset.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get cityBadgeFetched;
+
   /// Empty-state heading on Discover when no city is selected.
   ///
   /// In en, this message translates to:

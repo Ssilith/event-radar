@@ -13,6 +13,15 @@
   "chooseCityTitle": "Choose City",
   "@chooseCityTitle": { "description": "Title of the city picker page." },
 
+  "cityBadgeRecent": "Recent",
+  "@cityBadgeRecent": { "description": "Small badge on a city picker row that's been picked before." },
+
+  "cityBadgeNearby": "Nearby",
+  "@cityBadgeNearby": { "description": "Small badge on a city picker row close to the user's current location." },
+
+  "cityBadgeFetched": "Available",
+  "@cityBadgeFetched": { "description": "Small badge on a city picker row that already has an indexed dataset." },
+
   "chooseCityToDiscoverEvents": "Choose a city to\ndiscover events",
   "@chooseCityToDiscoverEvents": { "description": "Empty-state heading on Discover when no city is selected." },
 

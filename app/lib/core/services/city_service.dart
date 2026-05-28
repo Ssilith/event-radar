@@ -56,6 +56,13 @@ class CityService {
 
   bool sameCity(String a, String b) => _normalize(a) == _normalize(b);
 
+  // Source classification for picker rendering. A city can match more than
+  // one; the picker picks the strongest badge in this order: recent → current
+  // → nearby → fetched.
+  bool isRecent(CityItem c) => _recentCities.contains(c);
+  bool isNearby(CityItem c) => nearbyCities.contains(c);
+  bool isFetched(CityItem c) => _knownCities.contains(c);
+
   Future<void> init() => _initFuture ??= _doInit();
 
   Future<void> _doInit() async {

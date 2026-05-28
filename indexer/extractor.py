@@ -84,14 +84,8 @@ class SchemaOrgExtractor:
         elif isinstance(loc, str):
             address = loc
 
-        price = None
-        offers = obj.get("offers", {})
-        offer = offers[0] if isinstance(offers, list) and offers else offers
-        if isinstance(offer, dict):
-            p = offer.get("price") or offer.get("lowPrice")
-            currency = offer.get("priceCurrency", "")
-            if p is not None:
-                price = f"{currency} {p}".strip() if currency else str(p)
+        description = self._str(obj.get("description"))
+        price = self._extract_price(obj, title, description)
 
         raw_type = obj.get("@type", "")
         schema_type = (
@@ -104,7 +98,7 @@ class SchemaOrgExtractor:
             end=self._norm_date(self._str(obj.get("endDate"))),
             venue=venue,
             address=address,
-            description=self._str(obj.get("description")),
+            description=description,
             url=self._str(obj.get("url")) or page_url,
             source=urllib.parse.urlparse(page_url).netloc,
             price=price,
@@ -112,6 +106,58 @@ class SchemaOrgExtractor:
             longitude=lon,
             category=schema_type,
         )
+
+    _FREE_KEYWORDS = (
+        "free admission",
+        "free entry",
+        "free event",
+        "free",
+        "gratis",
+        "darmow",
+        "bezpłatn",
+        "bezplatn",
+        "wstęp wolny",
+        "wstep wolny",
+        "wstęp bezpłatny",
+        "eintritt frei",
+        "kostenlos",
+        "entrée libre",
+        "entree libre",
+        "gratuit",
+        "ingresso gratuito",
+        "gratuito",
+        "entrada libre",
+        "entrada gratis",
+        "vstup zdarma",
+        "zdarma",
+        "ilmainen",
+        "inträde fritt",
+        "vrije toegang",
+    )
+
+    @classmethod
+    def _extract_price(
+        cls, obj: dict, title: Optional[str], description: Optional[str]
+    ) -> Optional[str]:
+        offers = obj.get("offers", {})
+        offer = offers[0] if isinstance(offers, list) and offers else offers
+        if not isinstance(offer, dict):
+            return None
+        p = offer.get("price") or offer.get("lowPrice")
+        if p is None:
+            return None
+
+        try:
+            value = float(str(p).replace(",", "."))
+        except (TypeError, ValueError):
+            value = None
+        if value == 0:
+            haystack = f"{title or ''} {description or ''}".lower()
+            if not any(k in haystack for k in cls._FREE_KEYWORDS):
+                return None
+
+        currency = offer.get("priceCurrency", "")
+        return f"{currency} {p}".strip() if currency else str(p)
 
     @staticmethod
     def _str(val) -> Optional[str]:

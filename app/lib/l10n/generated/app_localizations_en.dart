@@ -21,6 +21,15 @@ class AppL10nEn extends AppL10n {
   String get chooseCityTitle => 'Choose City';
 
   @override
+  String get cityBadgeRecent => 'Recent';
+
+  @override
+  String get cityBadgeNearby => 'Nearby';
+
+  @override
+  String get cityBadgeFetched => 'Available';
+
+  @override
   String get chooseCityToDiscoverEvents => 'Choose a city to\ndiscover events';
 
   @override

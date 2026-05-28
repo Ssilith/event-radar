@@ -5,6 +5,7 @@ import 'package:dropdown_search/dropdown_search.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/theme/app_shadows.dart';
 import 'package:event_radar/core/utils/language.dart';
+import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:event_radar/core/models/city_item.dart';
@@ -227,6 +228,28 @@ class _CityTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
+    final svc = CityService.instance;
+    final l = AppL10n.of(context);
+    // Resolve a single badge per row (recent > current > nearby > fetched)
+    // so users can tell at a glance why each candidate is here without
+    // pushing extra rows of metadata into the dense list.
+    final ({String label, IconData icon, Color color})? badge;
+    if (svc.isRecent(item)) {
+      badge = (label: l.cityBadgeRecent, icon: Icons.history_rounded, color: primary);
+    } else if (isCurrent) {
+      badge = (label: l.cityBadgeNearby, icon: Icons.my_location_rounded, color: primary);
+    } else if (svc.isNearby(item)) {
+      badge = (label: l.cityBadgeNearby, icon: Icons.near_me_rounded, color: primary);
+    } else if (svc.isFetched(item)) {
+      badge = (
+        label: l.cityBadgeFetched,
+        icon: Icons.cloud_done_rounded,
+        color: AppColors.textMuted,
+      );
+    } else {
+      badge = null;
+    }
+
     return ListTile(
       leading: isCurrent
           ? Icon(Icons.location_on, size: 18, color: primary)
@@ -235,6 +258,27 @@ class _CityTile extends StatelessWidget {
         item.name,
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
+      subtitle: badge == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(badge.icon, size: 12, color: badge.color),
+                  const SizedBox(width: 4),
+                  Text(
+                    badge.label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: badge.color,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
