@@ -96,8 +96,8 @@ class NearbyEventRow extends StatelessWidget {
                           ),
                           child: Text(
                             l.bucketToday.toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.black,
+                            style: TextStyle(
+                              color: AppColors.onPrimary,
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.8,

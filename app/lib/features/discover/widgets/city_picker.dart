@@ -109,6 +109,212 @@ class _CityPickerState extends State<CityPicker> {
   }
 }
 
+//* Modal bottom-sheet city chooser: location row, search, and results list
+class CityPickerSheet extends StatefulWidget {
+  final CityItem? initialValue;
+  const CityPickerSheet._({this.initialValue});
+
+  //* Open the chooser; calls onCitySelected with the picked city (if any)
+  static Future<void> show(
+    BuildContext context, {
+    CityItem? initialValue,
+    required ValueChanged<CityItem> onCitySelected,
+  }) async {
+    final city = await showModalBottomSheet<CityItem>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CityPickerSheet._(initialValue: initialValue),
+    );
+    if (city != null) onCitySelected(city);
+  }
+
+  @override
+  State<CityPickerSheet> createState() => _CityPickerSheetState();
+}
+
+class _CityPickerSheetState extends State<CityPickerSheet> {
+  final _service = CityService.instance;
+  final _searchController = TextEditingController();
+  Timer? _debounce;
+  late Future<List<CityItem>> _future;
+  bool _locating = false;
+
+  String get _langCode => deviceLanguageCode;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _service.getItems('', languageCode: _langCode);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  //* Debounced search; an empty query falls back to the default list
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    final query = value.trim();
+    if (query.isEmpty) {
+      setState(() => _future = _service.getItems('', languageCode: _langCode));
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      setState(
+        () => _future = _service.getItems(query, languageCode: _langCode),
+      );
+    });
+  }
+
+  void _select(CityItem city) {
+    _service.markUsed(city);
+    Navigator.of(context).pop(city);
+  }
+
+  //* Resolve the user's city from GPS, or prompt to enable location
+  Future<void> _useLocation() async {
+    if (_locating) return;
+    setState(() => _locating = true);
+    final ok = await _service.resolveLocation(
+      languageCode: _langCode,
+      force: true,
+    );
+    if (!mounted) return;
+    setState(() => _locating = false);
+    final city = _service.locationCity;
+    if (ok && city != null) {
+      _select(city);
+    } else {
+      final l = AppL10n.of(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.couldNotGetLocation)));
+      AppSettings.openAppSettings(type: AppSettingsType.location);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppL10n.of(context);
+    final media = MediaQuery.of(context);
+    return Padding(
+      //* Lift the sheet above the keyboard when the search field is focused
+      padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: AppShadows.overlay,
+        ),
+        child: SafeArea(
+          top: false,
+          //* Transparent Material gives the ListTiles a paint surface above the
+          //* sheet's coloured Container (Flutter asserts otherwise)
+          child: Material(
+            type: MaterialType.transparency,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: media.size.height * 0.85),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.fromLTRB(0, 12, 0, 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.borderStrong,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        l.chooseCityTitle,
+                        style: GoogleFonts.syne(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  _LocationRow(loading: _locating, onTap: _useLocation),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _onSearchChanged,
+                      textInputAction: TextInputAction.search,
+                      style: TextStyle(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: l.searchCity,
+                        prefixIcon: const Icon(Icons.search, size: 18),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: FutureBuilder<List<CityItem>>(
+                      future: _future,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Loading(),
+                          );
+                        }
+                        final cities = snapshot.data ?? const <CityItem>[];
+                        if (cities.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(
+                              l.noCitiesFound,
+                              style: TextStyle(
+                                color: AppColors.textPlaceholder,
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.only(bottom: 8),
+                          itemCount: cities.length,
+                          itemBuilder: (_, i) {
+                            final city = cities[i];
+                            return _CityTile(
+                              item: city,
+                              isSelected: city == widget.initialValue,
+                              isCurrent: city == _service.locationCity,
+                              onTap: () => _select(city),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 //* Popup header with the "use my location" row
 class _PopupHeader extends StatefulWidget {
   final String langCode;
@@ -181,6 +387,7 @@ class _LocationRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
+    final l = AppL10n.of(context);
     return InkWell(
       onTap: loading ? null : onTap,
       child: Container(
@@ -204,7 +411,7 @@ class _LocationRow extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              loading ? 'Getting location…' : 'Use my current location',
+              loading ? l.gettingLocation : l.useMyLocation,
               style: GoogleFonts.syne(
                 textStyle: TextStyle(
                   color: primary,
@@ -224,11 +431,13 @@ class _CityTile extends StatelessWidget {
   final CityItem item;
   final bool isSelected;
   final bool isCurrent;
+  final VoidCallback? onTap;
 
   const _CityTile({
     required this.item,
     required this.isSelected,
     required this.isCurrent,
+    this.onTap,
   });
 
   @override
@@ -300,6 +509,7 @@ class _CityTile extends StatelessWidget {
         ],
       ),
       selected: isSelected,
+      onTap: onTap,
     );
   }
 }

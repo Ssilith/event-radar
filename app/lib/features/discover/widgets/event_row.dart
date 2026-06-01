@@ -12,7 +12,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-//* All-Events list row: date badge, title, venue, save, distance/chevron
+//* All-Events list row: date badge + category dot, title, venue, time + price, save
 class EventRow extends StatelessWidget {
   final Event event;
   final bool isSaved;
@@ -79,6 +79,14 @@ class EventRow extends StatelessWidget {
         ? nowInVenueTz(event.timezone)
         : eventWallClock(event);
     final catColor = event.category.color;
+    //* Start hour, only when the event has a time-of-day
+    final timeLabel = event.isAllDay
+        ? null
+        : formatEventTime(event, 'HH:mm', locale: locale);
+    //* Price (or "Free") to show in the category colour
+    final priceLabel = event.isFree
+        ? l.free
+        : (event.hasPrice ? event.price : null);
 
     return InkWell(
       onTap: onOpen,
@@ -89,45 +97,61 @@ class EventRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 46,
-              padding: const EdgeInsets.symmetric(vertical: 7),
-              decoration: BoxDecoration(
-                color: isPast
-                    ? Colors.red.withValues(alpha: 0.09)
-                    : primary.withValues(alpha: 0.09),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isPast
-                      ? Colors.red.withValues(alpha: 0.25)
-                      : primary.withValues(alpha: 0.25),
+            //* Date badge with a category-colour dot beneath it
+            Column(
+              children: [
+                Container(
+                  width: 46,
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  decoration: BoxDecoration(
+                    color: isPast
+                        ? Colors.red.withValues(alpha: 0.09)
+                        : primary.withValues(alpha: 0.09),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isPast
+                          ? Colors.red.withValues(alpha: 0.25)
+                          : primary.withValues(alpha: 0.25),
+                    ),
+                    boxShadow: AppShadows.subtle,
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        isPast
+                            ? l.pasShort
+                            : DateFormat('MMM', locale)
+                                  .format(badgeDate)
+                                  .toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                          color: isPast ? Colors.red.shade400 : primary,
+                        ),
+                      ),
+                      Text(
+                        '${badgeDate.day}',
+                        style: GoogleFonts.syne(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                          height: 1.15,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                boxShadow: AppShadows.subtle,
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    isPast
-                        ? l.pasShort
-                        : DateFormat('MMM', locale).format(badgeDate).toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.6,
-                      color: isPast ? Colors.red.shade400 : primary,
-                    ),
+                const SizedBox(height: 7),
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: catColor,
+                    shape: BoxShape.circle,
                   ),
-                  Text(
-                    '${badgeDate.day}',
-                    style: GoogleFonts.syne(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                      height: 1.15,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -151,10 +175,45 @@ class EventRow extends StatelessWidget {
                       event.venue!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textHint,
-                      ),
+                      style: TextStyle(fontSize: 12, color: AppColors.textHint),
+                    ),
+                  ],
+                  //* Bottom line: start hour + price (in the category colour)
+                  if (timeLabel != null || priceLabel != null) ...[
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        if (timeLabel != null) ...[
+                          Icon(
+                            Icons.schedule_rounded,
+                            size: 12,
+                            color: AppColors.textPlaceholder,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            timeLabel,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textPlaceholder,
+                            ),
+                          ),
+                        ],
+                        if (timeLabel != null && priceLabel != null)
+                          const SizedBox(width: 10),
+                        if (priceLabel != null)
+                          Flexible(
+                            child: Text(
+                              priceLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: catColor,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ],
@@ -183,16 +242,7 @@ class EventRow extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: catColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 10),
                 _buildTrailing(primary),
               ],
             ),

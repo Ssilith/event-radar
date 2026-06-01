@@ -53,8 +53,8 @@ class EventsChip extends StatelessWidget {
                   ),
                   child: Text(
                     l.todayCount(todayCount),
-                    style: const TextStyle(
-                      color: Colors.black,
+                    style: TextStyle(
+                      color: AppColors.onPrimary,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                     ),

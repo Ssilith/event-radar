@@ -33,8 +33,8 @@ class GroupSection extends StatelessWidget {
                   ),
                   child: Text(
                     AppL10n.of(context).groupCurrent,
-                    style: const TextStyle(
-                      color: Colors.black,
+                    style: TextStyle(
+                      color: AppColors.onPrimary,
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.8,

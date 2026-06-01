@@ -183,7 +183,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                         label: Text(l.directions),
                         style: FilledButton.styleFrom(
                           backgroundColor: primary,
-                          foregroundColor: Colors.black,
+                          foregroundColor: AppColors.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.w700,
@@ -221,7 +221,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                               label: Text(l.viewPage),
                               style: FilledButton.styleFrom(
                                 backgroundColor: primary,
-                                foregroundColor: Colors.black,
+                                foregroundColor: AppColors.onPrimary,
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 textStyle: const TextStyle(
                                   fontWeight: FontWeight.w700,

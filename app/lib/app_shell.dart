@@ -2,6 +2,7 @@ import 'package:event_radar/features/discover/discover_screen.dart';
 import 'package:event_radar/features/map/map_screen.dart';
 import 'package:event_radar/features/saved/saved_screen.dart';
 import 'package:event_radar/core/services/city_service.dart';
+import 'package:event_radar/core/services/settings_service.dart';
 import 'package:event_radar/core/models/page.dart';
 import 'package:event_radar/widgets/bottom_navigation.dart';
 import 'package:flutter/material.dart' hide Page;
@@ -29,12 +30,23 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
       vsync: this,
     );
     _loadDefaultCity();
+    // The tab screens read colours from the global AppColors tokens, which
+    // have no InheritedWidget to rebuild them on a theme flip. Rebuilding here
+    // (a State setState, which const can't block) refreshes them while keeping
+    // this State alive — so `const AppShell()` is fine.
+    SettingsService.instance.themeMode.addListener(_onThemeChanged);
+  }
+
+  //* Rebuild the tabs so they re-read AppColors after a theme flip
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    super.dispose();
+    SettingsService.instance.themeMode.removeListener(_onThemeChanged);
     _motionTabBarController?.dispose();
+    super.dispose();
   }
 
   //* Load the last-used city once CityService is ready

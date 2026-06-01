@@ -10,14 +10,13 @@ import 'package:google_fonts/google_fonts.dart';
 class SettingsSheet extends StatelessWidget {
   const SettingsSheet({super.key});
 
-  //* Open the sheet (transparent route; the sheet paints its own background)
+  //* Open the sheet. isScrollControlled matches the city picker so it has the
+  //* same full-height drag-down-to-dismiss feel; the sheet paints its own bg.
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => const SettingsSheet(),
     );
   }
@@ -201,7 +200,7 @@ class _SegmentedRow<T> extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? Colors.black : AppColors.textBody,
+                color: selected ? AppColors.onPrimary : AppColors.textBody,
               ),
             ),
           ),

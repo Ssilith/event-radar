@@ -49,7 +49,7 @@ class DiscoverEmptyState extends StatelessWidget {
               label: Text(l.pickACity),
               style: FilledButton.styleFrom(
                 backgroundColor: primary,
-                foregroundColor: Colors.black,
+                foregroundColor: AppColors.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 28,
                   vertical: 14,

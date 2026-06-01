@@ -401,8 +401,8 @@ class _MapScreenState extends State<MapScreen> {
                     child: Center(
                       child: Text(
                         '${markers.length}',
-                        style: const TextStyle(
-                          color: Colors.black,
+                        style: TextStyle(
+                          color: AppColors.onPrimary,
                           fontWeight: FontWeight.w800,
                           fontSize: 14,
                         ),

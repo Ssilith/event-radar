@@ -41,7 +41,7 @@ class DateFilterBar extends StatelessWidget {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: sel ? primary : Colors.transparent,
+                    color: sel ? primary : AppColors.surfaceHigh,
                     borderRadius: BorderRadius.circular(22),
                     border: Border.all(
                       color: sel ? primary : AppColors.borderStrong,
@@ -53,7 +53,7 @@ class DateFilterBar extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-                      color: sel ? Colors.black : AppColors.textMuted,
+                      color: sel ? AppColors.onPrimary : AppColors.textMuted,
                     ),
                   ),
                 ),
@@ -78,7 +78,7 @@ class DateFilterBar extends StatelessWidget {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: freeOnly ? primary : Colors.transparent,
+                  color: freeOnly ? primary : AppColors.surfaceHigh,
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(
                     color: freeOnly ? primary : AppColors.borderStrong,
@@ -91,7 +91,7 @@ class DateFilterBar extends StatelessWidget {
                     Icon(
                       Icons.savings_rounded,
                       size: 14,
-                      color: freeOnly ? Colors.black : AppColors.textMuted,
+                      color: freeOnly ? AppColors.onPrimary : AppColors.textMuted,
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -100,7 +100,7 @@ class DateFilterBar extends StatelessWidget {
                         fontSize: 13,
                         fontWeight:
                             freeOnly ? FontWeight.w700 : FontWeight.w400,
-                        color: freeOnly ? Colors.black : AppColors.textMuted,
+                        color: freeOnly ? AppColors.onPrimary : AppColors.textMuted,
                       ),
                     ),
                   ],

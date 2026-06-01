@@ -27,10 +27,9 @@ class StatusView extends StatelessWidget {
       onRetry = null,
       retryLabel = null;
 
-  //* Empty result
-  const StatusView.empty({super.key})
+  //* Empty result (optional message overrides the default statusEmpty)
+  const StatusView.empty({super.key, this.message})
     : icon = Icons.search_off,
-      message = null,
       showSpinner = false,
       onRetry = null,
       retryLabel = null;

@@ -11,13 +11,14 @@ import 'package:event_radar/core/services/event_service.dart';
 import 'package:event_radar/core/services/settings_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:diacritic/diacritic.dart';
+import 'package:extension_utils/string_utils.dart';
 import 'package:event_radar/core/utils/date_filter.dart';
 import 'package:event_radar/core/utils/event_dedup.dart';
 import 'package:event_radar/core/utils/event_sort.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/core/utils/language.dart';
 import 'package:event_radar/features/discover/widgets/category_bar.dart';
-import 'package:event_radar/features/discover/widgets/city_picker_page.dart';
+import 'package:event_radar/features/discover/widgets/city_picker.dart';
 import 'package:event_radar/features/discover/widgets/date_filter_bar.dart';
 import 'package:event_radar/features/discover/widgets/discover_empty_state.dart';
 import 'package:event_radar/features/discover/widgets/discover_header.dart';
@@ -66,6 +67,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   Set<String> _bookmarked = {};
   StreamSubscription<BoxEvent>? _bookmarkSub;
 
+  final _scrollController = ScrollController();
+  bool _showScrollTop = false;
+
   @override
   void initState() {
     super.initState();
@@ -76,11 +80,27 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     });
     //* Rebuild so distance pills refresh when the unit changes
     SettingsService.instance.distanceUnit.addListener(_onSettingsChanged);
+    _scrollController.addListener(_onScroll);
     _initCity();
   }
 
   void _onSettingsChanged() {
     if (mounted) setState(() {});
+  }
+
+  //* Show the jump-to-top button after scrolling past ~one screenful
+  void _onScroll() {
+    final show = _scrollController.offset > 500;
+    if (show != _showScrollTop) setState(() => _showScrollTop = show);
+  }
+
+  //* Animate the feed back to the top
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -94,6 +114,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     _sub?.cancel();
     _bookmarkSub?.cancel();
     _searchController.dispose();
+    _scrollController.dispose();
     SettingsService.instance.distanceUnit.removeListener(_onSettingsChanged);
     super.dispose();
   }
@@ -174,20 +195,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   Future<void> _toggleBookmark(Event event) =>
       BookmarkActions.toggle(event, AppL10n.of(context));
 
-  //* Open the full-screen city picker
+  //* Open the city chooser bottom sheet (markUsed is handled inside the sheet)
   void _openCityPicker() {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => CityPickerPage(
-          initialValue: widget.selectedCity,
-          onCitySelected: (city) {
-            Navigator.of(context).pop();
-            _cityService.markUsed(city);
-            widget.onCitySelected(city);
-          },
-        ),
-      ),
+    CityPickerSheet.show(
+      context,
+      initialValue: widget.selectedCity,
+      onCitySelected: widget.onCitySelected,
     );
   }
 
@@ -305,9 +318,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   //* The scrollable feed: header, stats, featured carousel, filters, list
   Widget _buildEventFeed(BuildContext context) {
     final l = AppL10n.of(context);
-    return RefreshIndicator(
+    final feed = RefreshIndicator(
       onRefresh: _refresh,
       child: CustomScrollView(
+        controller: _scrollController,
         //* Always overscroll so pull-to-refresh works with a short list
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
@@ -329,10 +343,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               SliverToBoxAdapter(
                 child: SectionHeader(
                   title: l.featuredSection,
+                  //* Capitalise the weekday (Polish lowercases it) for the label
                   trailing: DateFormat(
                     'EEEE',
                     Localizations.localeOf(context).languageCode,
-                  ).format(DateTime.now()),
+                  ).format(DateTime.now()).capitalize(),
                 ),
               ),
               SliverToBoxAdapter(
@@ -384,7 +399,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               ),
             ),
             if (_filtered.isEmpty)
-              const SliverToBoxAdapter(child: StatusView.empty())
+              SliverToBoxAdapter(
+                child: StatusView.empty(
+                  message: _dateFilter == DateFilter.past
+                      ? l.statusEmptyPast
+                      : null,
+                ),
+              )
             else
               SliverList(
                 delegate: SliverChildBuilderDelegate(
@@ -407,6 +428,57 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               ),
             ),
         ],
+      ),
+    );
+    return Stack(
+      children: [
+        feed,
+        //* Floating jump-to-top button, shown once the feed is scrolled
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: AnimatedSlide(
+            duration: const Duration(milliseconds: 200),
+            offset: _showScrollTop ? Offset.zero : const Offset(0, 1.4),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: _showScrollTop ? 1 : 0,
+              child: IgnorePointer(
+                ignoring: !_showScrollTop,
+                child: _ScrollTopButton(onTap: _scrollToTop),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+//* Round button that animates the Discover feed back to the top
+class _ScrollTopButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _ScrollTopButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Material(
+      color: primary,
+      shape: const CircleBorder(),
+      elevation: 3,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Icon(
+            Icons.keyboard_arrow_up_rounded,
+            color: AppColors.onPrimary,
+            size: 26,
+          ),
+        ),
       ),
     );
   }

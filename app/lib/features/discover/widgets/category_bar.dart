@@ -34,20 +34,21 @@ class CategoryBar extends StatelessWidget {
               avatar: Icon(
                 cat?.iconData ?? Icons.apps_rounded,
                 size: 15,
-                color: sel ? Colors.black : color,
+                //* "All" fills with primary (white text); category chips pastel (black)
+                color: sel ? (cat == null ? AppColors.onPrimary : Colors.black) : color,
               ),
               label: Text(cat?.label(l) ?? l.categoryAll),
               selected: sel,
               onSelected: (_) => onChanged(sel ? null : cat),
               showCheckmark: false,
               selectedColor: color,
-              backgroundColor: AppColors.border,
+              backgroundColor: AppColors.surfaceHigh,
               side: BorderSide(
                 color: sel ? color : AppColors.borderStrong,
               ),
               labelStyle: TextStyle(
                 fontSize: 12,
-                color: sel ? Colors.black : AppColors.textBody,
+                color: sel ? (cat == null ? AppColors.onPrimary : Colors.black) : AppColors.textBody,
                 fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
               ),
               padding: const EdgeInsets.symmetric(horizontal: 4),

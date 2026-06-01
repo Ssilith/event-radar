@@ -169,7 +169,7 @@ class SelectedEventCard extends StatelessWidget {
                       label: Text(l.details),
                       style: FilledButton.styleFrom(
                         backgroundColor: primary,
-                        foregroundColor: Colors.black,
+                        foregroundColor: AppColors.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         textStyle: const TextStyle(
                           fontSize: 12,

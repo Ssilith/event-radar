@@ -21,6 +21,12 @@ class AppL10nPl extends AppL10n {
   String get chooseCityTitle => 'Wybierz miasto';
 
   @override
+  String get searchCity => 'Szukaj dowolnego miasta…';
+
+  @override
+  String get noCitiesFound => 'Nie znaleziono miast';
+
+  @override
   String get cityBadgeRecent => 'Ostatnie';
 
   @override
@@ -80,7 +86,7 @@ class AppL10nPl extends AppL10n {
 
   @override
   String get notificationsHint =>
-      'Powiadom dzień przed zapisanymi wydarzeniami.';
+      'Powiadom dzień przed zapisanymi wydarzeniami';
 
   @override
   String notificationsTitle(String title) {
@@ -99,10 +105,10 @@ class AppL10nPl extends AppL10n {
   String get sortByLabel => 'Sortuj';
 
   @override
-  String get sortByDate => 'Data';
+  String get sortByDate => 'Sortuj według daty';
 
   @override
-  String get sortByNearby => 'Najbliższe';
+  String get sortByNearby => 'Sortuj według odległości';
 
   @override
   String get searchHint => 'Szukaj wydarzeń';
@@ -115,7 +121,7 @@ class AppL10nPl extends AppL10n {
 
   @override
   String eventsFound(int count) {
-    return 'znaleziono $count';
+    return 'Znaleziono $count';
   }
 
   @override
@@ -263,6 +269,12 @@ class AppL10nPl extends AppL10n {
 
   @override
   String get couldNotGetLocation => 'Nie można ustalić Twojej lokalizacji';
+
+  @override
+  String get useMyLocation => 'Użyj mojej obecnej lokalizacji';
+
+  @override
+  String get gettingLocation => 'Pobieranie lokalizacji…';
 
   @override
   String get couldNotOpenMaps => 'Nie udało się otworzyć Google Maps';
@@ -424,6 +436,10 @@ class AppL10nPl extends AppL10n {
   @override
   String get statusEmpty =>
       'Nie znaleziono nadchodzących wydarzeń dla tego miasta';
+
+  @override
+  String get statusEmptyPast =>
+      'Nie znaleziono minionych wydarzeń dla tego miasta';
 
   @override
   String get retry => 'Spróbuj ponownie';

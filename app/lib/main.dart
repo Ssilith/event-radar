@@ -41,12 +41,9 @@ class MyApp extends StatelessWidget {
               locale: locale,
               localizationsDelegates: AppL10n.localizationsDelegates,
               supportedLocales: AppL10n.supportedLocales,
-              //* Re-listen to themeMode inside the route so AppShell rebuilds on
-              //* a flip; AppShell must stay non-const or the rebuild is skipped
-              home: ValueListenableBuilder<ThemeMode>(
-                valueListenable: settings.themeMode,
-                builder: (_, _, _) => const AppShell(),
-              ),
+              //* AppShell subscribes to themeMode itself and rebuilds its tabs
+              //* on a flip, so it can stay const here (see app_shell.dart)
+              home: const AppShell(),
             );
           },
         );
@@ -61,6 +58,6 @@ class MyApp extends StatelessWidget {
     colorSchemeSeed: AppColors.primary,
     scaffoldBackgroundColor: b == Brightness.dark
         ? const Color(0xFF0A0A0A)
-        : const Color(0xFFFAFAFA),
+        : const Color(0xFFF2F5F9),
   );
 }
