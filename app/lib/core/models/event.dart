@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:event_radar/core/models/event_category.dart';
-import 'package:event_radar/core/utils/html_text.dart';
+import 'package:event_radar/core/utils/html_parsing.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'event.g.dart';
@@ -78,8 +78,6 @@ class Event {
       latitude!.isFinite &&
       longitude!.isFinite;
 
-  bool get isUpcoming => start.isAfter(DateTime.now().toUtc());
-
   bool get hasPrice {
     final p = price?.trim();
     return p != null && p.isNotEmpty;
@@ -138,7 +136,7 @@ DateTime _parseDate(String raw) {
 DateTime? _parseDateOrNull(String? raw) => raw == null ? null : _parseDate(raw);
 
 // Non-nullable counterpart used for required text fields. The shared helper
-// is in html_text.dart; this thin wrapper exists because json_serializable's
+// is in html_parsing.dart; this thin wrapper exists because json_serializable's
 // fromJson hook for a non-nullable field must itself be non-nullable.
 String _cleanText(String raw) => htmlToText(raw);
 

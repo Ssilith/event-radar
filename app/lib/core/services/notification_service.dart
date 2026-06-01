@@ -24,7 +24,7 @@ class NotificationService {
 
   Future<void> init() async {
     if (_initialized) return;
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const android = AndroidInitializationSettings('@mipmap/launcher_icon');
     const ios = DarwinInitializationSettings();
     await _plugin.initialize(
       settings: const InitializationSettings(android: android, iOS: ios),
@@ -52,17 +52,12 @@ class NotificationService {
     await init();
     if (!await ensurePermission()) return;
 
-    // Fire 24h before the event's wall-clock start. The plugin's zoned
-    // scheduler needs a TZDateTime; we anchor it in the venue's location so
-    // the user gets reminded relative to where the event actually happens.
+    // The plugin's zoned scheduler needs a TZDateTime; we anchor everything in
+    // the venue's location so reminders fire relative to where the event
+    // actually happens.
     final venueTz = venueLocation(event.timezone);
-    final start = tz.TZDateTime.from(event.start, venueTz);
-    final reminder = start.subtract(const Duration(days: 1));
-    final now = tz.TZDateTime.now(venueTz);
-    if (!reminder.isAfter(now)) {
-      _log.info('skipping past reminder for ${event.id}');
-      return;
-    }
+    final reminder = _reminderTime(event, venueTz);
+    if (reminder == null) return;
 
     try {
       await _plugin.zonedSchedule(
@@ -84,6 +79,40 @@ class NotificationService {
     } catch (e, s) {
       _log.warning('zonedSchedule failed for ${event.id}', e, s);
     }
+  }
+
+  // Decides when a saved event's reminder should fire, in the venue's tz.
+  //
+  // - Normal case: 24h before the wall-clock start, so the user gets a
+  //   heads-up the day before.
+  // - Day-before slot already passed: happens for events saved inside that
+  //   24h window, and for multi-day events saved after they've begun but
+  //   while they're still running. Rather than drop the reminder, we simply
+  //   fire 24h from now (from bookmarking) — as long as the event is still on
+  //   by then.
+  // - Returns null only when there's nothing left to remind about: the event
+  //   has already ended, or it ends within the next 24h.
+  tz.TZDateTime? _reminderTime(Event event, tz.Location venueTz) {
+    final start = tz.TZDateTime.from(event.start, venueTz);
+    final now = tz.TZDateTime.now(venueTz);
+
+    final dayBefore = start.subtract(const Duration(days: 1));
+    if (dayBefore.isAfter(now)) return dayBefore;
+
+    final end = event.end == null
+        ? start
+        : tz.TZDateTime.from(event.end!, venueTz);
+    if (!end.isAfter(now)) {
+      _log.info('skipping reminder for ${event.id}: event already ended');
+      return null;
+    }
+
+    final reminder = now.add(const Duration(days: 1));
+    if (reminder.isAfter(end)) {
+      _log.info('skipping reminder for ${event.id}: ends within 24h');
+      return null;
+    }
+    return reminder;
   }
 
   Future<void> cancelEventReminder(String eventId) async {

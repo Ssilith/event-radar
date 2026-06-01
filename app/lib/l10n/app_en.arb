@@ -295,6 +295,9 @@
   "upcoming": "UPCOMING",
   "@upcoming": { "description": "Badge on upcoming events." },
 
+  "ongoing": "ONGOING",
+  "@ongoing": { "description": "Badge on events that have started but not yet ended (multi-day events currently in progress)." },
+
   "pasShort": "PAS",
   "@pasShort": { "description": "Compact three-letter \"past\" badge used inside small date squares." },
 

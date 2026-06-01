@@ -1,4 +1,4 @@
-import 'package:event_radar/core/utils/html_text.dart' as html_text;
+import 'package:event_radar/core/utils/html_parsing.dart';
 import 'package:flutter/material.dart';
 
 // Drop-in for `Text` that renders inline HTML formatting (<b>/<strong>,
@@ -27,7 +27,7 @@ class HtmlText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text.rich(
-      html_text.htmlToSpan(data, baseStyle: style),
+      htmlToSpan(data, baseStyle: style),
       maxLines: maxLines,
       overflow: overflow,
       textAlign: textAlign,

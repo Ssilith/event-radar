@@ -40,6 +40,7 @@ class NearbyEventRow extends StatelessWidget {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final catColor = event.category.color;
     final distance = _distanceLabel();
+    final durationLabels = DurationLabels(allDay: l.allDay);
     // In light mode every row uses the more saturated "today" decoration so
     // tiles feel consistent on a light surface; dark mode keeps the original
     // toned-down look for non-today rows so today still stands out.
@@ -125,8 +126,16 @@ class NearbyEventRow extends StatelessWidget {
                       Icon(Icons.schedule_rounded, size: 11, color: primary),
                       const SizedBox(width: 3),
                       Text(
+                        // Mirror the featured card: when the event is on today
+                        // (single- or multi-day) show just the start time, or
+                        // "All day". Otherwise show date + time. This drops the
+                        // old "→ end date" arrow for multi-day events.
                         isToday
-                            ? formatEventTime(event, 'HH:mm', locale: locale)
+                            ? eventTodayLabel(
+                                event,
+                                labels: durationLabels,
+                                locale: locale,
+                              )
                             : formatEventTime(event, 'd MMM • HH:mm', locale: locale),
                         style: TextStyle(
                           fontSize: 11,

@@ -619,6 +619,12 @@ abstract class AppL10n {
   /// **'UPCOMING'**
   String get upcoming;
 
+  /// Badge on events that have started but not yet ended (multi-day events currently in progress).
+  ///
+  /// In en, this message translates to:
+  /// **'ONGOING'**
+  String get ongoing;
+
   /// Compact three-letter "past" badge used inside small date squares.
   ///
   /// In en, this message translates to:

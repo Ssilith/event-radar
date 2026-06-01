@@ -20,8 +20,13 @@ class SavedEventRow extends StatelessWidget {
     final primary = Theme.of(context).colorScheme.primary;
     final l = AppL10n.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final isPast = event.start.isBefore(DateTime.now().toUtc());
-    final eventLocal = eventWallClock(event);
+    final isPast = event.isPast;
+    final isHappeningToday = !isPast && event.isHappeningToday;
+    // Multi-day events spanning today show today's date in the badge — keeps
+    // visual parity with the Discover list.
+    final badgeDate = isHappeningToday
+        ? nowInVenueTz(event.timezone)
+        : eventWallClock(event);
     final catColor = event.category.color;
 
     return InkWell(
@@ -55,7 +60,7 @@ class SavedEventRow extends StatelessWidget {
                   Text(
                     isPast
                         ? l.pasShort
-                        : DateFormat('MMM', locale).format(eventLocal).toUpperCase(),
+                        : DateFormat('MMM', locale).format(badgeDate).toUpperCase(),
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -64,7 +69,7 @@ class SavedEventRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${eventLocal.day}',
+                    '${badgeDate.day}',
                     style: GoogleFonts.syne(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,

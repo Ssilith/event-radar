@@ -79,13 +79,12 @@ class _SavedScreenState extends State<SavedScreen> {
         return a.key.toLowerCase().compareTo(b.key.toLowerCase());
       });
 
-    final nowUtc = DateTime.now().toUtc();
     return entries.map((e) {
       final isCurrent =
           current != null && cityService.sameCity(e.key, current);
       e.value.sort((x, y) {
-        final xPast = x.start.isBefore(nowUtc);
-        final yPast = y.start.isBefore(nowUtc);
+        final xPast = x.isPast;
+        final yPast = y.isPast;
         if (xPast != yPast) return xPast ? 1 : -1;
         if (xPast) return y.start.compareTo(x.start);
         return x.start.compareTo(y.start);
@@ -106,11 +105,12 @@ class _SavedScreenState extends State<SavedScreen> {
   ];
 
   List<Group> _groupByDate(AppL10n l) {
-    final nowUtc = DateTime.now().toUtc();
     final buckets = {for (final b in _bucketOrder) b: <Event>[]};
 
     for (final e in _saved) {
       // Bucket by the event's own venue-local date, not the phone's date.
+      // Past / today checks consider event.end too, so multi-day events stay
+      // in "today" until their end has actually passed.
       final start = eventWallClock(e);
       final venueNow = nowInVenueTz(e.timezone);
       final today = DateUtils.dateOnly(venueNow);
@@ -118,9 +118,9 @@ class _SavedScreenState extends State<SavedScreen> {
       final weekEnd = today.add(const Duration(days: 7));
       final monthEnd = today.add(const Duration(days: 30));
 
-      if (start.isBefore(today)) {
+      if (e.isPast) {
         buckets[_DateBucket.past]!.add(e);
-      } else if (DateUtils.isSameDay(start, venueNow)) {
+      } else if (e.isHappeningToday) {
         buckets[_DateBucket.today]!.add(e);
       } else if (DateUtils.isSameDay(start, tomorrow)) {
         buckets[_DateBucket.tomorrow]!.add(e);
@@ -136,15 +136,10 @@ class _SavedScreenState extends State<SavedScreen> {
     for (final entry in buckets.entries) {
       if (entry.key == _DateBucket.past) {
         entry.value.sort((a, b) => b.start.compareTo(a.start));
-      } else if (entry.key == _DateBucket.today) {
-        entry.value.sort((a, b) {
-          final aPast = a.start.isBefore(nowUtc);
-          final bPast = b.start.isBefore(nowUtc);
-          if (aPast != bPast) return aPast ? 1 : -1;
-          if (aPast) return b.start.compareTo(a.start);
-          return a.start.compareTo(b.start);
-        });
       } else {
+        // Non-past buckets are now homogeneous (no past events leaked in), so
+        // a plain chronological sort suffices — ongoing events sort first
+        // because their start is earliest.
         entry.value.sort((a, b) => a.start.compareTo(b.start));
       }
     }

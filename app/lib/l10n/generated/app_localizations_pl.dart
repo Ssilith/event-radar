@@ -311,6 +311,9 @@ class AppL10nPl extends AppL10n {
   String get upcoming => 'NADCHODZI';
 
   @override
+  String get ongoing => 'TRWA';
+
+  @override
   String get pasShort => 'MIN';
 
   @override

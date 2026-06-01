@@ -1,4 +1,4 @@
-import 'package:event_radar/core/utils/page.dart';
+import 'package:event_radar/core/models/page.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart' hide Page;
 import 'package:motion_tab_bar_v2/motion-tab-bar.dart';

@@ -8,14 +8,18 @@ import 'package:event_radar/core/services/city_service.dart';
 import 'package:event_radar/core/services/event_service.dart';
 import 'package:event_radar/core/services/settings_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
+import 'package:event_radar/core/utils/date_filter.dart';
+import 'package:event_radar/core/utils/event_dedup.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/core/utils/maps_launcher.dart';
 import 'package:event_radar/features/event_details/event_details_screen.dart';
 import 'package:event_radar/features/map/widgets/collapsed_event_bubble.dart';
+import 'package:event_radar/features/map/widgets/draggable_overlay.dart';
 import 'package:event_radar/features/map/widgets/event_marker.dart';
 import 'package:event_radar/features/map/widgets/events_chip.dart';
 import 'package:event_radar/features/map/widgets/events_panel.dart';
 import 'package:event_radar/features/map/widgets/loading_pill.dart';
+import 'package:event_radar/features/map/widgets/map_empty_state.dart';
 import 'package:event_radar/features/map/widgets/map_fab.dart';
 import 'package:event_radar/features/map/widgets/selected_event_card.dart';
 import 'package:event_radar/features/map/widgets/user_dot.dart';
@@ -39,13 +43,9 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  // HomeScreen's MotionTabBar (62 px) plus the active-tab pop-up overhang
+  // AppShell's MotionTabBar (62 px) plus the active-tab pop-up overhang
   // sits below this screen's body but isn't reflected in MediaQuery padding.
   static const _bottomNavReserved = 110.0;
-
-  // Minimum drag distance (px) before we treat the gesture as directional;
-  // smaller jitter falls back to "snap to nearest edge".
-  static const _dragSnapThreshold = 4.0;
 
   final _eventService = EventService.instance;
   final _cityService = CityService.instance;
@@ -57,26 +57,13 @@ class _MapScreenState extends State<MapScreen> {
   Event? _selected;
   Position? _userPosition;
 
-  // Draggable overlay state. Two independent widgets (the events chip and
-  // the selected-event card) can be moved around; each tracks an offset,
-  // an animating flag (so settle calls can animate), and a collapsed flag.
-  Offset? _chipOffset;
-  bool _chipAnimating = false;
+  // Floating-overlay state. Each DraggableOverlay manages its own offset and
+  // animation flags internally; the parent only owns the higher-level
+  // "expanded" / "collapsed" flags that drive `snapToCorner`.
   bool _chipExpanded = false;
-  Offset? _cardOffset;
-  bool _cardAnimating = false;
   bool _cardCollapsed = false;
-  final _chipKey = GlobalKey();
-  final _cardKey = GlobalKey();
-  Offset? _dragStart;
-
-  // Snap-side hint captured at the moment of an expanded→collapsed toggle.
-  // Without this, _settle() would pick the corner from the just-shrunk box,
-  // which lives at the expanded widget's left edge — so a panel that visibly
-  // occupied the right half snaps to the left after collapsing.
-  // x/y are -1.0 (left/top) or 1.0 (right/bottom). Consumed by _settle().
-  ({double x, double y})? _chipSnapHint;
-  ({double x, double y})? _cardSnapHint;
+  final _chipKey = GlobalKey<DraggableOverlayState>();
+  final _cardKey = GlobalKey<DraggableOverlayState>();
 
   @override
   void initState() {
@@ -133,12 +120,23 @@ class _MapScreenState extends State<MapScreen> {
 
     final slug = EventService.slugFor(city);
     _sub = _eventService
-        .getEventsForCity(slug, countryCode: city.countryCode)
+        // includePast keeps ongoing multi-day events (which started in the
+        // past) in the stream; DateFilter.all then drops only the truly-ended
+        // ones — matching Discover's default view exactly.
+        .getEventsForCity(
+          slug,
+          countryCode: city.countryCode,
+          includePast: true,
+        )
         .listen((state) {
           setState(() {
             _status = state.status;
             if (state.events.isNotEmpty) {
-              _events = state.events.where((e) => e.hasLocation).toList();
+              _events = dedupeOverlapping(
+                state.events
+                    .where((e) => e.hasLocation && DateFilter.all.matches(e))
+                    .toList(),
+              );
               _fitToEvents();
             }
           });
@@ -244,9 +242,8 @@ class _MapScreenState extends State<MapScreen> {
   // an accidental tap can't lose the selection.
   void _onMapTap() {
     if (_selected == null || _cardCollapsed) return;
-    _cardSnapHint = _readSnapSide(_cardKey, _cardOffset);
+    _cardKey.currentState?.recordSnapSide();
     setState(() => _cardCollapsed = true);
-    _settleCardPosition();
   }
 
   void _panTo(Event event) {
@@ -255,7 +252,6 @@ class _MapScreenState extends State<MapScreen> {
       _selected = event;
       _cardCollapsed = false;
     });
-    _settleCardPosition();
   }
 
   Future<void> _openDirections(Event event) async {
@@ -276,15 +272,15 @@ class _MapScreenState extends State<MapScreen> {
   List<Event> get _drawerEvents {
     final list = [..._events];
     list.sort((a, b) {
-      final ta = isEventToday(a);
-      final tb = isEventToday(b);
+      final ta = a.isHappeningToday;
+      final tb = b.isHappeningToday;
       if (ta != tb) return ta ? -1 : 1;
       return a.start.compareTo(b.start);
     });
     return list;
   }
 
-  int get _todayCount => _events.where(isEventToday).length;
+  int get _todayCount => _events.where((e) => e.isHappeningToday).length;
 
   // Geolocator can hand back a Position with NaN coords on simulators and
   // some Android quirks. flutter_map throws when fed a non-finite LatLng, so
@@ -302,7 +298,7 @@ class _MapScreenState extends State<MapScreen> {
   // share the same gesture + sizing logic.
   Marker _buildEventMarker(Event event) {
     final isSelected = event.id == _selected?.id;
-    final today = isEventToday(event);
+    final today = event.isHappeningToday;
     final size = isSelected ? 46 : (today ? 40 : 32);
     return Marker(
       point: LatLng(event.latitude!, event.longitude!),
@@ -314,183 +310,12 @@ class _MapScreenState extends State<MapScreen> {
             _selected = isSelected ? null : event;
             if (!isSelected) _cardCollapsed = false;
           });
-          if (!isSelected) _settleCardPosition();
         },
         child: EventMarker(
           category: event.category,
           isSelected: isSelected,
           isToday: today,
         ),
-      ),
-    );
-  }
-
-  // ── Draggable overlays ──────────────────────────────────────────────────
-
-  void _settleChipPosition() {
-    final hint = _chipSnapHint;
-    _chipSnapHint = null;
-    _settle(
-      key: _chipKey,
-      getOffset: () => _chipOffset,
-      snapToCorner: !_chipExpanded,
-      cornerHint: hint,
-      apply: (o) => setState(() {
-        _chipOffset = o;
-        _chipAnimating = true;
-      }),
-    );
-  }
-
-  void _settleCardPosition() {
-    final hint = _cardSnapHint;
-    _cardSnapHint = null;
-    _settle(
-      key: _cardKey,
-      getOffset: () => _cardOffset,
-      snapToCorner: _cardCollapsed,
-      cornerHint: hint,
-      apply: (o) => setState(() {
-        _cardOffset = o;
-        _cardAnimating = true;
-      }),
-    );
-  }
-
-  // Reads the rendered bounds of `key` synchronously and returns which half of
-  // the screen its center sits in. Call BEFORE the setState that swaps the
-  // widget out for its collapsed form, otherwise the box has already shrunk.
-  ({double x, double y})? _readSnapSide(GlobalKey key, Offset? offset) {
-    if (offset == null) return null;
-    final box = key.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null) return null;
-    final size = box.size;
-    final screen = MediaQuery.of(context).size;
-    return (
-      x: (offset.dx + size.width / 2) < screen.width / 2 ? -1.0 : 1.0,
-      y: (offset.dy + size.height / 2) < screen.height / 2 ? -1.0 : 1.0,
-    );
-  }
-
-  // Re-positions an overlay once we know its rendered size: collapsed widgets
-  // snap to the nearest corner; expanded ones just stay clamped on-screen.
-  void _settle({
-    required GlobalKey key,
-    required Offset? Function() getOffset,
-    required bool snapToCorner,
-    required ValueChanged<Offset> apply,
-    ({double x, double y})? cornerHint,
-  }) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final box = key.currentContext?.findRenderObject() as RenderBox?;
-      if (box == null) return;
-      final size = box.size;
-      final screen = MediaQuery.of(context).size;
-      final padding = MediaQuery.of(context).padding;
-      final minY = padding.top + kToolbarHeight + 8;
-      final maxX = screen.width - size.width - 16;
-      final maxY = screen.height -
-          size.height -
-          padding.bottom -
-          _bottomNavReserved -
-          16;
-      final cur = getOffset() ?? Offset(16, minY);
-
-      final Offset target;
-      if (snapToCorner) {
-        final double targetX;
-        final double targetY;
-        if (cornerHint != null) {
-          targetX = cornerHint.x < 0 ? 16.0 : maxX;
-          targetY = cornerHint.y < 0 ? minY : maxY;
-        } else {
-          final centerX = cur.dx + size.width / 2;
-          final centerY = cur.dy + size.height / 2;
-          targetX = centerX < screen.width / 2 ? 16.0 : maxX;
-          targetY = centerY < screen.height / 2 ? minY : maxY;
-        }
-        target = Offset(targetX, targetY);
-      } else {
-        target = Offset(
-          cur.dx.clamp(16.0, maxX).toDouble(),
-          cur.dy.clamp(minY, maxY).toDouble(),
-        );
-      }
-
-      if (target == cur) return;
-      apply(target);
-    });
-  }
-
-  Widget _draggableOverlay({
-    required GlobalKey key,
-    required Offset? Function() getOffset,
-    required bool Function() getAnimating,
-    required void Function(Offset offset, {required bool animating}) setOffset,
-    required Offset Function(Size screen, EdgeInsets padding) defaultOffset,
-    required Widget child,
-  }) {
-    final screen = MediaQuery.of(context).size;
-    final padding = MediaQuery.of(context).padding;
-    final offset = getOffset() ?? defaultOffset(screen, padding);
-    if (getOffset() == null) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => setOffset(offset, animating: false),
-      );
-    }
-    final minY = padding.top + kToolbarHeight + 8;
-
-    return AnimatedPositioned(
-      duration: getAnimating()
-          ? const Duration(milliseconds: 280)
-          : Duration.zero,
-      curve: Curves.easeOutCubic,
-      left: offset.dx,
-      top: offset.dy,
-      child: GestureDetector(
-        onPanStart: (_) {
-          _dragStart = getOffset() ?? offset;
-          if (getAnimating()) setOffset(_dragStart!, animating: false);
-        },
-        onPanUpdate: (d) {
-          final cur = getOffset() ?? offset;
-          setOffset(cur + d.delta, animating: false);
-        },
-        onPanEnd: (_) {
-          final cur = getOffset() ?? offset;
-          final start = _dragStart ?? cur;
-          _dragStart = null;
-          final box = key.currentContext?.findRenderObject() as RenderBox?;
-          final size = box?.size ?? Size.zero;
-          final maxX = screen.width - size.width - 16;
-          final maxY = screen.height -
-              size.height -
-              padding.bottom -
-              _bottomNavReserved -
-              16;
-          final dx = cur.dx - start.dx;
-          final dy = cur.dy - start.dy;
-
-          double snappedX;
-          if (dx.abs() < _dragSnapThreshold) {
-            final centerX = cur.dx + size.width / 2;
-            snappedX = centerX < screen.width / 2 ? 16.0 : maxX;
-          } else {
-            snappedX = dx < 0 ? 16.0 : maxX;
-          }
-
-          double snappedY;
-          if (dy.abs() < _dragSnapThreshold) {
-            final centerY = cur.dy + size.height / 2;
-            snappedY = centerY < screen.height / 2 ? minY : maxY;
-          } else {
-            snappedY = dy < 0 ? minY : maxY;
-          }
-
-          setOffset(Offset(snappedX, snappedY), animating: true);
-        },
-        child: KeyedSubtree(key: key, child: child),
       ),
     );
   }
@@ -532,31 +357,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Widget _buildBody(BuildContext context) {
     final l = AppL10n.of(context);
-    if (widget.city == null) {
-      return SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.map_outlined,
-                  size: 48,
-                  color: AppColors.textHint,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  l.mapNoCitySelected,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+    if (widget.city == null) return const MapEmptyState();
 
     return Stack(
       children: [
@@ -653,14 +454,11 @@ class _MapScreenState extends State<MapScreen> {
             ],
           ),
         ),
-        _draggableOverlay(
+        DraggableOverlay(
           key: _chipKey,
-          getOffset: () => _chipOffset,
-          getAnimating: () => _chipAnimating,
-          setOffset: (o, {required animating}) => setState(() {
-            _chipOffset = o;
-            _chipAnimating = animating;
-          }),
+          snapToCorner: !_chipExpanded,
+          topReserved: kToolbarHeight,
+          bottomReserved: _bottomNavReserved,
           defaultOffset: (screen, padding) =>
               Offset(16, screen.height - padding.bottom - _bottomNavReserved - 60),
           child: _chipExpanded
@@ -671,20 +469,17 @@ class _MapScreenState extends State<MapScreen> {
                     todayCount: _todayCount,
                     userPosition: _userPosition,
                     onCollapse: () {
-                      _chipSnapHint = _readSnapSide(_chipKey, _chipOffset);
+                      _chipKey.currentState?.recordSnapSide();
                       setState(() => _chipExpanded = false);
-                      _settleChipPosition();
                     },
                     onSelect: (e) {
-                      _chipSnapHint = _readSnapSide(_chipKey, _chipOffset);
+                      _chipKey.currentState?.recordSnapSide();
                       setState(() => _chipExpanded = false);
-                      _settleChipPosition();
                       _panTo(e);
                     },
                     onOpenDetails: (e) {
-                      _chipSnapHint = _readSnapSide(_chipKey, _chipOffset);
+                      _chipKey.currentState?.recordSnapSide();
                       setState(() => _chipExpanded = false);
-                      _settleChipPosition();
                       _openDetails(e);
                     },
                   ),
@@ -692,21 +487,15 @@ class _MapScreenState extends State<MapScreen> {
               : EventsChip(
                   total: _events.length,
                   todayCount: _todayCount,
-                  onTap: () {
-                    setState(() => _chipExpanded = true);
-                    _settleChipPosition();
-                  },
+                  onTap: () => setState(() => _chipExpanded = true),
                 ),
         ),
         if (_selected != null)
-          _draggableOverlay(
+          DraggableOverlay(
             key: _cardKey,
-            getOffset: () => _cardOffset,
-            getAnimating: () => _cardAnimating,
-            setOffset: (o, {required animating}) => setState(() {
-              _cardOffset = o;
-              _cardAnimating = animating;
-            }),
+            snapToCorner: _cardCollapsed,
+            topReserved: kToolbarHeight,
+            bottomReserved: _bottomNavReserved,
             defaultOffset: (screen, padding) => Offset(
               88,
               screen.height - padding.bottom - _bottomNavReserved - 170,
@@ -714,10 +503,7 @@ class _MapScreenState extends State<MapScreen> {
             child: _cardCollapsed
                 ? CollapsedEventBubble(
                     event: _selected!,
-                    onTap: () {
-                      setState(() => _cardCollapsed = false);
-                      _settleCardPosition();
-                    },
+                    onTap: () => setState(() => _cardCollapsed = false),
                     onClose: () => setState(() {
                       _selected = null;
                       _cardCollapsed = false;
@@ -728,9 +514,8 @@ class _MapScreenState extends State<MapScreen> {
                     child: SelectedEventCard(
                       event: _selected!,
                       onCollapse: () {
-                        _cardSnapHint = _readSnapSide(_cardKey, _cardOffset);
+                        _cardKey.currentState?.recordSnapSide();
                         setState(() => _cardCollapsed = true);
-                        _settleCardPosition();
                       },
                       onClose: () => setState(() => _selected = null),
                       onDirections: () => _openDirections(_selected!),

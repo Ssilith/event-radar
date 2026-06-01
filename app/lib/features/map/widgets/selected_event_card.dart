@@ -25,12 +25,24 @@ class SelectedEventCard extends StatelessWidget {
     required this.onDetails,
   });
 
+  // Mirror the featured card: while the event is on today (single- or
+  // multi-day) show just the start time, or "All day". The original start date
+  // isn't useful on a map being viewed today, and for multi-day events it
+  // would point at the past. Other events keep the "EEE d MMM, HH:mm" line.
+  String _formatWhen(String locale, DurationLabels labels) {
+    if (event.isHappeningToday) {
+      return eventTodayLabel(event, labels: labels, locale: locale);
+    }
+    return formatEventTime(event, 'EEE d MMM, HH:mm', locale: locale);
+  }
+
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
     final l = AppL10n.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final catColor = event.category.color;
+    final durationLabels = DurationLabels(allDay: l.allDay);
 
     return Material(
       color: AppColors.surface,
@@ -111,7 +123,7 @@ class SelectedEventCard extends StatelessWidget {
                   Icon(Icons.schedule_rounded, size: 12, color: primary),
                   const SizedBox(width: 4),
                   Text(
-                    formatEventTime(event, 'EEE d MMM, HH:mm', locale: locale),
+                    _formatWhen(locale, durationLabels),
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 11,

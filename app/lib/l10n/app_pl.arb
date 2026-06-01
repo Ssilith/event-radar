@@ -104,6 +104,7 @@
   "timeSuffix": "czas {name}",
 
   "past": "MINIONE",
+  "ongoing": "TRWA",
   "upcoming": "NADCHODZI",
   "pasShort": "MIN",
   "allDay": "Cały dzień",

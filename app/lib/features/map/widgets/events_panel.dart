@@ -100,7 +100,7 @@ class EventsPanel extends StatelessWidget {
                     itemBuilder: (_, i) => NearbyEventRow(
                       event: events[i],
                       userPosition: userPosition,
-                      isToday: isEventToday(events[i]),
+                      isToday: events[i].isHappeningToday,
                       onTap: () => onSelect(events[i]),
                       onOpenDetails: () => onOpenDetails(events[i]),
                     ),

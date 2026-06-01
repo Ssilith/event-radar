@@ -2,20 +2,20 @@ import 'package:event_radar/features/discover/discover_screen.dart';
 import 'package:event_radar/features/map/map_screen.dart';
 import 'package:event_radar/features/saved/saved_screen.dart';
 import 'package:event_radar/core/services/city_service.dart';
-import 'package:event_radar/core/utils/page.dart';
+import 'package:event_radar/core/models/page.dart';
 import 'package:event_radar/widgets/bottom_navigation.dart';
 import 'package:flutter/material.dart' hide Page;
 import 'package:event_radar/core/models/city_item.dart';
 import 'package:motion_tab_bar_v2/motion-tab-controller.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class AppShell extends StatefulWidget {
+  const AppShell({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<AppShell> createState() => _AppShellState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
   MotionTabBarController? _motionTabBarController;
 
   CityItem? _selectedCity;

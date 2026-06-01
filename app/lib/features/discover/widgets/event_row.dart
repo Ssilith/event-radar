@@ -73,8 +73,14 @@ class EventRow extends StatelessWidget {
     final primary = Theme.of(context).colorScheme.primary;
     final l = AppL10n.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final isPast = event.start.isBefore(DateTime.now().toUtc());
-    final eventLocal = eventWallClock(event);
+    final isPast = event.isPast;
+    final isHappeningToday = !isPast && event.isHappeningToday;
+    // Multi-day events that span today display today's date in the badge so
+    // the row reads as "happening now" instead of repeating the date the
+    // event originally began.
+    final badgeDate = isHappeningToday
+        ? nowInVenueTz(event.timezone)
+        : eventWallClock(event);
     final catColor = event.category.color;
 
     return InkWell(
@@ -106,7 +112,7 @@ class EventRow extends StatelessWidget {
                   Text(
                     isPast
                         ? l.pasShort
-                        : DateFormat('MMM', locale).format(eventLocal).toUpperCase(),
+                        : DateFormat('MMM', locale).format(badgeDate).toUpperCase(),
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -115,7 +121,7 @@ class EventRow extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${eventLocal.day}',
+                    '${badgeDate.day}',
                     style: GoogleFonts.syne(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,

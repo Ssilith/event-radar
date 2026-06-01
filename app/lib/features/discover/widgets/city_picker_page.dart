@@ -1,7 +1,7 @@
 import 'package:event_radar/core/models/city_item.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
-import 'package:event_radar/widgets/city_picker.dart';
+import 'package:event_radar/features/discover/widgets/city_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

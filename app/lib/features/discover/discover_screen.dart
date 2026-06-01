@@ -10,25 +10,27 @@ import 'package:event_radar/core/services/event_cache_service.dart';
 import 'package:event_radar/core/services/event_service.dart';
 import 'package:event_radar/core/services/settings_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
-import 'package:event_radar/core/theme/app_shadows.dart';
 import 'package:diacritic/diacritic.dart';
 import 'package:event_radar/core/utils/date_filter.dart';
+import 'package:event_radar/core/utils/event_dedup.dart';
 import 'package:event_radar/core/utils/event_sort.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/core/utils/language.dart';
+import 'package:event_radar/features/discover/widgets/category_bar.dart';
 import 'package:event_radar/features/discover/widgets/city_picker_page.dart';
+import 'package:event_radar/features/discover/widgets/date_filter_bar.dart';
+import 'package:event_radar/features/discover/widgets/discover_empty_state.dart';
+import 'package:event_radar/features/discover/widgets/discover_header.dart';
+import 'package:event_radar/features/discover/widgets/discover_search_field.dart';
 import 'package:event_radar/features/discover/widgets/event_row.dart';
 import 'package:event_radar/features/discover/widgets/featured_carousel.dart';
-import 'package:event_radar/features/discover/widgets/icon_btn.dart';
 import 'package:event_radar/features/discover/widgets/section_header.dart';
-import 'package:event_radar/features/discover/widgets/settings_sheet.dart';
+import 'package:event_radar/features/discover/widgets/sort_bar.dart';
 import 'package:event_radar/features/event_details/event_details_screen.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:event_radar/widgets/async_state_view.dart';
 import 'package:event_radar/widgets/status_view.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 
@@ -133,7 +135,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     // RefreshIndicator a Future to await that mirrors the round trip.
     final done = Completer<void>();
     _sub = _eventService
-        .getEventsForCity(slug, countryCode: city.countryCode)
+        .getEventsForCity(
+          slug,
+          countryCode: city.countryCode,
+          includePast: true,
+        )
         .listen(
           (s) {
             setState(() => _state = s);
@@ -193,21 +199,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   List<EventCategory> get _availableCategories =>
       _state.events.map((e) => e.category).toSet().toList();
 
-  List<Event> get _dateFiltered {
-    return _state.events.where((e) {
-      final start = eventWallClock(e);
-      final now = nowInVenueTz(e.timezone);
-      return switch (_dateFilter) {
-        DateFilter.today => DateUtils.isSameDay(start, now),
-        DateFilter.week =>
-          start.isAfter(now) && start.isBefore(now.add(const Duration(days: 7))),
-        DateFilter.month =>
-          start.isAfter(now) && start.isBefore(now.add(const Duration(days: 30))),
-        DateFilter.all => true,
-        DateFilter.past => start.isBefore(now),
-      };
-    }).toList();
-  }
+  List<Event> get _dateFiltered =>
+      _state.events.where(_dateFilter.matches).toList();
 
   List<Event> get _filtered {
     var events = _selectedCategory == null
@@ -228,7 +221,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         return hay.contains(q);
       }).toList();
     }
-    return _applySort(events);
+    // Collapse the same occurrence re-listed as overlapping date ranges before
+    // sorting, so an event can't appear two or three times in the feed.
+    return _applySort(dedupeOverlapping(events));
   }
 
   // Sorts the post-filter list. Date sort uses venue wall-clock so all-day
@@ -237,17 +232,18 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   List<Event> _applySort(List<Event> events) {
     if (_sort == EventSort.nearby && _nearbySortAvailable) {
       final pos = _cityService.lastPosition!;
-      final ranked = events
-          .map((e) => (e, e.distanceTo(pos.latitude, pos.longitude)))
-          .toList()
-        ..sort((a, b) {
-          final da = a.$2;
-          final db = b.$2;
-          if (da == null && db == null) return 0;
-          if (da == null) return 1;
-          if (db == null) return -1;
-          return da.compareTo(db);
-        });
+      final ranked =
+          events
+              .map((e) => (e, e.distanceTo(pos.latitude, pos.longitude)))
+              .toList()
+            ..sort((a, b) {
+              final da = a.$2;
+              final db = b.$2;
+              if (da == null && db == null) return 0;
+              if (da == null) return 1;
+              if (db == null) return -1;
+              return da.compareTo(db);
+            });
       return ranked.map((r) => r.$1).toList();
     }
     return [...events]
@@ -262,7 +258,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     // entries (parsed to 00:00) lead and timed events follow in hour order.
     // _state.events isn't reliably chronological (it may be sorted by distance
     // from the user when location is known), so sort here explicitly.
-    final todays = _state.events.where(isEventToday).toList()
+    final todays = _state.events.where((e) => e.isHappeningToday).toList()
       ..sort((a, b) => eventWallClock(a).compareTo(eventWallClock(b)));
     final result = <Event>[];
     for (final e in todays) {
@@ -277,10 +273,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       _state.status == CityDataStatus.fresh ||
       _state.status == CityDataStatus.ready;
 
-  bool get _isPolling =>
-      _state.status == CityDataStatus.triggered ||
-      _state.status == CityDataStatus.polling;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -292,56 +284,18 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final l = AppL10n.of(context);
     return SafeArea(
       child: Column(
         children: [
-          _buildHeader(context, compact: false),
+          DiscoverHeader(
+            city: widget.selectedCity,
+            compact: false,
+            onTapCity: _openCityPicker,
+          ),
           Expanded(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.location_city_outlined,
-                    size: 56,
-                    color: primary.withValues(alpha: 0.4),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    l.chooseCityToDiscoverEvents,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.syne(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  if (_cityLoading)
-                    SpinKitRipple(color: primary, size: 36)
-                  else
-                    FilledButton.icon(
-                      onPressed: _openCityPicker,
-                      icon: const Icon(Icons.search, size: 18),
-                      label: Text(l.pickACity),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: primary,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 14,
-                        ),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+            child: DiscoverEmptyState(
+              cityLoading: _cityLoading,
+              onPickCity: _openCityPicker,
             ),
           ),
         ],
@@ -357,467 +311,103 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         // Always allow overscroll so pull-to-refresh works when the list is short.
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-        SliverToBoxAdapter(child: _buildHeader(context, compact: true)),
-        SliverToBoxAdapter(child: _buildStatsCard(context)),
-        if (_hasData) ...[
-          if (_featuredEvents.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: DiscoverHeader(
+              city: widget.selectedCity,
+              compact: true,
+              onTapCity: _openCityPicker,
+            ),
+          ),
+          // SliverToBoxAdapter(
+          //   child: DiscoverStatsCard(
+          //     isPolling: _isPolling,
+          //     eventCount: _state.events.length,
+          //   ),
+          // ),
+          if (_hasData) ...[
+            if (_featuredEvents.isNotEmpty) ...[
+              SliverToBoxAdapter(
+                child: SectionHeader(
+                  title: l.featuredSection,
+                  trailing: DateFormat(
+                    'EEEE',
+                    Localizations.localeOf(context).languageCode,
+                  ).format(DateTime.now()),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: FeaturedCarousel(
+                  events: _featuredEvents,
+                  bookmarked: _bookmarked,
+                  onToggleBookmark: _toggleBookmark,
+                  onOpenDetails: _openDetails,
+                ),
+              ),
+            ],
             SliverToBoxAdapter(
               child: SectionHeader(
-                title: l.featuredSection,
-                trailing: DateFormat(
-                  'EEEE',
-                  Localizations.localeOf(context).languageCode,
-                ).format(DateTime.now()),
+                title: l.allEventsSection,
+                trailing: l.eventsFound(_filtered.length),
               ),
             ),
             SliverToBoxAdapter(
-              child: FeaturedCarousel(
-                events: _featuredEvents,
-                bookmarked: _bookmarked,
-                onToggleBookmark: _toggleBookmark,
-                onOpenDetails: _openDetails,
+              child: DiscoverSearchField(
+                controller: _searchController,
+                query: _searchQuery,
+                onChanged: (value) => setState(() => _searchQuery = value),
+                onClear: () {
+                  _searchController.clear();
+                  setState(() => _searchQuery = '');
+                },
               ),
             ),
-          ],
-          SliverToBoxAdapter(
-            child: SectionHeader(
-              title: l.allEventsSection,
-              trailing: l.eventsFound(_filtered.length),
-            ),
-          ),
-          SliverToBoxAdapter(child: _buildSearchField(context)),
-          SliverToBoxAdapter(child: _buildDateFilter(context)),
-          SliverToBoxAdapter(child: _buildCategoryBar(context)),
-          SliverToBoxAdapter(child: _buildSortBar(context)),
-          if (_filtered.isEmpty)
-            const SliverToBoxAdapter(child: StatusView.empty())
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (ctx, i) => EventRow(
-                  event: _filtered[i],
-                  isSaved: _bookmarked.contains(_filtered[i].id),
-                  onToggleSave: () => _toggleBookmark(_filtered[i]),
-                  onOpen: () => _openDetails(_filtered[i]),
-                  userPosition: _cityService.lastPosition,
-                ),
-                childCount: _filtered.length,
+            SliverToBoxAdapter(
+              child: DateFilterBar(
+                filter: _dateFilter,
+                freeOnly: _freeOnly,
+                onFilterChanged: (f) => setState(() => _dateFilter = f),
+                onFreeOnlyChanged: (v) => setState(() => _freeOnly = v),
               ),
             ),
-          const SliverToBoxAdapter(child: SizedBox(height: 40)),
-        ] else
-          SliverFillRemaining(
-            child: AsyncStateView(
-              state: _state,
-              onRetry: _loadEvents,
-              dataBuilder: (_) => const SizedBox.shrink(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, {required bool compact}) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final l = AppL10n.of(context);
-    final city = widget.selectedCity;
-
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          compact ? 12 : 20,
-          8,
-          compact ? 8 : 20,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: _openCityPicker,
-                behavior: HitTestBehavior.opaque,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l.discoveringEventsIn,
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 2,
-                        color: primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            city?.name ?? l.chooseCity,
-                            style: GoogleFonts.syne(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                              height: 1.1,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: primary,
-                          size: 22,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            SliverToBoxAdapter(
+              child: CategoryBar(
+                selected: _selectedCategory,
+                available: _availableCategories,
+                onChanged: (c) => setState(() => _selectedCategory = c),
               ),
             ),
-            IconBtn(
-              icon: Icons.tune_rounded,
-              onTap: () => SettingsSheet.show(context),
-              tooltip: l.settingsTitle,
+            SliverToBoxAdapter(
+              child: SortBar(
+                sort: _sort,
+                nearbyAvailable: _nearbySortAvailable,
+                onChanged: (s) => setState(() => _sort = s),
+              ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsCard(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final l = AppL10n.of(context);
-    final count = _state.events.length;
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: primary.withValues(alpha: 0.22)),
-        boxShadow: AppShadows.subtle,
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.auto_awesome_rounded, size: 15, color: primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _isPolling
-                ? Text(
-                    l.discoveringEventsLoading,
-                    style: TextStyle(fontSize: 13, color: primary),
-                  )
-                : RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: l.eventsAutoDiscoveredFrom(count),
-                          style: TextStyle(
-                            color: primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const TextSpan(text: ' '),
-                        TextSpan(
-                          text: l.schemaOrg,
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+            if (_filtered.isEmpty)
+              const SliverToBoxAdapter(child: StatusView.empty())
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (ctx, i) => EventRow(
+                    event: _filtered[i],
+                    isSaved: _bookmarked.contains(_filtered[i].id),
+                    onToggleSave: () => _toggleBookmark(_filtered[i]),
+                    onOpen: () => _openDetails(_filtered[i]),
+                    userPosition: _cityService.lastPosition,
                   ),
-          ),
-          if (_isPolling)
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: primary),
+                  childCount: _filtered.length,
+                ),
+              ),
+            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+          ] else
+            SliverFillRemaining(
+              child: AsyncStateView(
+                state: _state,
+                onRetry: _loadEvents,
+                dataBuilder: (_) => const SizedBox.shrink(),
+              ),
             ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSearchField(BuildContext context) {
-    final l = AppL10n.of(context);
-    final primary = Theme.of(context).colorScheme.primary;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (value) => setState(() => _searchQuery = value),
-        textInputAction: TextInputAction.search,
-        style: TextStyle(fontSize: 14, color: AppColors.textPrimary),
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: l.searchHint,
-          hintStyle: TextStyle(color: AppColors.textHint, fontSize: 14),
-          prefixIcon: Icon(Icons.search, size: 18, color: AppColors.textHint),
-          suffixIcon: _searchQuery.isEmpty
-              ? null
-              : IconButton(
-                  icon: Icon(
-                    Icons.close_rounded,
-                    size: 18,
-                    color: AppColors.textHint,
-                  ),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() => _searchQuery = '');
-                  },
-                ),
-          filled: true,
-          fillColor: AppColors.surfaceHigh,
-          contentPadding: const EdgeInsets.symmetric(vertical: 10),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.borderStrong),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: primary, width: 1.5),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDateFilter(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final l = AppL10n.of(context);
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
-      child: Row(
-        children: [
-          ...DateFilter.values.map((f) {
-            final sel = _dateFilter == f;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
-                onTap: () => setState(() => _dateFilter = f),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: sel ? primary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: sel ? primary : AppColors.borderStrong,
-                    ),
-                    boxShadow: sel ? AppShadows.subtle : null,
-                  ),
-                  child: Text(
-                    f.label(l),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-                      color: sel ? Colors.black : AppColors.textMuted,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-          // Separator + Free-only toggle. Lives in the same scroll row so
-          // mobile users don't get another vertical band of chips.
-          Container(
-            width: 1,
-            height: 18,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            color: AppColors.borderStrong,
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: GestureDetector(
-              onTap: () => setState(() => _freeOnly = !_freeOnly),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: _freeOnly ? primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: _freeOnly ? primary : AppColors.borderStrong,
-                  ),
-                  boxShadow: _freeOnly ? AppShadows.subtle : null,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.savings_rounded,
-                      size: 14,
-                      color: _freeOnly ? Colors.black : AppColors.textMuted,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      l.filterFreeOnly,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            _freeOnly ? FontWeight.w700 : FontWeight.w400,
-                        color:
-                            _freeOnly ? Colors.black : AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSortBar(BuildContext context) {
-    final l = AppL10n.of(context);
-    final primary = Theme.of(context).colorScheme.primary;
-    // Nearby chip is shown but disabled when the user's GPS fix isn't known —
-    // makes the option discoverable so the user knows enabling location will
-    // unlock it, instead of hiding the chip silently.
-    final available = _nearbySortAvailable;
-    // Segmented-control style — single rounded shell with one filled segment
-    // at a time. Reads as "which lens am I looking through" instead of two
-    // independent toggles.
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-      child: Row(
-        children: [
-          Icon(Icons.sort_rounded, size: 16, color: AppColors.textMuted),
-          const SizedBox(width: 8),
-          Text(
-            l.sortByLabel,
-            style: TextStyle(
-              fontSize: 12,
-              letterSpacing: 0.4,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textMuted,
-            ),
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceHigh,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AppColors.surfacePill),
-            ),
-            child: Row(
-              children: EventSort.values.map((s) {
-                final enabled = s == EventSort.date || available;
-                final selected = _sort == s;
-                final icon = s == EventSort.date
-                    ? Icons.event_rounded
-                    : Icons.near_me_rounded;
-                return GestureDetector(
-                  onTap: enabled ? () => setState(() => _sort = s) : null,
-                  behavior: HitTestBehavior.opaque,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected ? primary : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: selected ? AppShadows.subtle : null,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          icon,
-                          size: 13,
-                          color: selected
-                              ? Colors.black
-                              : enabled
-                                  ? AppColors.textBody
-                                  : AppColors.textFaint,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          s.label(l),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight:
-                                selected ? FontWeight.w700 : FontWeight.w500,
-                            color: selected
-                                ? Colors.black
-                                : enabled
-                                    ? AppColors.textBody
-                                    : AppColors.textFaint,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryBar(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final l = AppL10n.of(context);
-    return SizedBox(
-      height: 52,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        children: [null, ..._availableCategories].map((cat) {
-          final sel = _selectedCategory == cat;
-          final color = cat?.color ?? scheme.primary;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              avatar: Icon(
-                cat?.iconData ?? Icons.apps_rounded,
-                size: 15,
-                color: sel ? Colors.black : color,
-              ),
-              label: Text(cat?.label(l) ?? l.categoryAll),
-              selected: sel,
-              onSelected: (_) =>
-                  setState(() => _selectedCategory = sel ? null : cat),
-              showCheckmark: false,
-              selectedColor: color,
-              backgroundColor: AppColors.border,
-              side: BorderSide(
-                color: sel ? color : AppColors.borderStrong,
-              ),
-              labelStyle: TextStyle(
-                fontSize: 12,
-                color: sel ? Colors.black : AppColors.textBody,
-                fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-            ),
-          );
-        }).toList(),
       ),
     );
   }

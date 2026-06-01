@@ -3,7 +3,7 @@ import 'package:event_radar/core/services/bookmark_actions.dart';
 import 'package:event_radar/core/services/event_cache_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/utils/event_time.dart';
-import 'package:event_radar/core/utils/html_text.dart';
+import 'package:event_radar/core/utils/html_parsing.dart';
 import 'package:event_radar/core/utils/maps_launcher.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:event_radar/features/event_details/widgets/event_hero.dart';
@@ -63,7 +63,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     final primary = Theme.of(context).colorScheme.primary;
     final l = AppL10n.of(context);
     final cat = event.category;
-    final isPast = !event.isUpcoming;
+    final isPast = event.isPast;
     final hasVenueTzDifference = venueTzDiffersFromPhone(event.timezone);
 
     return Scaffold(

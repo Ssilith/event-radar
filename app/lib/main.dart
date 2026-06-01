@@ -1,11 +1,7 @@
-import 'package:event_radar/core/config.dart';
-import 'package:event_radar/core/services/event_cache_service.dart';
-import 'package:event_radar/core/services/notification_service.dart';
+import 'package:event_radar/core/app_bootstrap.dart';
 import 'package:event_radar/core/services/settings_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
-import 'package:event_radar/core/utils/event_time.dart';
-import 'package:event_radar/core/utils/logger.dart';
-import 'package:event_radar/features/home/home_screen.dart';
+import 'package:event_radar/app_shell.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -13,20 +9,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  initLogger();
-  AppConfig.validate();
-  initVenueTime();
-  await EventCacheService.init();
-  await SettingsService.instance.init();
-  await NotificationService.instance.init();
-  // When the user turns reminders off, drop every scheduled notification so
-  // stale ones don't fire later. Future bookmarks won't schedule because the
-  // ValueNotifier gates `scheduleEventReminder`.
-  SettingsService.instance.notificationsEnabled.addListener(() {
-    if (!SettingsService.instance.notificationsEnabled.value) {
-      NotificationService.instance.cancelAll();
-    }
-  });
+  await AppBootstrap.initialize();
   FlutterNativeSplash.remove();
   runApp(const MyApp());
 }
@@ -56,7 +39,22 @@ class MyApp extends StatelessWidget {
               locale: locale,
               localizationsDelegates: AppL10n.localizationsDelegates,
               supportedLocales: AppL10n.supportedLocales,
-              home: const HomeScreen(),
+              // AppShell's screens read colours from the global AppColors
+              // tokens rather than Theme.of(context), so they have no
+              // inherited dependency that fires on a theme flip. The
+              // MaterialApp above does rebuild, but the initial route (and a
+              // const AppShell) is insulated by the Navigator and is not
+              // re-run. Re-listening to themeMode here, inside the route,
+              // forces AppShell to rebuild so its whole subtree repaints with
+              // the new brightness. A non-const AppShell is required: a const
+              // instance is identity-equal across rebuilds and Flutter would
+              // skip it, whereas a fresh instance with the same type/key
+              // updates the element while preserving _AppShellState.
+              home: ValueListenableBuilder<ThemeMode>(
+                valueListenable: settings.themeMode,
+                // ignore: prefer_const_constructors
+                builder: (_, _, _) => AppShell(),
+              ),
             );
           },
         );

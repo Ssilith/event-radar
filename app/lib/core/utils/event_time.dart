@@ -85,14 +85,91 @@ DateTime nowInVenueTz(String? tzName) {
   );
 }
 
-// True if `event.start` falls on the same calendar day as right-now in the
-// venue's timezone. Used for the map's "today" emphasis.
-bool isEventToday(Event event) {
-  final start = eventWallClock(event);
-  final now = nowInVenueTz(event.timezone);
-  return start.year == now.year &&
-      start.month == now.month &&
-      start.day == now.day;
+// Where in its own lifecycle an event sits, computed in the venue's tz so
+// the answer matches what a local attendee would expect. Use via
+// `event.status` from the EventTiming extension below.
+enum EventStatus {
+  // Hasn't started yet.
+  upcoming,
+  // Started and not yet ended. Multi-day events live here while running.
+  ongoing,
+  // End time (or start, for end-less events) has passed.
+  past,
+}
+
+// Extension that exposes timezone-aware lifecycle checks as if they were
+// getters on Event. Lives in this file (not event.dart) because it relies on
+// the venue-tz helpers above — placing it on the model directly would force
+// the model to import flutter/timezone packages.
+extension EventTiming on Event {
+  // Computes start + end (with end falling back to start for instant events)
+  // once, in the venue's wall-clock frame. Other getters reuse this so the
+  // "what's the effective end?" logic lives in one place.
+  ({DateTime start, DateTime end}) get wallClockRange {
+    final s = eventWallClock(this);
+    final e = end != null ? eventWallClock(this, when: end) : s;
+    return (start: s, end: e);
+  }
+
+  EventStatus get status {
+    final s = eventWallClock(this);
+    // Events without an explicit end roll over at midnight of their start
+    // day — an 18:00 concert with no end reads as ongoing from 18:00 until
+    // midnight; all-day (00:00 start) events get the full 24 hours. With
+    // an explicit end, we honour it as-is. Note: this is intentionally NOT
+    // shared with wallClockRange — that getter describes the event's actual
+    // extent, used by isMultiDay / isHappeningToday, where a midnight roll
+    // would misclassify an instant evening event as multi-day.
+    final effectiveEnd = end != null
+        ? eventWallClock(this, when: end)
+        : DateTime(s.year, s.month, s.day + 1);
+    final now = nowInVenueTz(timezone);
+    if (effectiveEnd.isBefore(now)) return EventStatus.past;
+    // Upcoming only until the event first begins. Once it has started a
+    // multi-day event stays ongoing for its whole run — it does not flip back
+    // to "upcoming" each morning until the original start time. This matches
+    // how later days now read as all-day rather than re-opening at, say, 18:00.
+    if (s.isAfter(now)) return EventStatus.upcoming;
+    return EventStatus.ongoing;
+  }
+
+  bool get isPast => status == EventStatus.past;
+  bool get isOngoing => status == EventStatus.ongoing;
+  bool get isUpcoming => status == EventStatus.upcoming;
+
+  // True when the event's range overlaps today's calendar day in the venue's
+  // timezone. Distinct from `isOngoing` — a festival starting tomorrow is
+  // happening tomorrow, not today; a multi-week exhibition is happening today
+  // even if it started a week ago and ends next week.
+  bool get isHappeningToday {
+    final r = wallClockRange;
+    final now = nowInVenueTz(timezone);
+    final dayStart = DateTime(now.year, now.month, now.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
+    return r.start.isBefore(dayEnd) && !r.end.isBefore(dayStart);
+  }
+
+  // True when the event's start has no time-of-day component (00:00 in the
+  // venue's tz), matching the heuristic eventDurationLabel uses to render
+  // "All day". Multi-day events whose start lands at midnight count as
+  // all-day. Used to suppress the "ongoing" status for events with no proper
+  // hours — there's no meaningful "in progress" window to be inside of.
+  bool get isAllDay {
+    final s = eventWallClock(this);
+    return s.hour == 0 && s.minute == 0;
+  }
+
+  // True when start and end fall on different calendar days in the venue's
+  // timezone. Used by row/card widgets to swap "HH:mm" (the original start
+  // time, often on a past day) for an end-date pointer when the event spans
+  // today.
+  bool get isMultiDay {
+    if (end == null) return false;
+    final r = wallClockRange;
+    return r.start.year != r.end.year ||
+        r.start.month != r.end.month ||
+        r.start.day != r.end.day;
+  }
 }
 
 bool venueTzDiffersFromPhone(String? tzName) {
@@ -124,6 +201,26 @@ String? eventDurationLabel(
   final wall = eventWallClock(event);
   if (wall.hour == 0 && wall.minute == 0) return labels.allDay;
   return formatEventTime(event, 'HH:mm', locale: locale);
+}
+
+// Compact time label for an event as it reads *right now*. A multi-day event
+// only carries a meaningful start time on its first day; once it is under way,
+// every later day (including the last) is simply ongoing, so we render
+// "All day" rather than the now-past start time. Events that start today or
+// later — and every single-day event — fall through to their real start time.
+String eventTodayLabel(
+  Event event, {
+  required DurationLabels labels,
+  String? locale,
+}) {
+  if (event.isMultiDay) {
+    final start = eventWallClock(event);
+    final now = nowInVenueTz(event.timezone);
+    final startDay = DateTime(start.year, start.month, start.day);
+    final today = DateTime(now.year, now.month, now.day);
+    if (today.isAfter(startDay)) return labels.allDay;
+  }
+  return eventDurationLabel(event, labels: labels, locale: locale) ?? '';
 }
 
 String venueTzShortName(String? tzName) {

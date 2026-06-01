@@ -305,6 +305,9 @@ class AppL10nEn extends AppL10n {
   String get upcoming => 'UPCOMING';
 
   @override
+  String get ongoing => 'ONGOING';
+
+  @override
   String get pasShort => 'PAS';
 
   @override

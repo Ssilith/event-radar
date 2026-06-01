@@ -46,12 +46,23 @@ class EventService {
     double? longitude,
     DateTime? from,
     DateTime? to,
+    // When true, past events are kept in the result so screens with their own
+    // date filter (Discover's "Past" chip) can show them. Default drops past
+    // events so the upcoming-only consumers (Map) don't have to filter again.
+    bool includePast = false,
   }) async* {
     //* Memory cache hit
     if (_isCacheFresh(slug)) {
       yield CityDataState(
         CityDataStatus.fresh,
-        events: _filter(_cache[slug]!.events, latitude, longitude, from, to),
+        events: _filter(
+          _cache[slug]!.events,
+          latitude,
+          longitude,
+          from,
+          to,
+          includePast,
+        ),
       );
       return;
     }
@@ -65,7 +76,7 @@ class EventService {
       _setCache(slug, events);
       yield CityDataState(
         CityDataStatus.fresh,
-        events: _filter(events, latitude, longitude, from, to),
+        events: _filter(events, latitude, longitude, from, to, includePast),
       );
       return;
     }
@@ -94,7 +105,7 @@ class EventService {
           _setCache(entrySlug, events);
           yield CityDataState(
             CityDataStatus.ready,
-            events: _filter(events, latitude, longitude, from, to),
+            events: _filter(events, latitude, longitude, from, to, includePast),
           );
           return;
         }
@@ -201,6 +212,7 @@ class EventService {
     double? lon,
     DateTime? from,
     DateTime? to,
+    bool includePast,
   ) {
     final start = from ?? DateTime.now();
     final end = to ?? start.add(const Duration(days: _defaultWindowDays));
@@ -208,7 +220,11 @@ class EventService {
 
     final tagged =
         events
-            .where((e) => e.start.isAfter(start) && e.start.isBefore(end))
+            .where(
+              (e) =>
+                  (includePast || e.start.isAfter(start)) &&
+                  e.start.isBefore(end),
+            )
             .map(
               (e) =>
                   (event: e, dist: hasCoords ? e.distanceTo(lat, lon) : null),

@@ -129,15 +129,21 @@ class _SheetBody extends StatelessWidget {
               const SizedBox(height: 4),
               ValueListenableBuilder<bool>(
                 valueListenable: settings.notificationsEnabled,
-                builder: (_, enabled, _) => SwitchListTile.adaptive(
-                  value: enabled,
-                  onChanged: settings.setNotificationsEnabled,
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    l.notificationsHint,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textBody,
+                // ListTile paints its background/ink on the nearest Material
+                // ancestor; the sheet's coloured Container sits between this
+                // tile and the bottom-sheet Material, which would hide those
+                // effects (Flutter asserts on it). A transparent Material here
+                // gives the tile its own paint surface without adding any
+                // colour over AppColors.surface.
+                builder: (_, enabled, _) => Material(
+                  type: MaterialType.transparency,
+                  child: SwitchListTile.adaptive(
+                    value: enabled,
+                    onChanged: settings.setNotificationsEnabled,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      l.notificationsHint,
+                      style: TextStyle(fontSize: 13, color: AppColors.textBody),
                     ),
                   ),
                 ),

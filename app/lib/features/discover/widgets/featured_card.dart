@@ -27,9 +27,16 @@ class FeaturedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
     final l = AppL10n.of(context);
-    final isPast = !event.isUpcoming;
+    final status = event.status;
     final catColor = event.category.color;
     final durationLabels = DurationLabels(allDay: l.allDay);
+
+    final (statusLabel, statusColor) = switch (status) {
+      EventStatus.past => (l.past, Colors.red.shade300),
+      EventStatus.ongoing => (l.ongoing, primary),
+      EventStatus.upcoming => (l.upcoming, primary),
+    };
+    final isOngoing = status == EventStatus.ongoing;
 
     return GestureDetector(
       onTap: onOpenDetails,
@@ -104,24 +111,27 @@ class FeaturedCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: isPast
-                              ? Colors.red.withValues(alpha: 0.18)
-                              : primary.withValues(alpha: 0.18),
+                          // Slightly stronger fill on ONGOING so it reads as
+                          // "active now" without introducing a new accent
+                          // colour beyond the existing primary palette.
+                          color: statusColor.withValues(
+                            alpha: isOngoing ? 0.28 : 0.18,
+                          ),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          isPast ? l.past : l.upcoming,
+                          statusLabel,
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.2,
-                            color: isPast ? Colors.red.shade300 : primary,
+                            color: statusColor,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        eventDurationLabel(event, labels: durationLabels) ?? '',
+                        eventTodayLabel(event, labels: durationLabels),
                         style: GoogleFonts.syne(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
