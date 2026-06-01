@@ -2,6 +2,7 @@ import 'package:event_radar/core/models/event_category.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
+//* Category pin on the map; emphasised for selected/today events
 class EventMarker extends StatelessWidget {
   final EventCategory category;
   final bool isSelected;
@@ -17,9 +18,7 @@ class EventMarker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = category.color;
-    // In light mode the toned-down "not today" marker style barely shows on
-    // light map tiles, so we apply the today decoration to every marker. Dark
-    // mode keeps the distinction so today events stand out against bg.
+    //* Light mode uses the today style for all markers (faint ones vanish on tiles)
     final showTodayStyle =
         isToday || AppColors.brightness == Brightness.light;
     final filled = isSelected || showTodayStyle;

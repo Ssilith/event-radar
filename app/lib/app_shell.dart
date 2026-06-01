@@ -8,6 +8,7 @@ import 'package:flutter/material.dart' hide Page;
 import 'package:event_radar/core/models/city_item.dart';
 import 'package:motion_tab_bar_v2/motion-tab-controller.dart';
 
+//* Bottom-nav shell hosting the three tabs and the shared selected city
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -36,12 +37,14 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
     _motionTabBarController?.dispose();
   }
 
+  //* Load the last-used city once CityService is ready
   Future<void> _loadDefaultCity() async {
     await CityService.instance.init();
     if (!mounted) return;
     setState(() => _selectedCity = CityService.instance.defaultCity);
   }
 
+  //* Update the city shared across all three tabs
   void _onCitySelected(CityItem city) {
     setState(() => _selectedCity = city);
   }

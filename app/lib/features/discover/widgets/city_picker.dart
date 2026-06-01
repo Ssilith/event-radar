@@ -13,6 +13,7 @@ import 'package:event_radar/core/services/city_service.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+//* Searchable city dropdown with debounced remote lookup
 class CityPicker extends StatefulWidget {
   final CityItem? initialValue;
   final ValueChanged<CityItem> onCitySelected;
@@ -32,6 +33,7 @@ class _CityPickerState extends State<CityPicker> {
 
   String get _langCode => deviceLanguageCode;
 
+  //* Load matching cities, debouncing remote search by 350ms
   Future<List<CityItem>> _loadItems(String filter, _) async {
     _debounce?.cancel();
     if (filter.trim().isEmpty) {
@@ -107,6 +109,7 @@ class _CityPickerState extends State<CityPicker> {
   }
 }
 
+//* Popup header with the "use my location" row
 class _PopupHeader extends StatefulWidget {
   final String langCode;
   final ValueChanged<CityItem> onCityResolved;
@@ -120,6 +123,7 @@ class _PopupHeader extends StatefulWidget {
 class _PopupHeaderState extends State<_PopupHeader> {
   bool _loading = false;
 
+  //* Resolve the user's city from GPS, or prompt to enable location
   Future<void> _handleTap() async {
     if (_loading) return;
     setState(() => _loading = true);
@@ -167,6 +171,7 @@ class _PopupHeaderState extends State<_PopupHeader> {
   }
 }
 
+//* "Use my location" tappable row with a loading state
 class _LocationRow extends StatelessWidget {
   final bool loading;
   final VoidCallback onTap;
@@ -214,6 +219,7 @@ class _LocationRow extends StatelessWidget {
   }
 }
 
+//* One city row in the dropdown popup with its source badge
 class _CityTile extends StatelessWidget {
   final CityItem item;
   final bool isSelected;
@@ -230,9 +236,7 @@ class _CityTile extends StatelessWidget {
     final primary = Theme.of(context).colorScheme.primary;
     final svc = CityService.instance;
     final l = AppL10n.of(context);
-    // Resolve a single badge per row (recent > current > nearby > fetched)
-    // so users can tell at a glance why each candidate is here without
-    // pushing extra rows of metadata into the dense list.
+    //* One badge per row (recent > current > nearby > fetched)
     final ({String label, IconData icon, Color color})? badge;
     if (svc.isRecent(item)) {
       badge = (label: l.cityBadgeRecent, icon: Icons.history_rounded, color: primary);

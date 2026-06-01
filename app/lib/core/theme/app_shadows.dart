@@ -1,19 +1,13 @@
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-// Theme-aware drop-shadow presets. Light mode needs more visible shadows
-// because surfaces share similar tones; dark mode keeps them subtle so the
-// existing tonal hierarchy isn't muddied. Resolves against AppColors.brightness
-// at the time of read, so consumers should re-read inside a build() that's
-// known to rebuild on theme change.
+//* Theme-aware drop-shadow presets, resolved against AppColors.brightness
 class AppShadows {
   AppShadows._();
 
   static bool get _dark => AppColors.brightness == Brightness.dark;
 
-  // Tiny lift for chips/badges/small inline accents. Dark-mode is intentionally
-  // empty — small elements already pop against the dark bg, and adding a
-  // shadow there just smudges them.
+  //* Tiny lift for chips/badges (none in dark mode — they already pop)
   static List<BoxShadow> get subtle => _dark
       ? const []
       : const [
@@ -24,7 +18,7 @@ class AppShadows {
           ),
         ];
 
-  // Soft lift for static cards (e.g. discover carousel tiles).
+  //* Soft lift for static cards (e.g. discover carousel tiles)
   static List<BoxShadow> get card => _dark
       ? const [
           BoxShadow(
@@ -46,7 +40,7 @@ class AppShadows {
           ),
         ];
 
-  // Stronger lift for floating overlays (sheets, popups).
+  //* Stronger lift for floating overlays (sheets, popups)
   static List<BoxShadow> get overlay => _dark
       ? const [
           BoxShadow(

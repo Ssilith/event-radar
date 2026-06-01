@@ -3,8 +3,7 @@ import 'package:event_radar/core/models/event_category.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-// The Messenger-style minimized bubble shown after the user collapses the
-// selected event card. Tapping it re-expands; the corner X closes.
+//* Minimized bubble for a collapsed selected-event card (tap reopens, X closes)
 class CollapsedEventBubble extends StatelessWidget {
   final Event event;
   final VoidCallback onTap;

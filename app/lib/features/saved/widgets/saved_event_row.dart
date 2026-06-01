@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+//* Swipe-to-remove row for a saved event
 class SavedEventRow extends StatelessWidget {
   final Event event;
   final VoidCallback onRemove;
@@ -22,8 +23,7 @@ class SavedEventRow extends StatelessWidget {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final isPast = event.isPast;
     final isHappeningToday = !isPast && event.isHappeningToday;
-    // Multi-day events spanning today show today's date in the badge — keeps
-    // visual parity with the Discover list.
+    //* Multi-day events spanning today show today's date in the badge
     final badgeDate = isHappeningToday
         ? nowInVenueTz(event.timezone)
         : eventWallClock(event);

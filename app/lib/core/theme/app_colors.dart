@@ -1,21 +1,14 @@
 import 'package:flutter/material.dart';
 
-// Semantic color tokens. The same token name (e.g. AppColors.bg) returns a
-// different Color depending on AppColors.brightness — set during MyApp.build
-// so all descendants pick up the right shade after a theme switch.
-//
-// All fields except `primary` are non-const getters, which means any
-// `const TextStyle(... AppColors.X ...)` must drop its `const` keyword.
+//* Brightness-aware colour tokens; non-const getters resolve per AppColors.brightness
 class AppColors {
   AppColors._();
 
-  // Updated by MyApp before building MaterialApp.
+  //* Active brightness, set by MyApp before building MaterialApp
   static Brightness brightness = Brightness.dark;
   static bool get _dark => brightness == Brightness.dark;
 
-  // Resolves the active brightness for a given ThemeMode + OS preference and
-  // applies it to the static tokens. Call this in MyApp.build before the
-  // MaterialApp is constructed so all descendants see the right shade.
+  //* Resolve + apply the active brightness for a ThemeMode + OS preference
   static void applyThemeMode(ThemeMode mode, Brightness platform) {
     brightness = switch (mode) {
       ThemeMode.system => platform,
@@ -24,10 +17,10 @@ class AppColors {
     };
   }
 
-  // Brand colour — stable across themes.
+  //* Brand colour — stable across themes
   static const Color primary = Color(0xFF00E5B4);
 
-  // Surfaces (lowest -> highest elevation)
+  //* Surfaces (lowest → highest elevation)
   static Color get bg =>
       _dark ? const Color(0xFF0A0A0A) : const Color(0xFFFAFAFA);
   static Color get surfaceLow =>
@@ -43,13 +36,13 @@ class AppColors {
   static Color get surfacePill =>
       _dark ? const Color(0xFF222222) : const Color(0xFFD5D5D5);
 
-  // Lines & borders
+  //* Lines & borders
   static Color get border =>
       _dark ? const Color(0xFF181818) : const Color(0xFFE8E8E8);
   static Color get borderStrong =>
       _dark ? const Color(0xFF2E2E2E) : const Color(0xFFCCCCCC);
 
-  // Text (lightest -> darkest in dark mode; reversed for light mode)
+  //* Text (lightest → darkest in dark mode; reversed in light)
   static Color get textPrimary => _dark ? Colors.white : const Color(0xFF0F0F0F);
   static Color get textBody =>
       _dark ? const Color(0xFFCCCCCC) : const Color(0xFF333333);

@@ -4,6 +4,7 @@ import 'package:event_radar/features/saved/models/group_mode.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+//* Segmented toggle between grouping bookmarks by location vs date
 class GroupToggle extends StatelessWidget {
   final GroupMode mode;
   final ValueChanged<GroupMode> onChanged;
@@ -41,6 +42,7 @@ class GroupToggle extends StatelessWidget {
     );
   }
 
+  //* One segment of the toggle
   Widget _toggleButton({
     required String label,
     required IconData icon,

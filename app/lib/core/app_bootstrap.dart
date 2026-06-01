@@ -5,12 +5,11 @@ import 'package:event_radar/core/services/settings_service.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/core/utils/logger.dart';
 
-// One-shot startup tasks. Keeps main.dart down to widgets-binding +
-// splash-preserve + runApp, so the entrypoint reads as a thin shell and the
-// init order lives in one named, documented place.
+//* One-shot startup tasks, in order, so main.dart stays a thin shell
 class AppBootstrap {
   AppBootstrap._();
 
+  //* Run all startup init (logger, config, tz, caches, settings, notifications)
   static Future<void> initialize() async {
     initLogger();
     AppConfig.validate();
@@ -21,9 +20,7 @@ class AppBootstrap {
     _wireNotificationToggle();
   }
 
-  // When the user turns reminders off, drop every scheduled notification so
-  // stale ones don't fire later. Future bookmarks won't schedule because the
-  // ValueNotifier gates `scheduleEventReminder`.
+  //* Cancel all scheduled reminders whenever the user turns reminders off
   static void _wireNotificationToggle() {
     SettingsService.instance.notificationsEnabled.addListener(() {
       if (!SettingsService.instance.notificationsEnabled.value) {

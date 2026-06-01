@@ -34,6 +34,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 
+//* Discover tab: featured carousel + filterable, sortable events feed
 class DiscoverScreen extends StatefulWidget {
   final CityItem? selectedCity;
   final ValueChanged<CityItem> onCitySelected;
@@ -73,9 +74,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       if (!mounted) return;
       setState(() => _bookmarked = EventCacheService.bookmarkedIds());
     });
-    // EventRow reads SettingsService.distanceUnit statically, so when the
-    // user flips the unit from the bottom sheet we need a parent rebuild to
-    // re-render the pill text.
+    //* Rebuild so distance pills refresh when the unit changes
     SettingsService.instance.distanceUnit.addListener(_onSettingsChanged);
     _initCity();
   }
@@ -99,6 +98,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     super.dispose();
   }
 
+  //* Init city service, then auto-select the GPS city when none is chosen
   Future<void> _initCity() async {
     await _cityService.init();
     if (!mounted) return;
@@ -122,6 +122,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     if (widget.selectedCity != null) _loadEvents();
   }
 
+  //* Subscribe to the city's event stream; future completes on a terminal state
   Future<void> _loadEvents() {
     final city = widget.selectedCity;
     if (city == null) return Future.value();
@@ -131,8 +132,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       _selectedCategory = null;
     });
     final slug = EventService.slugFor(city);
-    // Resolved when the stream emits a terminal status — gives callers like
-    // RefreshIndicator a Future to await that mirrors the round trip.
     final done = Completer<void>();
     _sub = _eventService
         .getEventsForCity(
@@ -156,24 +155,26 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     return done.future;
   }
 
+  //* Pull-to-refresh: drop the cache and re-fetch from the network
   Future<void> _refresh() {
     final city = widget.selectedCity;
     if (city == null) return Future.value();
-    // Drop the in-memory cache so the next subscription hits the network
-    // instead of replaying the still-fresh cached copy.
     _eventService.invalidateCache(EventService.slugFor(city));
     return _loadEvents();
   }
 
+  //* Terminal stream states that complete the load future
   static bool _isTerminal(CityDataStatus status) =>
       status == CityDataStatus.fresh ||
       status == CityDataStatus.ready ||
       status == CityDataStatus.error ||
       status == CityDataStatus.timeout;
 
+  //* Save/unsave an event (and schedule/cancel its reminder)
   Future<void> _toggleBookmark(Event event) =>
       BookmarkActions.toggle(event, AppL10n.of(context));
 
+  //* Open the full-screen city picker
   void _openCityPicker() {
     Navigator.of(context).push<void>(
       MaterialPageRoute(
@@ -190,18 +191,22 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
+  //* Push the event details screen
   void _openDetails(Event event) {
     Navigator.of(context).push<void>(
       MaterialPageRoute(builder: (_) => EventDetailsScreen(event: event)),
     );
   }
 
+  //* Categories present in the current dataset (for the chip bar)
   List<EventCategory> get _availableCategories =>
       _state.events.map((e) => e.category).toSet().toList();
 
+  //* Events matching the active date filter
   List<Event> get _dateFiltered =>
       _state.events.where(_dateFilter.matches).toList();
 
+  //* Full pipeline: date + category + free + search, deduped, then sorted
   List<Event> get _filtered {
     var events = _selectedCategory == null
         ? _dateFiltered
@@ -211,9 +216,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     }
     final q = removeDiacritics(_searchQuery.trim().toLowerCase());
     if (q.isNotEmpty) {
-      // Match against title + venue, diacritic-folded so "wroclaw" finds
-      // "Wrocław". Title may still carry HTML tags from the raw feed; strip
-      // them for the search index but not for display.
+      //* Diacritic-folded match on title + venue (so "wroclaw" finds "Wrocław")
       events = events.where((e) {
         final hay = removeDiacritics(
           '${e.title} ${e.venue ?? ''}'.toLowerCase(),
@@ -221,14 +224,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         return hay.contains(q);
       }).toList();
     }
-    // Collapse the same occurrence re-listed as overlapping date ranges before
-    // sorting, so an event can't appear two or three times in the feed.
+    //* Dedupe re-listed overlapping copies before sorting
     return _applySort(dedupeOverlapping(events));
   }
 
-  // Sorts the post-filter list. Date sort uses venue wall-clock so all-day
-  // entries lead their day. Nearby sort falls back to date when the user has
-  // no location fix, or for events without coordinates (pushed to the end).
+  //* Sort by nearby (when a fix is known) else by venue wall-clock date
   List<Event> _applySort(List<Event> events) {
     if (_sort == EventSort.nearby && _nearbySortAvailable) {
       final pos = _cityService.lastPosition!;
@@ -252,12 +252,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
   bool get _nearbySortAvailable => _cityService.lastPosition != null;
 
+  //* Up to 5 de-duplicated today events for the featured carousel
   List<Event> get _featuredEvents {
     final seen = <String>{};
-    // Today-only, sorted chronologically by venue wall-clock so all-day
-    // entries (parsed to 00:00) lead and timed events follow in hour order.
-    // _state.events isn't reliably chronological (it may be sorted by distance
-    // from the user when location is known), so sort here explicitly.
     final todays = _state.events.where((e) => e.isHappeningToday).toList()
       ..sort((a, b) => eventWallClock(a).compareTo(eventWallClock(b)));
     final result = <Event>[];
@@ -269,6 +266,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     return result;
   }
 
+  //* Whether a dataset is loaded and ready to render
   bool get _hasData =>
       _state.status == CityDataStatus.fresh ||
       _state.status == CityDataStatus.ready;
@@ -283,6 +281,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
+  //* Header + "pick a city" prompt when no city is selected
   Widget _buildEmptyState(BuildContext context) {
     return SafeArea(
       child: Column(
@@ -303,12 +302,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
+  //* The scrollable feed: header, stats, featured carousel, filters, list
   Widget _buildEventFeed(BuildContext context) {
     final l = AppL10n.of(context);
     return RefreshIndicator(
       onRefresh: _refresh,
       child: CustomScrollView(
-        // Always allow overscroll so pull-to-refresh works when the list is short.
+        //* Always overscroll so pull-to-refresh works with a short list
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
@@ -404,7 +404,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               child: AsyncStateView(
                 state: _state,
                 onRetry: _loadEvents,
-                dataBuilder: (_) => const SizedBox.shrink(),
               ),
             ),
         ],

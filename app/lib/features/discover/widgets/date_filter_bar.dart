@@ -4,6 +4,7 @@ import 'package:event_radar/core/utils/date_filter.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+//* Date-range filter chips plus the free-only toggle, in one scroll row
 class DateFilterBar extends StatelessWidget {
   final DateFilter filter;
   final bool freeOnly;
@@ -59,8 +60,7 @@ class DateFilterBar extends StatelessWidget {
               ),
             );
           }),
-          // Separator + Free-only toggle. Lives in the same scroll row so
-          // mobile users don't get another vertical band of chips.
+          //* Separator + free-only toggle (kept inline to save vertical space)
           Container(
             width: 1,
             height: 18,

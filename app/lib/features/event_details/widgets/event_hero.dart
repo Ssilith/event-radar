@@ -2,8 +2,7 @@ import 'package:event_radar/core/models/event_category.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-// Big gradient header on the details screen — category-tinted with the
-// category icon centered and a PAST/UPCOMING pill in the corner.
+//* Category-tinted gradient header with a centred icon and PAST/UPCOMING pill
 class EventHero extends StatelessWidget {
   final EventCategory category;
   final bool isPast;
@@ -43,9 +42,7 @@ class EventHero extends StatelessWidget {
             child: Icon(
               category.iconData,
               size: 88,
-              // textPrimary so the silhouette stays visible on either palette:
-              // white-on-dark, black-on-light. Pure white disappeared against
-              // the light-mode gradient's end stop.
+              //* textPrimary so the icon stays visible on either palette
               color: AppColors.textPrimary.withValues(alpha: 0.85),
             ),
           ),

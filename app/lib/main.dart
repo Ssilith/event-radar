@@ -6,6 +6,7 @@ import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
+//* Entry point: hold the splash, run startup init, then launch the app
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
@@ -14,6 +15,7 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+//* Root widget: rebuilds MaterialApp on theme/locale change
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -39,21 +41,11 @@ class MyApp extends StatelessWidget {
               locale: locale,
               localizationsDelegates: AppL10n.localizationsDelegates,
               supportedLocales: AppL10n.supportedLocales,
-              // AppShell's screens read colours from the global AppColors
-              // tokens rather than Theme.of(context), so they have no
-              // inherited dependency that fires on a theme flip. The
-              // MaterialApp above does rebuild, but the initial route (and a
-              // const AppShell) is insulated by the Navigator and is not
-              // re-run. Re-listening to themeMode here, inside the route,
-              // forces AppShell to rebuild so its whole subtree repaints with
-              // the new brightness. A non-const AppShell is required: a const
-              // instance is identity-equal across rebuilds and Flutter would
-              // skip it, whereas a fresh instance with the same type/key
-              // updates the element while preserving _AppShellState.
+              //* Re-listen to themeMode inside the route so AppShell rebuilds on
+              //* a flip; AppShell must stay non-const or the rebuild is skipped
               home: ValueListenableBuilder<ThemeMode>(
                 valueListenable: settings.themeMode,
-                // ignore: prefer_const_constructors
-                builder: (_, _, _) => AppShell(),
+                builder: (_, _, _) => const AppShell(),
               ),
             );
           },
@@ -62,6 +54,7 @@ class MyApp extends StatelessWidget {
     );
   }
 
+  //* ThemeData for a given brightness
   ThemeData _buildTheme(Brightness b) => ThemeData(
     brightness: b,
     useMaterial3: true,

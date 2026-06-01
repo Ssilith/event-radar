@@ -1,6 +1,7 @@
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
+//* Small tinted icon button used in the discover header
 class IconBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;

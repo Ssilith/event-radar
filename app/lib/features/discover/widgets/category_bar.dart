@@ -3,6 +3,7 @@ import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+//* Horizontal category filter chips ("All" + each available category)
 class CategoryBar extends StatelessWidget {
   final EventCategory? selected;
   final List<EventCategory> available;

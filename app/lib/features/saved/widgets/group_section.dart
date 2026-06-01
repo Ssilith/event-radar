@@ -6,6 +6,7 @@ import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+//* A saved-events group: header (+ "current" badge) and its event rows
 class GroupSection extends StatelessWidget {
   final Group group;
   final Future<void> Function(Event) onRemove;

@@ -1,6 +1,7 @@
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
+//* Round map action button (fit-to-events / my-location), dimmed when disabled
 class MapFab extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;

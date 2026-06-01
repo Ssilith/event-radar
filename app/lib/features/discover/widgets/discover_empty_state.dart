@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+//* Discover placeholder prompting the user to pick a city
 class DiscoverEmptyState extends StatelessWidget {
   final bool cityLoading;
   final VoidCallback onPickCity;

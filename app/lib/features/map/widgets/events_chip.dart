@@ -2,6 +2,7 @@ import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+//* Collapsed floating chip showing event/today counts; opens the events panel
 class EventsChip extends StatelessWidget {
   final int total;
   final int todayCount;

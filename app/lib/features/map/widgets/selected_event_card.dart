@@ -6,9 +6,7 @@ import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:event_radar/widgets/html_text.dart';
 import 'package:flutter/material.dart';
 
-// Compact info card shown over the map when a marker (or nearby event) is
-// selected. Header has collapse + close icons; footer has Directions + Details
-// buttons.
+//* Compact info card over the map for the selected event (directions/details)
 class SelectedEventCard extends StatelessWidget {
   final Event event;
   final VoidCallback onClose;
@@ -25,10 +23,7 @@ class SelectedEventCard extends StatelessWidget {
     required this.onDetails,
   });
 
-  // Mirror the featured card: while the event is on today (single- or
-  // multi-day) show just the start time, or "All day". The original start date
-  // isn't useful on a map being viewed today, and for multi-day events it
-  // would point at the past. Other events keep the "EEE d MMM, HH:mm" line.
+  //* Today → time/"All day" (like featured); else "EEE d MMM, HH:mm"
   String _formatWhen(String locale, DurationLabels labels) {
     if (event.isHappeningToday) {
       return eventTodayLabel(event, labels: labels, locale: locale);

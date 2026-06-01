@@ -9,6 +9,7 @@ import 'package:event_radar/widgets/html_text.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
+//* Event row in the map's events panel, with a distance pill
 class NearbyEventRow extends StatelessWidget {
   final Event event;
   final Position? userPosition;
@@ -25,6 +26,7 @@ class NearbyEventRow extends StatelessWidget {
     required this.onOpenDetails,
   });
 
+  //* Formatted distance pill text, or null without a position/coords
   String? _distanceLabel() {
     final pos = userPosition;
     if (pos == null) return null;
@@ -41,9 +43,7 @@ class NearbyEventRow extends StatelessWidget {
     final catColor = event.category.color;
     final distance = _distanceLabel();
     final durationLabels = DurationLabels(allDay: l.allDay);
-    // In light mode every row uses the more saturated "today" decoration so
-    // tiles feel consistent on a light surface; dark mode keeps the original
-    // toned-down look for non-today rows so today still stands out.
+    //* Light mode uses the today style for all rows (faint ones vanish on light)
     final showTodayStyle =
         isToday || AppColors.brightness == Brightness.light;
 
@@ -126,10 +126,7 @@ class NearbyEventRow extends StatelessWidget {
                       Icon(Icons.schedule_rounded, size: 11, color: primary),
                       const SizedBox(width: 3),
                       Text(
-                        // Mirror the featured card: when the event is on today
-                        // (single- or multi-day) show just the start time, or
-                        // "All day". Otherwise show date + time. This drops the
-                        // old "→ end date" arrow for multi-day events.
+                        //* Today → time/"All day" (like featured); else date + time
                         isToday
                             ? eventTodayLabel(
                                 event,

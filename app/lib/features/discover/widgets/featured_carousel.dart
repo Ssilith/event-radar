@@ -2,6 +2,7 @@ import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/features/discover/widgets/featured_card.dart';
 import 'package:flutter/material.dart';
 
+//* Horizontal carousel of today's featured event cards
 class FeaturedCarousel extends StatelessWidget {
   final List<Event> events;
   final Set<String> bookmarked;

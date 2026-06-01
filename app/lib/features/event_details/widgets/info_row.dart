@@ -2,7 +2,7 @@ import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
-// Icon + label + value row used on the details screen for Date/Time/Venue/Price.
+//* Icon + label + value row (Date/Time/Venue/Price) on the details screen
 class InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;

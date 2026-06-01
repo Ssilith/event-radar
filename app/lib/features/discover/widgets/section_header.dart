@@ -1,6 +1,7 @@
 import 'package:event_radar/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
+//* Section title with an optional trailing accent label
 class SectionHeader extends StatelessWidget {
   final String title;
   final String? trailing;

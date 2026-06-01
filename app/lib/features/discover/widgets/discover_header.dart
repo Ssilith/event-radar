@@ -6,6 +6,7 @@ import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+//* Discover header: tappable city title + settings button
 class DiscoverHeader extends StatelessWidget {
   final CityItem? city;
   final bool compact;

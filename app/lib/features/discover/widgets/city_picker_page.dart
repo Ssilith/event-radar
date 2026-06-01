@@ -5,6 +5,7 @@ import 'package:event_radar/features/discover/widgets/city_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+//* Full-screen page wrapping the CityPicker
 class CityPickerPage extends StatelessWidget {
   final CityItem? initialValue;
   final ValueChanged<CityItem> onCitySelected;

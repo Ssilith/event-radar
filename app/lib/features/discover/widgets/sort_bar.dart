@@ -4,6 +4,7 @@ import 'package:event_radar/core/utils/event_sort.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+//* Date/Nearby sort segmented control (Nearby disabled without a GPS fix)
 class SortBar extends StatelessWidget {
   final EventSort sort;
   final bool nearbyAvailable;
@@ -20,12 +21,6 @@ class SortBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppL10n.of(context);
     final primary = Theme.of(context).colorScheme.primary;
-    // Nearby chip is shown but disabled when the user's GPS fix isn't known —
-    // makes the option discoverable so the user knows enabling location will
-    // unlock it, instead of hiding the chip silently.
-    // Segmented-control style — single rounded shell with one filled segment
-    // at a time. Reads as "which lens am I looking through" instead of two
-    // independent toggles.
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
       child: Row(

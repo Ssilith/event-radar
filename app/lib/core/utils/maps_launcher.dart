@@ -5,10 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 final _log = Logger('MapsLauncher');
 
-// Opens Google Maps with driving directions to `event`. Returns true when the
-// platform reports a successful launch. Returns false if the event has no
-// coordinates or the launch fails — callers are expected to surface the error
-// in their own UI (snackbar, dialog, …).
+//* Open Google Maps driving directions to an event (false if no coords/fails)
 Future<bool> openDirectionsToEvent(Event event) async {
   if (!event.hasLocation) return false;
   final uri = Uri.https('www.google.com', '/maps/dir/', {

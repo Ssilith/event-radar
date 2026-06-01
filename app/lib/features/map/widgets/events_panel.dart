@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// The events chip's expanded panel — header + scrollable list of nearby events.
+//* Expanded events panel: header + scrollable list of nearby events
 class EventsPanel extends StatelessWidget {
   final List<Event> events;
   final int todayCount;

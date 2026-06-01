@@ -16,6 +16,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+//* Full event details: hero, info rows, description, save + links
 class EventDetailsScreen extends StatefulWidget {
   final Event event;
   const EventDetailsScreen({super.key, required this.event});
@@ -33,12 +34,14 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     _isSaved = EventCacheService.bookmarkedIds().contains(widget.event.id);
   }
 
+  //* Save/unsave this event
   Future<void> _toggleSave() async {
     final saved = await BookmarkActions.toggle(widget.event, AppL10n.of(context));
     if (!mounted) return;
     setState(() => _isSaved = saved);
   }
 
+  //* Open the event's ticket/source URL in an in-app browser
   Future<void> _openUrl(String? url) async {
     if (url == null) return;
     final uri = Uri.tryParse(url);
@@ -48,6 +51,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     }
   }
 
+  //* Open external directions to the venue
   Future<void> _openDirections() async {
     final ok = await openDirectionsToEvent(widget.event);
     if (!ok && mounted) {
@@ -156,9 +160,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     const SizedBox(height: 8),
                     Html(
                       data: unescapeHtmlIfNeeded(event.description!),
-                      // Style only the body so the package's per-tag defaults
-                      // (b → bold, i → italic, etc.) keep working; padding +
-                      // margins zeroed so it sits flush with the section head.
+                      //* Style only the body so per-tag defaults keep working
                       style: {
                         'body': Style(
                           margin: Margins.zero,
@@ -195,8 +197,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     SizedBox(height: event.hasLocation ? 10 : 24),
                     SizedBox(
                       width: double.infinity,
-                      // Demote to outlined when Directions is the primary CTA;
-                      // otherwise keep the filled emphasis the page used to have.
+                      //* Outlined when Directions is the primary CTA, else filled
                       child: event.hasLocation
                           ? OutlinedButton.icon(
                               onPressed: () => _openUrl(event.url),
@@ -251,6 +252,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     );
   }
 
+  //* Date line: single day, or "start → end" for multi-day events
   String _formatDate(Event event, BuildContext context) {
     const pattern = 'EEE, MMM d, yyyy';
     final start = eventWallClock(event);
@@ -260,6 +262,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     return '${formatEventTime(event, pattern)}  →  ${formatEventTime(event, pattern, when: event.end)}';
   }
 
+  //* Time range in the venue's tz (start–end same day, else just start)
   String _formatTimeVenue(Event event) {
     final startStr = formatEventTime(event, 'HH:mm');
     if (event.end == null) return startStr;
@@ -271,10 +274,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     return startStr;
   }
 
+  //* Time range in the phone's tz, with a date prefix when the day differs
   String _formatTimePhone(Event event, BuildContext context) {
-    // Same shape as _formatTimeVenue but always in the phone's tz. Adds the
-    // date prefix when the venue day and phone day disagree (e.g. a Wrocław
-    // 22:30 lands the next morning in Tokyo).
     const fmt = 'HH:mm';
     const fmtWithDate = 'd MMM, HH:mm';
     final locale = Localizations.localeOf(context).toLanguageTag();

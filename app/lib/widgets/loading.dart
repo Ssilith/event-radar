@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
+//* Centred ripple spinner in the primary colour
 class Loading extends StatelessWidget {
   const Loading({super.key});
 

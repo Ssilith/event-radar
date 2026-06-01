@@ -1,6 +1,7 @@
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+//* Event classification used for icons, colours, and filtering
 enum EventCategory {
   music,
   theater,
@@ -21,6 +22,7 @@ enum EventCategory {
   other,
 }
 
+//* Per-category icon
 const Map<EventCategory, IconData> _eventCategoryIcons = {
   EventCategory.music: Icons.music_note,
   EventCategory.theater: Icons.theater_comedy,
@@ -41,6 +43,7 @@ const Map<EventCategory, IconData> _eventCategoryIcons = {
   EventCategory.other: Icons.category,
 };
 
+//* Per-category accent colour
 Map<EventCategory, Color> _eventCategoryColors = {
   EventCategory.music: Colors.pink.shade200,
   EventCategory.theater: Colors.blue.shade200,
@@ -62,28 +65,29 @@ Map<EventCategory, Color> _eventCategoryColors = {
 };
 
 extension EventCategoryExt on EventCategory {
+  //* This category's icon
   IconData get iconData => _eventCategoryIcons[this]!;
+  //* This category's accent colour
   Color get color => _eventCategoryColors[this]!;
 
-  // Localized display label. Falls back to the enum name in title case if a
-  // future category is added and the ARB hasn't caught up yet.
+  //* Localized category name
   String label(AppL10n l) => switch (this) {
-        EventCategory.music => l.categoryMusic,
-        EventCategory.theater => l.categoryTheater,
-        EventCategory.art => l.categoryArt,
-        EventCategory.festival => l.categoryFestival,
-        EventCategory.food => l.categoryFood,
-        EventCategory.sports => l.categorySports,
-        EventCategory.comedy => l.categoryComedy,
-        EventCategory.dance => l.categoryDance,
-        EventCategory.literature => l.categoryLiterature,
-        EventCategory.education => l.categoryEducation,
-        EventCategory.family => l.categoryFamily,
-        EventCategory.film => l.categoryFilm,
-        EventCategory.market => l.categoryMarket,
-        EventCategory.business => l.categoryBusiness,
-        EventCategory.social => l.categorySocial,
-        EventCategory.tour => l.categoryTour,
-        EventCategory.other => l.categoryOther,
-      };
+    EventCategory.music => l.categoryMusic,
+    EventCategory.theater => l.categoryTheater,
+    EventCategory.art => l.categoryArt,
+    EventCategory.festival => l.categoryFestival,
+    EventCategory.food => l.categoryFood,
+    EventCategory.sports => l.categorySports,
+    EventCategory.comedy => l.categoryComedy,
+    EventCategory.dance => l.categoryDance,
+    EventCategory.literature => l.categoryLiterature,
+    EventCategory.education => l.categoryEducation,
+    EventCategory.family => l.categoryFamily,
+    EventCategory.film => l.categoryFilm,
+    EventCategory.market => l.categoryMarket,
+    EventCategory.business => l.categoryBusiness,
+    EventCategory.social => l.categorySocial,
+    EventCategory.tour => l.categoryTour,
+    EventCategory.other => l.categoryOther,
+  };
 }

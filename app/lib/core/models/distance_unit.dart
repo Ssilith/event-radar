@@ -1,9 +1,8 @@
+//* User's preferred distance unit
 enum DistanceUnit { km, mi }
 
 extension DistanceUnitExt on DistanceUnit {
-  // Formats a distance given in kilometers according to this unit. Mirrors
-  // the original km logic: under 1 → metres / feet, under 10 → one decimal,
-  // otherwise rounded. Returned label includes the unit suffix.
+  //* Format a kilometre distance in this unit (m/ft under 1, 1 decimal under 10)
   String format(double km) {
     switch (this) {
       case DistanceUnit.km:

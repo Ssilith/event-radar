@@ -9,6 +9,7 @@ import 'package:event_radar/widgets/html_text.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+//* Rich featured-event card with status, time, price, and save toggle
 class FeaturedCard extends StatelessWidget {
   final Event event;
   final bool isSaved;
@@ -60,7 +61,7 @@ class FeaturedCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Subtle tinted corner glow.
+            //* Subtle tinted corner glow
             Positioned(
               top: -30,
               right: -30,
@@ -111,9 +112,7 @@ class FeaturedCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          // Slightly stronger fill on ONGOING so it reads as
-                          // "active now" without introducing a new accent
-                          // colour beyond the existing primary palette.
+                          //* Stronger fill on ONGOING so it reads as "active now"
                           color: statusColor.withValues(
                             alpha: isOngoing ? 0.28 : 0.18,
                           ),

@@ -5,11 +5,7 @@ import 'package:html_unescape/html_unescape.dart';
 
 final _unescape = HtmlUnescape();
 
-// ── Plain-text helpers ─────────────────────────────────────────────────────
-// Used at parse time for fields where rich formatting doesn't fit (city,
-// price, venue). Strips tags AND decodes entities in one pass via the html
-// package's parser.
-
+//* Strip tags + decode entities to plain text (city/price/venue fields)
 String htmlToText(String input) {
   if (input.isEmpty) return input;
   if (!input.contains('<') && !input.contains('&')) return input;
@@ -21,37 +17,18 @@ String htmlToText(String input) {
       .trim();
 }
 
+//* Nullable htmlToText (null when the result is empty)
 String? htmlToTextOrNull(String? input) {
   if (input == null) return null;
   final cleaned = htmlToText(input);
   return cleaned.isEmpty ? null : cleaned;
 }
 
-// Decodes HTML entities (`&lt;`, `&gt;`, `&amp;`, `&hellip;`, numeric `&#39;`,
-// `&#x27;`, …) without touching real tags, so any escape level the publisher
-// emits ends up as renderable HTML for flutter_html / htmlToSpan.
-//
-// Examples:
-//   "<p>Hello</p>"              → "<p>Hello</p>"               (no change)
-//   "&lt;p&gt;Sylvie&hellip;&lt;/p&gt;" → "<p>Sylvie…</p>"     (tags revealed)
-//   "<p>It&apos;s &amp; cool</p>"      → "<p>It's & cool</p>"  (entities decoded)
-//
-// We use html_unescape rather than html_parser.parseFragment(...).text because
-// the latter strips tags as a side-effect — fine for tag-encoded-as-entity
-// payloads, wrong for real HTML that happens to carry a couple of entities.
+//* Decode entities without stripping real tags, and turn newlines into <br>
 String unescapeHtmlIfNeeded(String input) {
   if (input.isEmpty) return input;
   var out = input.contains('&') ? _unescape.convert(input) : input;
-  // HTML collapses newlines to whitespace, so a description like
-  //   "Sylvie brings…\nLondon's finest…"
-  // would render as one paragraph. Convert each `\n` (and `\r\n`) to a <br>
-  // before handing off, but skip newlines that come right after a closing
-  // block tag (`</p>\n<p>…`) — those are source-side cosmetic whitespace and
-  // adding an extra <br> there opens a visible double gap.
-  // Some publishers dump the description as a raw JSON string without escape
-  // processing, so the field carries the literal two-character sequence \n
-  // (backslash + 'n'), not the newline byte 0x0A. Normalise those to real
-  // newlines first so the rest of the pipeline handles both flavours.
+  //* Normalise literal "\n"/"\r" sequences (raw JSON dumps) to real newlines
   if (out.contains(r'\n') || out.contains(r'\r')) {
     out = out
         .replaceAll(r'\r\n', '\n')
@@ -67,9 +44,7 @@ String unescapeHtmlIfNeeded(String input) {
         )
         .replaceAll('\n', '<br>');
   }
-  // Strip trailing whitespace AND the trailing-line-break artefacts sources
-  // love to emit (stray `<br>`, empty `<p>`, `&nbsp;`) so the rendered block
-  // doesn't end with a phantom blank line. Leading content is left untouched.
+  //* Trim trailing whitespace and stray <br>/<p></p>/&nbsp; artefacts
   final trailing = RegExp(
     r'(\s|<br\s*/?>|<p>\s*</p>|&nbsp;)+$',
     caseSensitive: false,
@@ -77,26 +52,19 @@ String unescapeHtmlIfNeeded(String input) {
   return out.replaceAll(trailing, '');
 }
 
-// ── Inline rich-text helper ────────────────────────────────────────────────
-// Returns a TextSpan that Text.rich can render. Preserves <b>/<strong>,
-// <i>/<em>, <u>, <br>, <p>, <li>, and decodes entities. Unknown tags pass
-// their text through unstyled. Used by the HtmlText widget — see widgets/
-// html_text.dart. We map the parsed DOM ourselves (instead of pulling in a
-// flutter-specific HTML-to-span package) because the popular ones either
-// build block widgets (flutter_html) or reference deprecated Material APIs
-// (simple_html_css references TextTheme.headline5).
+//* Convert limited inline HTML (b/i/u/br/p/li + entities) to a TextSpan
 TextSpan htmlToSpan(String input, {TextStyle? baseStyle}) {
   if (input.isEmpty) return TextSpan(text: '', style: baseStyle);
   if (!input.contains('<') && !input.contains('&')) {
     return TextSpan(text: input, style: baseStyle);
   }
-  // Handle the entity-encoded-tags case before parsing — otherwise the parser
-  // sees the decoded `<b>` as text, not a tag.
+  //* Decode entity-encoded tags first so the parser sees real tags
   final src = unescapeHtmlIfNeeded(input);
   final fragment = html_parser.parseFragment(src);
   return TextSpan(style: baseStyle, children: _nodesToSpans(fragment.nodes));
 }
 
+//* Recursively map DOM nodes to styled InlineSpans
 List<InlineSpan> _nodesToSpans(List<dom.Node> nodes) {
   final spans = <InlineSpan>[];
   for (final node in nodes) {

@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+//* Saved tab: bookmarks grouped by location or date
 class SavedScreen extends StatefulWidget {
   final CityItem? currentCity;
   const SavedScreen({super.key, this.currentCity});
@@ -43,21 +44,25 @@ class _SavedScreenState extends State<SavedScreen> {
     super.dispose();
   }
 
+  //* Reload bookmarks from cache
   void _refresh() {
     if (!mounted) return;
     setState(() => _saved = EventCacheService.getBookmarks());
   }
 
+  //* Unsave an event and cancel its reminder
   Future<void> _remove(Event event) async {
     await EventCacheService.removeBookmark(event.id);
     await NotificationService.instance.cancelEventReminder(event.id);
   }
 
+  //* Grouped bookmarks for the active grouping mode
   List<Group> _groups(AppL10n l) => switch (_groupMode) {
         GroupMode.location => _groupByLocation(l),
         GroupMode.date => _groupByDate(l),
       };
 
+  //* Group bookmarks by city, current city first, then alphabetically
   List<Group> _groupByLocation(AppL10n l) {
     final cityService = CityService.instance;
     final byDisplay = <String, List<Event>>{};
@@ -93,8 +98,7 @@ class _SavedScreenState extends State<SavedScreen> {
     }).toList();
   }
 
-  // Internal bucket keys are stable enums so we can sort and emphasize without
-  // string comparisons against translated labels.
+  //* Stable bucket order (enums, not translated labels) for sorting
   static const _bucketOrder = [
     _DateBucket.today,
     _DateBucket.tomorrow,
@@ -104,13 +108,12 @@ class _SavedScreenState extends State<SavedScreen> {
     _DateBucket.past,
   ];
 
+  //* Group bookmarks into today/tomorrow/week/month/later/past (venue-local)
   List<Group> _groupByDate(AppL10n l) {
     final buckets = {for (final b in _bucketOrder) b: <Event>[]};
 
     for (final e in _saved) {
-      // Bucket by the event's own venue-local date, not the phone's date.
-      // Past / today checks consider event.end too, so multi-day events stay
-      // in "today" until their end has actually passed.
+      //* Bucket by the event's venue-local date (multi-day stays "today" til end)
       final start = eventWallClock(e);
       final venueNow = nowInVenueTz(e.timezone);
       final today = DateUtils.dateOnly(venueNow);
@@ -137,9 +140,7 @@ class _SavedScreenState extends State<SavedScreen> {
       if (entry.key == _DateBucket.past) {
         entry.value.sort((a, b) => b.start.compareTo(a.start));
       } else {
-        // Non-past buckets are now homogeneous (no past events leaked in), so
-        // a plain chronological sort suffices — ongoing events sort first
-        // because their start is earliest.
+        //* Non-past buckets sort chronologically (ongoing first)
         entry.value.sort((a, b) => a.start.compareTo(b.start));
       }
     }
@@ -154,6 +155,7 @@ class _SavedScreenState extends State<SavedScreen> {
         .toList();
   }
 
+  //* Localized label for a date bucket
   String _bucketLabel(AppL10n l, _DateBucket b) => switch (b) {
         _DateBucket.today => l.bucketToday,
         _DateBucket.tomorrow => l.bucketTomorrow,
@@ -239,4 +241,5 @@ class _SavedScreenState extends State<SavedScreen> {
   }
 }
 
+//* Internal date buckets for the by-date grouping
 enum _DateBucket { today, tomorrow, thisWeek, thisMonth, later, past }

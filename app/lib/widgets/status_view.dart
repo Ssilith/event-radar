@@ -3,6 +3,7 @@ import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
 
+//* Centred placeholder for loading / empty / error-retry states
 class StatusView extends StatelessWidget {
   final IconData? icon;
   final String? message;
@@ -19,22 +20,22 @@ class StatusView extends StatelessWidget {
     this.retryLabel,
   });
 
-  // Loading state.
+  //* Loading state
   const StatusView.loading({super.key, required this.message})
-      : icon = null,
-        showSpinner = true,
-        onRetry = null,
-        retryLabel = null;
+    : icon = null,
+      showSpinner = true,
+      onRetry = null,
+      retryLabel = null;
 
-  // Empty result. Uses the l10n statusEmpty string at build time.
+  //* Empty result
   const StatusView.empty({super.key})
-      : icon = Icons.search_off,
-        message = null,
-        showSpinner = false,
-        onRetry = null,
-        retryLabel = null;
+    : icon = Icons.search_off,
+      message = null,
+      showSpinner = false,
+      onRetry = null,
+      retryLabel = null;
 
-  // Error / timeout.
+  //* Error / timeout
   const StatusView.withRetry({
     super.key,
     required this.icon,
