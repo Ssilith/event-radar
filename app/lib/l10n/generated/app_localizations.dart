@@ -121,6 +121,18 @@ abstract class AppL10n {
   /// **'Choose City'**
   String get chooseCityTitle;
 
+  /// Placeholder text in the city picker search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Search any city…'**
+  String get searchCity;
+
+  /// Empty state in the city picker when a search returns nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No cities found'**
+  String get noCitiesFound;
+
   /// Small badge on a city picker row that's been picked before.
   ///
   /// In en, this message translates to:
@@ -238,7 +250,7 @@ abstract class AppL10n {
   /// Helper text describing what the notifications toggle does.
   ///
   /// In en, this message translates to:
-  /// **'Notify the day before saved events.'**
+  /// **'Notify the day before saved events'**
   String get notificationsHint;
 
   /// Reminder notification title shown the day before a saved event.
@@ -268,13 +280,13 @@ abstract class AppL10n {
   /// Sort option that orders events chronologically.
   ///
   /// In en, this message translates to:
-  /// **'Date'**
+  /// **'Sort by date'**
   String get sortByDate;
 
   /// Sort option that orders events by distance from the user.
   ///
   /// In en, this message translates to:
-  /// **'Nearby'**
+  /// **'Sort by distance'**
   String get sortByNearby;
 
   /// Placeholder text in the search field on Discover.
@@ -493,6 +505,18 @@ abstract class AppL10n {
   /// **'Collapse'**
   String get collapse;
 
+  /// Toggle to expand a clamped event description.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get showMore;
+
+  /// Toggle to collapse an expanded event description.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get showLess;
+
   /// Tooltip on the close button on a draggable overlay.
   ///
   /// In en, this message translates to:
@@ -534,6 +558,18 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Could not get your location'**
   String get couldNotGetLocation;
+
+  /// Row in the city picker that resolves the user's city from GPS.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my current location'**
+  String get useMyLocation;
+
+  /// Loading label on the city picker location row while resolving GPS.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting location…'**
+  String get gettingLocation;
 
   /// Snackbar shown when launchUrl to Google Maps fails.
   ///
@@ -829,16 +865,28 @@ abstract class AppL10n {
   /// **'No upcoming events found for this city'**
   String get statusEmpty;
 
+  /// Empty-list message shown when the Past date filter is active.
+  ///
+  /// In en, this message translates to:
+  /// **'No past events found for this city'**
+  String get statusEmptyPast;
+
   /// Default retry button label.
   ///
   /// In en, this message translates to:
   /// **'Retry'**
   String get retry;
 
-  /// Status message shown while the first scrape kicks off.
+  /// Title shown while the first scrape kicks off.
   ///
   /// In en, this message translates to:
-  /// **'Discovering events - usually takes about 2 minutes the first time.'**
+  /// **'Discovering events'**
+  String get scrapeStartedTitle;
+
+  /// Subtitle under scrapeStartedTitle explaining the wait.
+  ///
+  /// In en, this message translates to:
+  /// **'This usually takes about 2 minutes the first time.'**
   String get scrapeStartedMessage;
 
   /// Status message shown on subsequent polls while waiting for results.

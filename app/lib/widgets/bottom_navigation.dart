@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' hide Page;
 import 'package:motion_tab_bar_v2/motion-tab-bar.dart';
 import 'package:motion_tab_bar_v2/motion-tab-controller.dart';
 
+//* The app's three-tab motion bottom navigation bar
 class BottomNavigation extends StatelessWidget {
   final MotionTabBarController? controller;
   final Function(int) onTap;
@@ -17,17 +18,9 @@ class BottomNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l = AppL10n.of(context);
-    // MotionTabBar caches the active tab as a *label string* in its own State
-    // and only refreshes via the controller's onTabChange callback. Self-
-    // assigning controller.index inside didChangeDependencies turned out to be
-    // unreliable in practice (the package's internal animation state can lag
-    // behind), so we just force a remount by keying on the locale. The
-    // `initialSelectedTab` is seeded from the controller's current index so
-    // the user stays on the same tab through the remount.
     final localeCode = Localizations.localeOf(context).languageCode;
     final currentPage = Page.values[controller?.index ?? 0];
-    // MotionTabBar doesn't forward `key` to its StatefulWidget super, so wrap
-    // it in a KeyedSubtree to make remount-on-locale actually take effect.
+
     return KeyedSubtree(
       key: ValueKey('motion-tab-bar-$localeCode'),
       child: MotionTabBar(
@@ -47,7 +40,11 @@ class BottomNavigation extends StatelessWidget {
         tabSelectedColor: cs.primary,
         tabIconColor: cs.onSurface.withValues(alpha: 0.5),
         tabIconSize: 30,
-        tabIconSelectedColor: cs.surfaceContainerHigh,
+        //* Light mode: icon matches the bar colour (knockout on the circle);
+        //* dark mode: onPrimary stays legible on the bright primary circle
+        tabIconSelectedColor: cs.brightness == Brightness.light
+            ? cs.surfaceContainerHigh
+            : cs.onPrimary,
         tabIconSelectedSize: 30,
         onTabItemSelected: onTap,
       ),

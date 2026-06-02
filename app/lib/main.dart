@@ -3,17 +3,20 @@ import 'package:event_radar/core/services/settings_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/app_shell.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
+//* Entry point: hold the splash, run startup init, then launch the app
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  if (!kIsWeb) FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await AppBootstrap.initialize();
-  FlutterNativeSplash.remove();
+  if (!kIsWeb) FlutterNativeSplash.remove();
   runApp(const MyApp());
 }
 
+//* Root widget: rebuilds MaterialApp on theme/locale change
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -39,22 +42,9 @@ class MyApp extends StatelessWidget {
               locale: locale,
               localizationsDelegates: AppL10n.localizationsDelegates,
               supportedLocales: AppL10n.supportedLocales,
-              // AppShell's screens read colours from the global AppColors
-              // tokens rather than Theme.of(context), so they have no
-              // inherited dependency that fires on a theme flip. The
-              // MaterialApp above does rebuild, but the initial route (and a
-              // const AppShell) is insulated by the Navigator and is not
-              // re-run. Re-listening to themeMode here, inside the route,
-              // forces AppShell to rebuild so its whole subtree repaints with
-              // the new brightness. A non-const AppShell is required: a const
-              // instance is identity-equal across rebuilds and Flutter would
-              // skip it, whereas a fresh instance with the same type/key
-              // updates the element while preserving _AppShellState.
-              home: ValueListenableBuilder<ThemeMode>(
-                valueListenable: settings.themeMode,
-                // ignore: prefer_const_constructors
-                builder: (_, _, _) => AppShell(),
-              ),
+              //* AppShell subscribes to themeMode itself and rebuilds its tabs
+              //* on a flip, so it can stay const here (see app_shell.dart)
+              home: const AppShell(),
             );
           },
         );
@@ -62,12 +52,13 @@ class MyApp extends StatelessWidget {
     );
   }
 
+  //* ThemeData for a given brightness
   ThemeData _buildTheme(Brightness b) => ThemeData(
     brightness: b,
     useMaterial3: true,
     colorSchemeSeed: AppColors.primary,
     scaffoldBackgroundColor: b == Brightness.dark
         ? const Color(0xFF0A0A0A)
-        : const Color(0xFFFAFAFA),
+        : const Color(0xFFF2F5F9),
   );
 }

@@ -4,6 +4,7 @@ import 'package:event_radar/features/saved/models/group_mode.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+//* Segmented toggle between grouping bookmarks by location vs date
 class GroupToggle extends StatelessWidget {
   final GroupMode mode;
   final ValueChanged<GroupMode> onChanged;
@@ -14,7 +15,6 @@ class GroupToggle extends StatelessWidget {
     final primary = Theme.of(context).colorScheme.primary;
     final l = AppL10n.of(context);
     return Container(
-      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: AppColors.surfaceHigh,
         borderRadius: BorderRadius.circular(22),
@@ -41,6 +41,7 @@ class GroupToggle extends StatelessWidget {
     );
   }
 
+  //* One segment of the toggle
   Widget _toggleButton({
     required String label,
     required IconData icon,
@@ -54,10 +55,10 @@ class GroupToggle extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
             color: selected ? primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(21),
             boxShadow: selected ? AppShadows.subtle : null,
           ),
           child: Row(
@@ -66,7 +67,7 @@ class GroupToggle extends StatelessWidget {
               Icon(
                 icon,
                 size: 14,
-                color: selected ? Colors.black : AppColors.textMuted,
+                color: selected ? AppColors.onPrimary : AppColors.textMuted,
               ),
               const SizedBox(width: 6),
               Text(
@@ -74,7 +75,7 @@ class GroupToggle extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? Colors.black : AppColors.textMuted,
+                  color: selected ? AppColors.onPrimary : AppColors.textMuted,
                 ),
               ),
             ],

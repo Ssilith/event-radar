@@ -1,27 +1,13 @@
 import 'package:flutter/material.dart';
 
-// A floating widget the user can drag anywhere on screen, with two modes:
-// "snap to corner" (for compact pills) and "free placement, clamped to
-// safe bounds" (for full-size panels/cards).
-//
-// State (offset, animating, dragStart) lives inside this widget so the parent
-// only owns the higher-level expanded/collapsed flags. When the parent flips
-// the mode, `didUpdateWidget` re-runs `_settle` to animate to the new
-// resting position.
-//
-// The collapse transition (panel → pill) shrinks the rendered child, which
-// would make a center-of-box snap calculation pick the wrong corner. Callers
-// fix this by invoking `recordSnapSide()` *before* the setState that swaps
-// in the smaller child — the captured side is consumed by the next settle.
+//* Draggable floating overlay: snap-to-corner (pills) or clamped free placement
 class DraggableOverlay extends StatefulWidget {
   final Widget child;
   final bool snapToCorner;
   final Offset Function(Size screen, EdgeInsets padding) defaultOffset;
-  // Top reservation (e.g. kToolbarHeight) so the widget can't be dragged
-  // under the AppBar; combined with MediaQuery.padding.top.
+  //* Top inset so it can't be dragged under the AppBar
   final double topReserved;
-  // Bottom reservation (e.g. tab bar height) so the widget can't be dragged
-  // under fixed bottom chrome; combined with MediaQuery.padding.bottom.
+  //* Bottom inset so it can't be dragged under the tab bar
   final double bottomReserved;
 
   const DraggableOverlay({
@@ -38,8 +24,7 @@ class DraggableOverlay extends StatefulWidget {
 }
 
 class DraggableOverlayState extends State<DraggableOverlay> {
-  // Minimum drag distance (px) before we treat the gesture as directional;
-  // smaller jitter falls back to "snap to nearest edge".
+  //* Min drag (px) to treat as directional; smaller jitter snaps to nearest edge
   static const _dragSnapThreshold = 4.0;
 
   Offset? _offset;
@@ -48,10 +33,7 @@ class DraggableOverlayState extends State<DraggableOverlay> {
   ({double x, double y})? _pendingSnapHint;
   final _innerKey = GlobalKey();
 
-  // Reads which half of the screen the widget currently sits in and stores
-  // it; the next `_settle` will use this instead of measuring the (newly
-  // shrunk) bounds. Call this BEFORE the parent setState that swaps in a
-  // smaller child, otherwise the box has already shrunk.
+  //* Capture the current corner side before the child shrinks (call pre-setState)
   void recordSnapSide() {
     final offset = _offset;
     if (offset == null) return;
@@ -71,6 +53,7 @@ class DraggableOverlayState extends State<DraggableOverlay> {
     if (oldWidget.snapToCorner != widget.snapToCorner) _settle();
   }
 
+  //* Animate to the resting position (snap corner or clamp) after a mode change
   void _settle() {
     final hint = _pendingSnapHint;
     _pendingSnapHint = null;

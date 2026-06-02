@@ -1,7 +1,6 @@
 import 'package:event_radar/core/models/event.dart';
 
-// A bucket of bookmarked events with a header label. `emphasis` flags the
-// "current city" or "Today" group for visual highlighting.
+//* A labelled bucket of bookmarks; emphasis flags "current city"/"Today"
 class Group {
   final String label;
   final List<Event> events;

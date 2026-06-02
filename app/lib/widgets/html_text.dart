@@ -1,13 +1,7 @@
 import 'package:event_radar/core/utils/html_parsing.dart';
 import 'package:flutter/material.dart';
 
-// Drop-in for `Text` that renders inline HTML formatting (<b>/<strong>,
-// <i>/<em>, <u>, <br>, <p>, <li>) and decodes entities (&amp;, &nbsp;, &#39;).
-// Falls back to a regular Text fast-path when the source has no markup.
-//
-// Use this when a field may carry markup AND needs the constraint props that
-// `flutter_html.Html` doesn't support: maxLines + overflow ellipsis in lists,
-// cards, and headers.
+//* Renders limited inline HTML (b/i/u/br/p/li) as a Text.rich span
 class HtmlText extends StatelessWidget {
   final String data;
   final TextStyle? style;

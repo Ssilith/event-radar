@@ -2,12 +2,10 @@ import 'package:event_radar/core/models/event_category.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
-// Tinted pill showing an EventCategory's icon + label, color-keyed by category.
+//* Coloured pill showing a category's icon + localized name
 class CategoryChip extends StatelessWidget {
   final EventCategory category;
-  // Slightly bigger variant used on the event details hero.
   final bool large;
-
   const CategoryChip({super.key, required this.category, this.large = false});
 
   @override

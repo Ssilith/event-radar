@@ -24,6 +24,7 @@ const _defaultWindowDays = 90;
 //* Cache
 typedef _CacheEntry = ({List<Event> events, DateTime cachedAt});
 
+//* Fetches, caches, and triggers scraping of per-city event datasets
 class EventService {
   final http.Client _client;
   final Uri _datasetsBase;
@@ -36,9 +37,11 @@ class EventService {
 
   static final EventService instance = EventService._internal();
 
+  //* URL-safe slug for a city name
   static String slugFor(CityItem city) =>
       removeDiacritics(city.name).toLowerCase().replaceAll(' ', '-');
 
+  //* Stream a city's events: cache → remote → trigger scrape + poll
   Stream<CityDataState> getEventsForCity(
     String slug, {
     String countryCode = '',
@@ -46,9 +49,7 @@ class EventService {
     double? longitude,
     DateTime? from,
     DateTime? to,
-    // When true, past events are kept in the result so screens with their own
-    // date filter (Discover's "Past" chip) can show them. Default drops past
-    // events so the upcoming-only consumers (Map) don't have to filter again.
+    //* Keep past events for screens that filter them (Discover); default drops
     bool includePast = false,
   }) async* {
     //* Memory cache hit
@@ -115,6 +116,7 @@ class EventService {
     yield const CityDataState.timeout();
   }
 
+  //* Fetch the list of available cities from index.json
   Future<List<Map<String, dynamic>>> fetchIndex() async {
     try {
       final r = await _client.get(_datasetUri('index.json'));
@@ -130,23 +132,27 @@ class EventService {
     return [];
   }
 
+  //* Close the HTTP client
   void dispose() => _client.close();
 
-  // Drops the in-memory cache for `slug` so the next getEventsForCity call
-  // re-fetches the dataset. Used by pull-to-refresh.
+  //* Drop the in-memory cache for a slug so the next call re-fetches (refresh)
   void invalidateCache(String slug) => _cache.remove(slug);
 
+  //* Whether the cached entry for a slug is still within the memory-cache window
   bool _isCacheFresh(String slug) {
     final entry = _cache[slug];
     return entry != null && DataFreshness.isMemoryCacheFresh(entry.cachedAt);
   }
 
+  //* Store events in the memory cache, stamped now
   void _setCache(String slug, List<Event> events) =>
       _cache[slug] = (events: events, cachedAt: DateTime.now());
 
+  //* Build a datasets endpoint URL for a given path
   Uri _datasetUri(String path) =>
       _datasetsBase.replace(queryParameters: {'path': path});
 
+  //* Fetch and decode a single city dataset JSON
   Future<Map<String, dynamic>?> _fetchDataset(String slug) async {
     try {
       final r = await _client.get(_datasetUri('$slug.json'));
@@ -160,6 +166,7 @@ class EventService {
     return null;
   }
 
+  //* Ask the backend to (re)scrape a city; true if it accepted the request
   Future<bool> _triggerScrape(String city, {String countryCode = ''}) async {
     try {
       final r = await _client.post(
@@ -183,6 +190,7 @@ class EventService {
     return false;
   }
 
+  //* Look up a city's index entry by name (case-insensitive)
   Future<Map<String, dynamic>?> _findInIndex(String cityName) async {
     final cities = await fetchIndex();
     final needle = cityName.toLowerCase();
@@ -191,13 +199,12 @@ class EventService {
         .firstOrNull;
   }
 
+  //* Parse dataset events, injecting the dataset-level venue timezone into each
   List<Event> _parseEvents(Map<String, dynamic> data) {
     final tzName = (data['timezone'] as String?)?.trim() ?? '';
     return (data['events'] as List? ?? [])
         .map((e) {
           final raw = e as Map<String, dynamic>;
-          // Inject dataset-level IANA timezone so each Event knows the venue's
-          // tz for display, without Flutter maintaining a country→tz map.
           return Event.fromJson({
             ...raw,
             if (tzName.isNotEmpty) 'timezone': tzName,
@@ -206,6 +213,7 @@ class EventService {
         .toList();
   }
 
+  //* Window by date (and radius when coords given), then sort by distance/date
   List<Event> _filter(
     List<Event> events,
     double? lat,

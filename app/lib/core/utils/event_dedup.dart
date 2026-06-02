@@ -1,14 +1,9 @@
 import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 
-// Some sources list the same multi-day event several times with staggered start
-// dates but the same end (e.g. a 3-day fair indexed as 27–29, 28–29 and 29–29),
-// so the copies all overlap and a single day can show the event two or three
-// times. This collapses entries that are really the SAME occurrence — identical
-// title + venue whose venue-local date ranges overlap — down to one, keeping the
-// widest span. Entries that merely share a name but fall on non-overlapping
-// dates (a weekly market on different Saturdays) are left untouched, so genuine
-// recurrences still show one row per date.
+//* Collapse same title+venue events with overlapping date ranges (the same
+//* occurrence re-listed) to one, keeping the widest span; recurrences on
+//* separate dates are kept
 List<Event> dedupeOverlapping(List<Event> events) {
   final groups = <String, List<Event>>{};
   for (final e in events) {
@@ -23,14 +18,14 @@ List<Event> dedupeOverlapping(List<Event> events) {
       result.add(group.first);
       continue;
     }
-    // Keep one representative per cluster of overlapping ranges.
+    //* One representative per cluster of overlapping ranges
     final reps = <Event>[];
     for (final e in group) {
       final r = e.wallClockRange;
       var merged = false;
       for (var i = 0; i < reps.length; i++) {
         final rr = reps[i].wallClockRange;
-        // Inclusive overlap: ranges intersect or touch at an endpoint.
+        //* Inclusive overlap: ranges intersect or touch at an endpoint
         final overlaps = !r.start.isAfter(rr.end) && !rr.start.isAfter(r.end);
         if (overlaps) {
           if (_spanMs(e) > _spanMs(reps[i])) reps[i] = e;
@@ -45,7 +40,26 @@ List<Event> dedupeOverlapping(List<Event> events) {
   return result;
 }
 
+//* Event duration in ms (used to pick the widest of overlapping copies)
 int _spanMs(Event e) {
   final r = e.wallClockRange;
   return r.end.difference(r.start).inMilliseconds;
+}
+
+//* Map markers are spatial, so a same title+venue event must be a single pin.
+//* [dedupeOverlapping] first merges genuinely continuous runs into their true
+//* span; then any remaining same-place repeats (a recurrence with gaps)
+//* collapse to the current/next occurrence — never a fabricated span.
+List<Event> dedupeForMap(List<Event> events) {
+  final byPlace = <String, Event>{};
+  for (final e in dedupeOverlapping(events)) {
+    final key = '${e.title.trim().toLowerCase()}|'
+        '${(e.venue ?? '').trim().toLowerCase()}';
+    final existing = byPlace[key];
+    //* Keep the earliest-starting (current/next) occurrence per place
+    if (existing == null || e.start.isBefore(existing.start)) {
+      byPlace[key] = e;
+    }
+  }
+  return byPlace.values.toList();
 }

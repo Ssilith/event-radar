@@ -33,9 +33,6 @@ dependencies:
   # settings
   app_settings: ^7.0.0
 
-  # dropdown
-  dropdown_search: ^7.0.0
-
   # navigation bar
   motion_tab_bar_v2: ^0.4.0
 

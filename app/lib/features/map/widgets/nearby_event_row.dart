@@ -9,6 +9,7 @@ import 'package:event_radar/widgets/html_text.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
+//* Event row in the map's events panel, with a distance pill
 class NearbyEventRow extends StatelessWidget {
   final Event event;
   final Position? userPosition;
@@ -25,6 +26,7 @@ class NearbyEventRow extends StatelessWidget {
     required this.onOpenDetails,
   });
 
+  //* Formatted distance pill text, or null without a position/coords
   String? _distanceLabel() {
     final pos = userPosition;
     if (pos == null) return null;
@@ -41,11 +43,6 @@ class NearbyEventRow extends StatelessWidget {
     final catColor = event.category.color;
     final distance = _distanceLabel();
     final durationLabels = DurationLabels(allDay: l.allDay);
-    // In light mode every row uses the more saturated "today" decoration so
-    // tiles feel consistent on a light surface; dark mode keeps the original
-    // toned-down look for non-today rows so today still stands out.
-    final showTodayStyle =
-        isToday || AppColors.brightness == Brightness.light;
 
     return InkWell(
       onTap: onTap,
@@ -53,10 +50,7 @@ class NearbyEventRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 12, 16, 12),
         decoration: BoxDecoration(
-          color: showTodayStyle ? primary.withValues(alpha: 0.05) : null,
-          border: Border(
-            bottom: BorderSide(color: AppColors.surfaceMuted),
-          ),
+          border: Border(bottom: BorderSide(color: AppColors.surfaceMuted)),
         ),
         child: Row(
           children: [
@@ -64,16 +58,10 @@ class NearbyEventRow extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: showTodayStyle
-                    ? catColor.withValues(alpha: 0.3)
-                    : catColor.withValues(alpha: 0.15),
+                //* Canonical category icon-box (same as the rest of the app)
+                color: catColor.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: showTodayStyle
-                      ? catColor
-                      : catColor.withValues(alpha: 0.35),
-                  width: showTodayStyle ? 1.5 : 1,
-                ),
+                border: Border.all(color: catColor.withValues(alpha: 0.4)),
               ),
               child: Icon(event.category.iconData, size: 18, color: catColor),
             ),
@@ -96,8 +84,8 @@ class NearbyEventRow extends StatelessWidget {
                           ),
                           child: Text(
                             l.bucketToday.toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.black,
+                            style: TextStyle(
+                              color: AppColors.onPrimary,
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.8,
@@ -126,10 +114,7 @@ class NearbyEventRow extends StatelessWidget {
                       Icon(Icons.schedule_rounded, size: 11, color: primary),
                       const SizedBox(width: 3),
                       Text(
-                        // Mirror the featured card: when the event is on today
-                        // (single- or multi-day) show just the start time, or
-                        // "All day". Otherwise show date + time. This drops the
-                        // old "→ end date" arrow for multi-day events.
+                        //* Today → time/"All day" (like featured); else date + time
                         isToday
                             ? eventTodayLabel(
                                 event,

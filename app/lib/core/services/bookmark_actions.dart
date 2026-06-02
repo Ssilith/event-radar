@@ -4,12 +4,11 @@ import 'package:event_radar/core/services/notification_service.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 
-// Pairs the Hive bookmark write with notification scheduling so call sites
-// don't have to do both. Returns the post-toggle saved state, same as
-// EventCacheService.toggleBookmark.
+//* Bookmark write + reminder scheduling in one call
 class BookmarkActions {
   BookmarkActions._();
 
+  //* Toggle bookmark: schedule a reminder when saved, cancel it when removed
   static Future<bool> toggle(Event event, AppL10n l) async {
     final saved = await EventCacheService.toggleBookmark(event);
     if (saved) {

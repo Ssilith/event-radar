@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+//* Blue dot marking the user's location on the map
 class UserDot extends StatelessWidget {
   const UserDot({super.key});
 
@@ -10,12 +11,6 @@ class UserDot extends StatelessWidget {
         color: Colors.blueAccent,
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 3),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 6,
-            color: Colors.blueAccent.withValues(alpha: 0.5),
-          ),
-        ],
       ),
     );
   }

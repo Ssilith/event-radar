@@ -21,6 +21,12 @@ class AppL10nPl extends AppL10n {
   String get chooseCityTitle => 'Wybierz miasto';
 
   @override
+  String get searchCity => 'Szukaj dowolnego miasta…';
+
+  @override
+  String get noCitiesFound => 'Nie znaleziono miast';
+
+  @override
   String get cityBadgeRecent => 'Ostatnie';
 
   @override
@@ -80,7 +86,7 @@ class AppL10nPl extends AppL10n {
 
   @override
   String get notificationsHint =>
-      'Powiadom dzień przed zapisanymi wydarzeniami.';
+      'Powiadom dzień przed zapisanymi wydarzeniami';
 
   @override
   String notificationsTitle(String title) {
@@ -99,10 +105,10 @@ class AppL10nPl extends AppL10n {
   String get sortByLabel => 'Sortuj';
 
   @override
-  String get sortByDate => 'Data';
+  String get sortByDate => 'Sortuj według daty';
 
   @override
-  String get sortByNearby => 'Najbliższe';
+  String get sortByNearby => 'Sortuj według odległości';
 
   @override
   String get searchHint => 'Szukaj wydarzeń';
@@ -115,7 +121,7 @@ class AppL10nPl extends AppL10n {
 
   @override
   String eventsFound(int count) {
-    return 'znaleziono $count';
+    return 'Znaleziono $count';
   }
 
   @override
@@ -151,7 +157,7 @@ class AppL10nPl extends AppL10n {
 
   @override
   String savedCount(int count) {
-    return 'zapisane: $count';
+    return 'Zapisane: $count';
   }
 
   @override
@@ -243,6 +249,12 @@ class AppL10nPl extends AppL10n {
   String get collapse => 'Zwiń';
 
   @override
+  String get showMore => 'Pokaż więcej';
+
+  @override
+  String get showLess => 'Pokaż mniej';
+
+  @override
   String get dismiss => 'Zamknij';
 
   @override
@@ -263,6 +275,12 @@ class AppL10nPl extends AppL10n {
 
   @override
   String get couldNotGetLocation => 'Nie można ustalić Twojej lokalizacji';
+
+  @override
+  String get useMyLocation => 'Użyj mojej obecnej lokalizacji';
+
+  @override
+  String get gettingLocation => 'Pobieranie lokalizacji…';
 
   @override
   String get couldNotOpenMaps => 'Nie udało się otworzyć Google Maps';
@@ -301,7 +319,7 @@ class AppL10nPl extends AppL10n {
 
   @override
   String timeSuffix(String name) {
-    return 'czas $name';
+    return 'Czas $name';
   }
 
   @override
@@ -426,11 +444,18 @@ class AppL10nPl extends AppL10n {
       'Nie znaleziono nadchodzących wydarzeń dla tego miasta';
 
   @override
+  String get statusEmptyPast =>
+      'Nie znaleziono minionych wydarzeń dla tego miasta';
+
+  @override
   String get retry => 'Spróbuj ponownie';
 
   @override
+  String get scrapeStartedTitle => 'Wyszukuję wydarzenia';
+
+  @override
   String get scrapeStartedMessage =>
-      'Wyszukuję wydarzenia — pierwsze pobranie zwykle trwa ok. 2 minut.';
+      'Pierwsze pobranie zwykle trwa ok. 2 minut.';
 
   @override
   String get scrapePollingMessage => 'Nadal wyszukuję wydarzenia…';

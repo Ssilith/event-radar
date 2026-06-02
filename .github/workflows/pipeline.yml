@@ -81,16 +81,23 @@ jobs:
           git commit -m "chore: add ${{ github.event.inputs.cities }} to cities.txt"
           git push
 
-      - name: Restore existing datasets index
+      - name: Restore existing datasets
         run: |
           mkdir -p indexer/datasets
           OWNER="${{ github.repository_owner }}"
           REPO="${{ github.event.repository.name }}"
-          URL="https://${OWNER}.github.io/${REPO}/datasets/index.json"
-          echo "Fetching $URL"
-          if curl -sf "$URL" -o indexer/datasets/index.json; then
+          BASE="https://${OWNER}.github.io/${REPO}/datasets"
+          echo "Fetching $BASE/index.json"
+          if curl -sf "$BASE/index.json" -o indexer/datasets/index.json; then
             COUNT=$(python3 -c "import json; d=json.load(open('indexer/datasets/index.json')); print(len(d.get('cities',[])))")
             echo "Restored index.json — $COUNT existing cities"
+            for URL in $(python3 -c "import json; d=json.load(open('indexer/datasets/index.json')); print(' '.join(c['url'] for c in d.get('cities',[]) if c.get('url')))"); do
+              if curl -sf "$BASE/$URL" -o "indexer/datasets/$URL"; then
+                echo "Restored $URL"
+              else
+                echo "WARN: could not restore $URL (will be missing unless re-scraped)"
+              fi
+            done
           else
             echo "No existing index found, starting fresh"
           fi

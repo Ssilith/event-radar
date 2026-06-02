@@ -1,11 +1,11 @@
 {
   "@@locale": "pl",
-
   "appTitle": "Event Radar",
-
   "discoveringEventsIn": "ODKRYWAJ WYDARZENIA W",
   "chooseCity": "Wybierz miasto",
   "chooseCityTitle": "Wybierz miasto",
+  "searchCity": "Szukaj dowolnego miasta…",
+  "noCitiesFound": "Nie znaleziono miast",
   "cityBadgeRecent": "Ostatnie",
   "cityBadgeNearby": "W pobliżu",
   "cityBadgeFetched": "Dostępne",
@@ -21,42 +21,46 @@
   "languageSystem": "Systemowy",
   "languageEnglish": "English",
   "languagePolish": "Polski",
-
   "distanceUnitLabel": "Odległość",
   "distanceUnitKm": "Kilometry",
   "distanceUnitMi": "Mile",
-
   "notificationsLabel": "Przypomnienia",
-  "notificationsHint": "Powiadom dzień przed zapisanymi wydarzeniami.",
+  "notificationsHint": "Powiadom dzień przed zapisanymi wydarzeniami",
   "notificationsTitle": "{title} jutro",
   "@notificationsTitle": {
-    "placeholders": { "title": { "type": "String" } }
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
   },
   "notificationsBody": "Początek: {time}{venuePart}",
   "@notificationsBody": {
     "placeholders": {
-      "time": { "type": "String" },
-      "venuePart": { "type": "String" }
+      "time": {
+        "type": "String"
+      },
+      "venuePart": {
+        "type": "String"
+      }
     }
   },
-
   "nearbySection": "W pobliżu",
   "sortByLabel": "Sortuj",
-  "sortByDate": "Data",
-  "sortByNearby": "Najbliższe",
+  "sortByDate": "Sortuj według daty",
+  "sortByNearby": "Sortuj według odległości",
   "searchHint": "Szukaj wydarzeń",
   "featuredSection": "Polecane",
   "allEventsSection": "Wszystkie wydarzenia",
-  "eventsFound": "znaleziono {count}",
+  "eventsFound": "Znaleziono {count}",
   "eventsAutoDiscoveredFrom": "{count, plural, =1{1 wydarzenie} few{{count} wydarzenia} many{{count} wydarzeń} other{{count} wydarzeń}} pobrane z",
   "schemaOrg": "schema.org",
   "discoveringEventsLoading": "Wyszukiwanie wydarzeń…",
   "stillDiscoveringEventsLoading": "Nadal wyszukuję wydarzenia…",
   "showingOfflineData": "Wyświetlanie danych offline",
-
   "savedForLater": "ZAPISANE NA PÓŹNIEJ",
   "bookmarks": "Zakładki",
-  "savedCount": "zapisane: {count}",
+  "savedCount": "Zapisane: {count}",
   "byLocation": "Według lokalizacji",
   "byDate": "Według daty",
   "bucketToday": "Dziś",
@@ -69,7 +73,6 @@
   "groupCurrent": "OBECNE",
   "noSavedEvents": "Brak zapisanych wydarzeń",
   "noSavedEventsBody": "Stuknij ikonę zakładki przy wydarzeniu\nw Odkrywaniu, aby zapisać je tutaj.",
-
   "mapTitle": "Mapa",
   "mapNoCitySelected": "Wybierz miasto w zakładce Odkrywaj, aby zobaczyć wydarzenia na mapie.",
   "mapNoEvents": "Brak wydarzeń do wyświetlenia.",
@@ -82,6 +85,8 @@
   "eventCount": "{count, plural, =1{1 wydarzenie} few{{count} wydarzenia} many{{count} wydarzeń} other{{count} wydarzeń}}",
   "loadingEvents": "Ładowanie wydarzeń…",
   "collapse": "Zwiń",
+  "showMore": "Pokaż więcej",
+  "showLess": "Pokaż mniej",
   "dismiss": "Zamknij",
   "directions": "Trasa",
   "details": "Szczegóły",
@@ -89,8 +94,9 @@
   "locationPermissionDeniedForever": "Lokalizacja jest trwale zablokowana",
   "settings": "Ustawienia",
   "couldNotGetLocation": "Nie można ustalić Twojej lokalizacji",
+  "useMyLocation": "Użyj mojej obecnej lokalizacji",
+  "gettingLocation": "Pobieranie lokalizacji…",
   "couldNotOpenMaps": "Nie udało się otworzyć Google Maps",
-
   "dateLabel": "Data",
   "timeLabel": "Godzina",
   "venueLabel": "Miejsce",
@@ -101,15 +107,13 @@
   "viewPage": "Otwórz stronę",
   "viaSource": "źródło: {host}",
   "timeYour": "Twojego",
-  "timeSuffix": "czas {name}",
-
+  "timeSuffix": "Czas {name}",
   "past": "MINIONE",
   "ongoing": "TRWA",
   "upcoming": "NADCHODZI",
   "pasShort": "MIN",
   "allDay": "Cały dzień",
   "daysCount": "{count, plural, few{{count} dni} many{{count} dni} other{{count} dni}}",
-
   "filterToday": "Dziś",
   "filterWeek": "W tym tygodniu",
   "filterMonth": "W tym miesiącu",
@@ -117,7 +121,6 @@
   "filterFreeOnly": "Tylko darmowe",
   "filterPast": "Minione",
   "categoryAll": "Wszystkie",
-
   "categoryMusic": "Muzyka",
   "categoryTheater": "Teatr",
   "categoryArt": "Sztuka",
@@ -135,19 +138,17 @@
   "categorySocial": "Spotkania",
   "categoryTour": "Zwiedzanie",
   "categoryOther": "Inne",
-
   "pageDiscover": "Odkrywaj",
   "pageSaved": "Zapisane",
   "pageMap": "Mapa",
-
-
   "statusErrorGeneric": "Coś poszło nie tak",
   "statusTimedOut": "Upłynął limit czasu",
   "statusLoading": "Ładowanie…",
   "statusEmpty": "Nie znaleziono nadchodzących wydarzeń dla tego miasta",
+  "statusEmptyPast": "Nie znaleziono minionych wydarzeń dla tego miasta",
   "retry": "Spróbuj ponownie",
-
-  "scrapeStartedMessage": "Wyszukuję wydarzenia — pierwsze pobranie zwykle trwa ok. 2 minut.",
+  "scrapeStartedTitle": "Wyszukuję wydarzenia",
+  "scrapeStartedMessage": "Pierwsze pobranie zwykle trwa ok. 2 minut.",
   "scrapePollingMessage": "Nadal wyszukuję wydarzenia…",
   "scrapeErrorMessage": "Nie udało się rozpocząć wyszukiwania. Spróbuj później.",
   "scrapeTimeoutMessage": "Wyszukiwanie trwa dłużej niż zwykle. Sprawdź ponownie za kilka minut."

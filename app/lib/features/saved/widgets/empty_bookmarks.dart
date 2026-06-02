@@ -3,6 +3,7 @@ import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+//* Placeholder shown when there are no saved events
 class EmptyBookmarks extends StatelessWidget {
   const EmptyBookmarks({super.key});
 

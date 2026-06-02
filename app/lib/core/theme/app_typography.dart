@@ -2,13 +2,11 @@ import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// Typography tokens. Headings use the Syne display face; body text uses the
-// platform default. Sizes are kept few and consistent across screens.
+//* Typography tokens: Syne for headings, system for body
 class AppText {
   AppText._();
 
-  // ── Display / heading (Syne) ───────────────────────────────────────────
-
+  //* Display / heading styles (Syne)
   static TextStyle displayLarge() => GoogleFonts.syne(
         fontSize: 28,
         fontWeight: FontWeight.w700,
@@ -49,11 +47,7 @@ class AppText {
         height: 1.15,
       );
 
-  // ── Body (system) ──────────────────────────────────────────────────────
-  // Body styles that pick up theme-aware colours from AppColors must be
-  // non-const getters, otherwise the const-evaluator chokes on the non-const
-  // brightness lookup.
-
+  //* Body styles (non-const getters so theme-aware AppColors resolve)
   static TextStyle get bodyLarge => TextStyle(
         fontSize: 15,
         fontWeight: FontWeight.w600,
@@ -90,14 +84,14 @@ class AppText {
     letterSpacing: 0.8,
   );
 
-  // Tiny, ALL-CAPS section/label badges that appear above headings.
+  //* Tiny ALL-CAPS badge above headings
   static const TextStyle overline = TextStyle(
     fontSize: 10,
     letterSpacing: 2,
     fontWeight: FontWeight.w700,
   );
 
-  // Used by InfoRow on the event details screen.
+  //* InfoRow field label on the event details screen
   static TextStyle get fieldLabel => TextStyle(
         fontSize: 10,
         letterSpacing: 1.4,

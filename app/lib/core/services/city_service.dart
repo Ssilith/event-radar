@@ -12,6 +12,7 @@ import 'package:event_radar/core/models/city_item.dart';
 
 final _log = Logger('CityService');
 
+//* Resolves, searches, and remembers cities; owns the GPS location lookup
 class CityService {
   CityService._internal();
   static final CityService instance = CityService._internal();
@@ -31,16 +32,17 @@ class CityService {
   Future<void>? _initFuture;
   Future<bool>? _resolveFuture;
 
-  // The previously-used city, or null on first launch. Returning null lets
-  // DiscoverScreen run its location-based resolution instead of silently
-  // landing on an arbitrary entry from the published index.
+  //* Last-used city, or null on first launch (lets Discover resolve by location)
   CityItem? get defaultCity => _recentCities.firstOrNull;
 
+  //* Most recent GPS fix, if any
   Position? get lastPosition => _lastPosition;
 
+  //* Diacritic-folded, dash-joined key for case/spacing-insensitive matching
   static String _normalize(String s) =>
       removeDiacritics(s).toLowerCase().replaceAll(RegExp(r'[\s_-]+'), '-');
 
+  //* Best-known display name for a raw city string (else title-cased)
   String displayCityName(String raw) {
     if (raw.trim().isEmpty) return raw;
     final key = _normalize(raw);
@@ -54,15 +56,15 @@ class CityService {
         .join(' ');
   }
 
+  //* Whether two raw city strings refer to the same city
   bool sameCity(String a, String b) => _normalize(a) == _normalize(b);
 
-  // Source classification for picker rendering. A city can match more than
-  // one; the picker picks the strongest badge in this order: recent → current
-  // → nearby → fetched.
+  //* Source badges for the picker (recent → current → nearby → fetched)
   bool isRecent(CityItem c) => _recentCities.contains(c);
   bool isNearby(CityItem c) => nearbyCities.contains(c);
   bool isFetched(CityItem c) => _knownCities.contains(c);
 
+  //* Run init once (cached future)
   Future<void> init() => _initFuture ??= _doInit();
 
   Future<void> _doInit() async {
@@ -72,6 +74,7 @@ class CityService {
     _knownCities = await _loadKnownCities();
   }
 
+  //* Move a city to the front of the recents list (capped) and persist
   void markUsed(CityItem city) {
     _recentCities.remove(city);
     _recentCities.insert(0, city);
@@ -79,6 +82,7 @@ class CityService {
     _persistRecents();
   }
 
+  //* Load recents from Hive
   void _loadRecents() {
     final raw = _recentsBox?.get(_recentsKey);
     if (raw == null) return;
@@ -97,6 +101,7 @@ class CityService {
     }
   }
 
+  //* Persist recents to Hive as JSON
   void _persistRecents() {
     final box = _recentsBox;
     if (box == null) return;
@@ -108,6 +113,7 @@ class CityService {
     box.put(_recentsKey, encoded);
   }
 
+  //* Picker results for a filter: defaults, then local prefix, then remote search
   Future<List<CityItem>> getItems(
     String filter, {
     String languageCode = 'en',
@@ -131,6 +137,7 @@ class CityService {
     return results;
   }
 
+  //* Resolve the user's city from GPS once (cached unless force)
   Future<bool> resolveLocation({
     String languageCode = 'en',
     bool force = false,
@@ -168,12 +175,14 @@ class CityService {
     }
   }
 
+  //* Default picker list: recents + current + nearby pinned, then the rest
   List<CityItem> _buildDefaultList() {
     final pinned = <CityItem>{..._recentCities, ?locationCity, ...nearbyCities};
     final rest = _knownCities.where((c) => !pinned.contains(c));
     return [...pinned, ...rest];
   }
 
+  //* Load the published city index (falls back to a hard-coded list on failure)
   Future<List<CityItem>> _loadKnownCities() async {
     try {
       final uri = Uri.parse(
@@ -193,6 +202,7 @@ class CityService {
     }
   }
 
+  //* Parse one index entry into a CityItem (handles "Name:CC" and country_code)
   CityItem? _parseIndexEntry(Map<String, dynamic> c) {
     final raw = c['city'] as String?;
     if (raw == null) return null;
@@ -208,10 +218,12 @@ class CityService {
     return CityItem(raw.capitalize(), '');
   }
 
+  //* Build a geodata proxy URL for a path + params
   Uri _geoUri(String path, Map<String, String> params) => Uri.parse(
     '${AppConfig.vercelBase}/api/geodata',
   ).replace(queryParameters: {'path': path, ...params});
 
+  //* Fetch cities near a lat/lon, biggest first
   Future<List<CityItem>> _fetchNearbyCities(
     double lat,
     double lon, {
@@ -236,6 +248,7 @@ class CityService {
     }
   }
 
+  //* Remote city search by name prefix, biased toward the user's location
   Future<List<CityItem>> _searchByPrefix(
     String prefix, {
     String languageCode = 'en',
@@ -266,11 +279,13 @@ class CityService {
     }
   }
 
+  //* Format lat/lon as the API's signed "+dd.dddd+dd.dddd" string
   String _fmtLatLon(double lat, double lon) {
     String s(double v) => '${v >= 0 ? '+' : ''}${v.toStringAsFixed(4)}';
     return '${s(lat)}${s(lon)}';
   }
 
+  //* Parse the API's city list payload into CityItems
   List<CityItem> _parseCities(dynamic data) {
     if (data is! List) return [];
     return data
@@ -282,6 +297,7 @@ class CityService {
         .toList();
   }
 
+  //* Current GPS position, requesting permission if needed (null if unavailable)
   Future<Position?> _getPosition() async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) return null;
@@ -294,7 +310,8 @@ class CityService {
         return null;
       }
       return await Geolocator.getCurrentPosition(
-        locationSettings: AndroidSettings(accuracy: LocationAccuracy.low),
+        //* Base LocationSettings (not AndroidSettings) so it's correct on iOS too
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
       );
     } catch (e, s) {
       _log.warning('getPosition failed', e, s);
@@ -303,4 +320,5 @@ class CityService {
   }
 }
 
+//* Used when the city index can't be loaded
 const _fallbackCities = [CityItem('Wrocław', 'PL'), CityItem('Berlin', 'DE')];

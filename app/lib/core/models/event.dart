@@ -5,13 +5,10 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'event.g.dart';
 
+//* A single event, parsed from a city dataset
 @JsonSerializable()
 class Event {
   final String id;
-
-  // Title keeps its raw HTML so display sites can render <b>/<i>/<u>/<br>
-  // via HtmlText. Dedupe / sort code reads it case-insensitively so leftover
-  // tag chars don't cause false splits.
   final String title;
 
   @JsonKey(fromJson: _cleanText)
@@ -30,9 +27,6 @@ class Event {
   final double? latitude;
   final double? longitude;
 
-  // Description keeps its raw HTML so the details screen can render <b>/<i>/
-  // <p>/<br>/<a> with flutter_html. Other text fields are pre-cleaned because
-  // rich markup in them is rare and breaks line-wrapping in compact rows.
   final String? description;
   final String? url;
   final String? source;
@@ -43,10 +37,6 @@ class Event {
   @JsonKey(name: 'updated_at', fromJson: _parseDateOrNull)
   final DateTime? updatedAt;
 
-  // IANA timezone name of the venue, e.g. "Europe/Warsaw". Injected at parse
-  // time from the dataset wrapper (not present on individual event payloads).
-  // Resolved by the indexer from country_code via pytz, so Flutter has no
-  // country→tz mapping to maintain.
   @JsonKey(defaultValue: '')
   final String timezone;
 
@@ -72,17 +62,20 @@ class Event {
 
   Map<String, dynamic> toJson() => _$EventToJson(this);
 
+  //* True when the event has usable (finite) coordinates
   bool get hasLocation =>
       latitude != null &&
       longitude != null &&
       latitude!.isFinite &&
       longitude!.isFinite;
 
+  //* True when a non-empty price string is present
   bool get hasPrice {
     final p = price?.trim();
     return p != null && p.isNotEmpty;
   }
 
+  //* True when the price reads as free or parses to zero
   bool get isFree {
     final p = price?.trim().toLowerCase();
     if (p == null || p.isEmpty) return false;
@@ -93,6 +86,7 @@ class Event {
     return asNumber == 0;
   }
 
+  //* Haversine great-circle distance in km to a point (null without coords)
   double? distanceTo(double lat, double lon) {
     if (!hasLocation) return null;
 
@@ -111,11 +105,11 @@ class Event {
   }
 }
 
+//* Degrees → radians
 double _toRad(double deg) => deg * pi / 180;
 
+//* Parse an ISO date, normalising naive timestamps to UTC
 DateTime _parseDate(String raw) {
-  // Indexer emits UTC. We keep it UTC here — formatting happens in the venue's
-  // timezone via formatEventTime(), so .toLocal() (phone tz) is no longer used.
   var dt = DateTime.tryParse(raw);
   if (dt == null) throw FormatException('Cannot parse date: $raw');
   if (!dt.isUtc) {
@@ -133,13 +127,13 @@ DateTime _parseDate(String raw) {
   return dt;
 }
 
+//* Nullable variant of _parseDate
 DateTime? _parseDateOrNull(String? raw) => raw == null ? null : _parseDate(raw);
 
-// Non-nullable counterpart used for required text fields. The shared helper
-// is in html_parsing.dart; this thin wrapper exists because json_serializable's
-// fromJson hook for a non-nullable field must itself be non-nullable.
+//* Strip HTML from a required text field
 String _cleanText(String raw) => htmlToText(raw);
 
+//* Map a raw category string to an EventCategory (other when unknown)
 EventCategory _parseEventCategory(String? category) {
   final needle = category?.toLowerCase();
   return EventCategory.values.firstWhere(

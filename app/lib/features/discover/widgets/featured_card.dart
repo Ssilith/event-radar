@@ -1,7 +1,6 @@
 import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/core/models/event_category.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
-import 'package:event_radar/core/theme/app_shadows.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:event_radar/widgets/category_chip.dart';
@@ -9,6 +8,7 @@ import 'package:event_radar/widgets/html_text.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+//* Rich featured-event card with status, time, price, and save toggle
 class FeaturedCard extends StatelessWidget {
   final Event event;
   final bool isSaved;
@@ -56,11 +56,10 @@ class FeaturedCard extends StatelessWidget {
             stops: const [0.0, 0.45, 1.0],
           ),
           border: Border.all(color: catColor.withValues(alpha: 0.28)),
-          boxShadow: AppShadows.card,
         ),
         child: Stack(
           children: [
-            // Subtle tinted corner glow.
+            //* Subtle tinted corner glow
             Positioned(
               top: -30,
               right: -30,
@@ -111,9 +110,7 @@ class FeaturedCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          // Slightly stronger fill on ONGOING so it reads as
-                          // "active now" without introducing a new accent
-                          // colour beyond the existing primary palette.
+                          //* Stronger fill on ONGOING so it reads as "active now"
                           color: statusColor.withValues(
                             alpha: isOngoing ? 0.28 : 0.18,
                           ),
@@ -181,28 +178,15 @@ class FeaturedCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       if (event.isFree || event.hasPrice)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              event.isFree ? l.free : event.price!,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: event.isFree
-                                    ? primary
-                                    : AppColors.textPrimary,
-                              ),
-                            ),
-                            if (event.source != null)
-                              Text(
-                                l.viaSource(Uri.tryParse(event.source ?? '')?.host ?? event.source ?? ''),
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  color: AppColors.textDisabled,
-                                ),
-                              ),
-                          ],
+                        Text(
+                          event.isFree ? l.free : event.price!,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: event.isFree
+                                ? primary
+                                : AppColors.textPrimary,
+                          ),
                         )
                       else
                         const SizedBox.shrink(),

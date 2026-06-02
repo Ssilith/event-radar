@@ -3,6 +3,7 @@ import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+//* Horizontal category filter chips ("All" + each available category)
 class CategoryBar extends StatelessWidget {
   final EventCategory? selected;
   final List<EventCategory> available;
@@ -33,20 +34,22 @@ class CategoryBar extends StatelessWidget {
               avatar: Icon(
                 cat?.iconData ?? Icons.apps_rounded,
                 size: 15,
-                color: sel ? Colors.black : color,
+                //* Selected fg contrasts the fill: black on pale dark-mode fills,
+                //* white on the deep light-mode fills (same rule as onPrimary)
+                color: sel ? AppColors.onPrimary : color,
               ),
               label: Text(cat?.label(l) ?? l.categoryAll),
               selected: sel,
               onSelected: (_) => onChanged(sel ? null : cat),
               showCheckmark: false,
               selectedColor: color,
-              backgroundColor: AppColors.border,
+              backgroundColor: AppColors.surfaceHigh,
               side: BorderSide(
                 color: sel ? color : AppColors.borderStrong,
               ),
               labelStyle: TextStyle(
                 fontSize: 12,
-                color: sel ? Colors.black : AppColors.textBody,
+                color: sel ? AppColors.onPrimary : AppColors.textBody,
                 fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
               ),
               padding: const EdgeInsets.symmetric(horizontal: 4),

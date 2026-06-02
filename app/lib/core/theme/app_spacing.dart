@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
-// Spacing and shape tokens. Use these instead of raw numeric literals so the
-// app's rhythm is enforced from one place.
+//* Spacing tokens (4-pt grid) — use instead of raw numbers
 class AppSpacing {
   AppSpacing._();
 
-  // Base scale — most paddings and gaps come from this 4-pt grid.
+  //* Base scale
   static const double xxs = 2;
   static const double xs = 4;
   static const double sm = 6;
@@ -16,12 +15,13 @@ class AppSpacing {
   static const double xxxl = 24;
   static const double huge = 32;
 
-  // Common screen-edge padding (e.g. list rows, sections).
+  //* Common screen-edge / list-row paddings
   static const EdgeInsets pagePadding = EdgeInsets.symmetric(horizontal: xl);
   static const EdgeInsets listRowPadding =
       EdgeInsets.fromLTRB(xl, 14, lg, 14);
 }
 
+//* Corner-radius tokens
 class AppRadius {
   AppRadius._();
 
@@ -35,6 +35,7 @@ class AppRadius {
   static const double circle = 999;
 }
 
+//* Square SizedBox gaps at the spacing-scale steps
 class AppGap {
   AppGap._();
 

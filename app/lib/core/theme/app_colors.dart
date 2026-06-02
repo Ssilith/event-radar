@@ -1,21 +1,14 @@
 import 'package:flutter/material.dart';
 
-// Semantic color tokens. The same token name (e.g. AppColors.bg) returns a
-// different Color depending on AppColors.brightness — set during MyApp.build
-// so all descendants pick up the right shade after a theme switch.
-//
-// All fields except `primary` are non-const getters, which means any
-// `const TextStyle(... AppColors.X ...)` must drop its `const` keyword.
+//* Brightness-aware colour tokens; non-const getters resolve per AppColors.brightness
 class AppColors {
   AppColors._();
 
-  // Updated by MyApp before building MaterialApp.
+  //* Active brightness, set by MyApp before building MaterialApp
   static Brightness brightness = Brightness.dark;
   static bool get _dark => brightness == Brightness.dark;
 
-  // Resolves the active brightness for a given ThemeMode + OS preference and
-  // applies it to the static tokens. Call this in MyApp.build before the
-  // MaterialApp is constructed so all descendants see the right shade.
+  //* Resolve + apply the active brightness for a ThemeMode + OS preference
   static void applyThemeMode(ThemeMode mode, Brightness platform) {
     brightness = switch (mode) {
       ThemeMode.system => platform,
@@ -24,49 +17,55 @@ class AppColors {
     };
   }
 
-  // Brand colour — stable across themes.
+  //* Brand colour — stable across themes
   static const Color primary = Color(0xFF00E5B4);
 
-  // Surfaces (lowest -> highest elevation)
+  //* Text/icon colour on a primary fill: black on the bright dark-mode mint,
+  //* white on the darker (Material-derived) light-mode primary.
+  static Color get onPrimary => _dark ? Colors.black : Colors.white;
+
+  //* Surfaces (lowest → highest elevation). Light mode uses a cool slate
+  //* undertone with white cards that lift off a faint grey-blue page.
   static Color get bg =>
-      _dark ? const Color(0xFF0A0A0A) : const Color(0xFFFAFAFA);
+      _dark ? const Color(0xFF0A0A0A) : const Color(0xFFF2F5F9);
   static Color get surfaceLow =>
-      _dark ? const Color(0xFF0E0E0E) : const Color(0xFFF4F4F4);
+      _dark ? const Color(0xFF0E0E0E) : const Color(0xFFEAEEF4);
   static Color get surface =>
       _dark ? const Color(0xFF111111) : const Color(0xFFFFFFFF);
   static Color get surfaceHigh =>
-      _dark ? const Color(0xFF161616) : const Color(0xFFEEEEEE);
+      _dark ? const Color(0xFF161616) : const Color(0xFFE7ECF2);
   static Color get surfaceMuted =>
-      _dark ? const Color(0xFF1A1A1A) : const Color(0xFFE5E5E5);
+      _dark ? const Color(0xFF1A1A1A) : const Color(0xFFDDE3EB);
   static Color get surfaceElevated =>
-      _dark ? const Color(0xFF1E1E1E) : const Color(0xFFE0E0E0);
+      _dark ? const Color(0xFF1E1E1E) : const Color(0xFFD5DCE5);
   static Color get surfacePill =>
-      _dark ? const Color(0xFF222222) : const Color(0xFFD5D5D5);
+      _dark ? const Color(0xFF222222) : const Color(0xFFCBD3DE);
 
-  // Lines & borders
+  //* Lines & borders
   static Color get border =>
-      _dark ? const Color(0xFF181818) : const Color(0xFFE8E8E8);
+      _dark ? const Color(0xFF181818) : const Color(0xFFE2E7EE);
   static Color get borderStrong =>
-      _dark ? const Color(0xFF2E2E2E) : const Color(0xFFCCCCCC);
+      _dark ? const Color(0xFF2E2E2E) : const Color(0xFFC4CDD9);
 
-  // Text (lightest -> darkest in dark mode; reversed for light mode)
-  static Color get textPrimary => _dark ? Colors.white : const Color(0xFF0F0F0F);
+  //* Text (lightest → darkest in dark mode; reversed in light). Light mode
+  //* uses deep slate tones rather than pure black/grey for a softer, premium feel.
+  static Color get textPrimary => _dark ? Colors.white : const Color(0xFF101620);
   static Color get textBody =>
-      _dark ? const Color(0xFFCCCCCC) : const Color(0xFF333333);
+      _dark ? const Color(0xFFCCCCCC) : const Color(0xFF2B333F);
   static Color get textBodyAlt =>
-      _dark ? const Color(0xFFBFBFBF) : const Color(0xFF444444);
+      _dark ? const Color(0xFFBFBFBF) : const Color(0xFF38414E);
   static Color get textSecondary =>
-      _dark ? const Color(0xFFAAAAAA) : const Color(0xFF555555);
+      _dark ? const Color(0xFFAAAAAA) : const Color(0xFF4E5765);
   static Color get textMuted =>
-      _dark ? const Color(0xFF999999) : const Color(0xFF666666);
+      _dark ? const Color(0xFF999999) : const Color(0xFF646E7C);
   static Color get textPlaceholder =>
-      _dark ? const Color(0xFF888888) : const Color(0xFF777777);
+      _dark ? const Color(0xFF888888) : const Color(0xFF77808D);
   static Color get textHint =>
-      _dark ? const Color(0xFF666666) : const Color(0xFF888888);
+      _dark ? const Color(0xFF666666) : const Color(0xFF8B95A1);
   static Color get textDisabled =>
-      _dark ? const Color(0xFF555555) : const Color(0xFF999999);
+      _dark ? const Color(0xFF555555) : const Color(0xFFA7B0BC);
   static Color get textFaint =>
-      _dark ? const Color(0xFF444444) : const Color(0xFFAAAAAA);
+      _dark ? const Color(0xFF444444) : const Color(0xFFBEC6D0);
   static Color get textFainter =>
-      _dark ? const Color(0xFF3A3A3A) : const Color(0xFFB5B5B5);
+      _dark ? const Color(0xFF3A3A3A) : const Color(0xFFCED5DD);
 }

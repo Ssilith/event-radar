@@ -1,6 +1,9 @@
+//* Remote dataset is stale past this age
 const _staleDuration = Duration(days: 30);
+//* In-memory cache is served directly within this age
 const _cacheInMemory = Duration(hours: 1);
 
+//* Freshness checks for remote datasets and the in-memory cache
 class DataFreshness {
   const DataFreshness._();
 

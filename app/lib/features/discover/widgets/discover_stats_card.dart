@@ -1,8 +1,10 @@
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/theme/app_shadows.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
+import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
 
+//* Banner showing the discovered-event count (or a polling state)
 class DiscoverStatsCard extends StatelessWidget {
   final bool isPolling;
   final int eventCount;
@@ -63,12 +65,7 @@ class DiscoverStatsCard extends StatelessWidget {
                     ),
                   ),
           ),
-          if (isPolling)
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: primary),
-            ),
+          if (isPolling) const Loading(size: 20),
         ],
       ),
     );

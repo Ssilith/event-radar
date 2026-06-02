@@ -8,9 +8,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 final _log = Logger('NotificationService');
 
-// Schedules T-1 day reminders for bookmarked events. Cancelled on unbookmark.
-// Uses the event id (hashed to int) as the notification id so we can address
-// each one without persisting an extra mapping.
+//* Schedules saved-event reminders; notification id = hashed event id
 class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
@@ -22,6 +20,7 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   bool _initialized = false;
 
+  //* Initialize the plugin once (Android + iOS settings)
   Future<void> init() async {
     if (_initialized) return;
     const android = AndroidInitializationSettings('@mipmap/launcher_icon');
@@ -32,9 +31,7 @@ class NotificationService {
     _initialized = true;
   }
 
-  // Returns true when the user has granted us notification permission. On
-  // older Android versions the permission is granted at install time so this
-  // always returns true there.
+  //* True when notification permission is granted (requests it if undetermined)
   Future<bool> ensurePermission() async {
     final status = await Permission.notification.status;
     if (status.isGranted) return true;
@@ -43,6 +40,7 @@ class NotificationService {
     return result.isGranted;
   }
 
+  //* Schedule a reminder for a saved event (no-op if disabled/denied/past)
   Future<void> scheduleEventReminder(
     Event event, {
     required String title,
@@ -52,9 +50,7 @@ class NotificationService {
     await init();
     if (!await ensurePermission()) return;
 
-    // The plugin's zoned scheduler needs a TZDateTime; we anchor everything in
-    // the venue's location so reminders fire relative to where the event
-    // actually happens.
+    //* Anchor in the venue's tz so it fires relative to where the event happens
     final venueTz = venueLocation(event.timezone);
     final reminder = _reminderTime(event, venueTz);
     if (reminder == null) return;
@@ -81,17 +77,7 @@ class NotificationService {
     }
   }
 
-  // Decides when a saved event's reminder should fire, in the venue's tz.
-  //
-  // - Normal case: 24h before the wall-clock start, so the user gets a
-  //   heads-up the day before.
-  // - Day-before slot already passed: happens for events saved inside that
-  //   24h window, and for multi-day events saved after they've begun but
-  //   while they're still running. Rather than drop the reminder, we simply
-  //   fire 24h from now (from bookmarking) — as long as the event is still on
-  //   by then.
-  // - Returns null only when there's nothing left to remind about: the event
-  //   has already ended, or it ends within the next 24h.
+  //* When to fire: 24h before start, else 24h from now; null if ended/ending
   tz.TZDateTime? _reminderTime(Event event, tz.Location venueTz) {
     final start = tz.TZDateTime.from(event.start, venueTz);
     final now = tz.TZDateTime.now(venueTz);
@@ -115,6 +101,7 @@ class NotificationService {
     return reminder;
   }
 
+  //* Cancel a single event's reminder
   Future<void> cancelEventReminder(String eventId) async {
     if (!_initialized) return;
     try {
@@ -124,12 +111,13 @@ class NotificationService {
     }
   }
 
+  //* Cancel every scheduled reminder (used when reminders are turned off)
   Future<void> cancelAll() async {
     if (!_initialized) return;
     await _plugin.cancelAll();
   }
 
-  // 32-bit signed int is all the platforms accept; xor-fold the SHA hex id.
+  //* Fold the SHA hex event id into a 32-bit signed int for the notification id
   int _idFor(String eventId) {
     var h = 0;
     for (final c in eventId.codeUnits) {

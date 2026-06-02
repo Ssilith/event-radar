@@ -21,6 +21,12 @@ class AppL10nEn extends AppL10n {
   String get chooseCityTitle => 'Choose City';
 
   @override
+  String get searchCity => 'Search any city…';
+
+  @override
+  String get noCitiesFound => 'No cities found';
+
+  @override
   String get cityBadgeRecent => 'Recent';
 
   @override
@@ -78,7 +84,7 @@ class AppL10nEn extends AppL10n {
   String get notificationsLabel => 'Reminders';
 
   @override
-  String get notificationsHint => 'Notify the day before saved events.';
+  String get notificationsHint => 'Notify the day before saved events';
 
   @override
   String notificationsTitle(String title) {
@@ -97,10 +103,10 @@ class AppL10nEn extends AppL10n {
   String get sortByLabel => 'Sort';
 
   @override
-  String get sortByDate => 'Date';
+  String get sortByDate => 'Sort by date';
 
   @override
-  String get sortByNearby => 'Nearby';
+  String get sortByNearby => 'Sort by distance';
 
   @override
   String get searchHint => 'Search events';
@@ -237,6 +243,12 @@ class AppL10nEn extends AppL10n {
   String get collapse => 'Collapse';
 
   @override
+  String get showMore => 'Show more';
+
+  @override
+  String get showLess => 'Show less';
+
+  @override
   String get dismiss => 'Dismiss';
 
   @override
@@ -257,6 +269,12 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get couldNotGetLocation => 'Could not get your location';
+
+  @override
+  String get useMyLocation => 'Use my current location';
+
+  @override
+  String get gettingLocation => 'Getting location…';
 
   @override
   String get couldNotOpenMaps => 'Could not open Google Maps';
@@ -412,11 +430,17 @@ class AppL10nEn extends AppL10n {
   String get statusEmpty => 'No upcoming events found for this city';
 
   @override
+  String get statusEmptyPast => 'No past events found for this city';
+
+  @override
   String get retry => 'Retry';
 
   @override
+  String get scrapeStartedTitle => 'Discovering events';
+
+  @override
   String get scrapeStartedMessage =>
-      'Discovering events - usually takes about 2 minutes the first time.';
+      'This usually takes about 2 minutes the first time.';
 
   @override
   String get scrapePollingMessage => 'Still discovering events…';

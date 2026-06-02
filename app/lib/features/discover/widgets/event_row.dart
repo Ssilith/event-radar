@@ -12,16 +12,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-// Single row in the All Events list — date badge, title, venue, bookmark
-// toggle, category dot, chevron.
+//* All-Events list row: date badge, title, venue, category icon + time + price (muted), save
 class EventRow extends StatelessWidget {
   final Event event;
   final bool isSaved;
   final VoidCallback onToggleSave;
   final VoidCallback onOpen;
-  // When set and the event has coordinates, a distance pill replaces the
-  // chevron trailing the row. Pass null (or unset) to hide the pill — used
-  // by Saved screen which doesn't always carry a location.
+  //* When set (and the event has coords), shows a distance pill instead of a chevron
   final Position? userPosition;
 
   const EventRow({
@@ -33,6 +30,7 @@ class EventRow extends StatelessWidget {
     this.userPosition,
   });
 
+  //* Formatted distance pill text, or null without a position/coords
   String? _distanceLabel() {
     final pos = userPosition;
     if (pos == null) return null;
@@ -41,6 +39,7 @@ class EventRow extends StatelessWidget {
     return SettingsService.instance.distanceUnit.value.format(km);
   }
 
+  //* Trailing widget: distance pill when known, else a chevron
   Widget _buildTrailing(Color primary) {
     final distance = _distanceLabel();
     if (distance == null) {
@@ -75,13 +74,21 @@ class EventRow extends StatelessWidget {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final isPast = event.isPast;
     final isHappeningToday = !isPast && event.isHappeningToday;
-    // Multi-day events that span today display today's date in the badge so
-    // the row reads as "happening now" instead of repeating the date the
-    // event originally began.
+    //* Multi-day events spanning today show today's date in the badge
     final badgeDate = isHappeningToday
         ? nowInVenueTz(event.timezone)
         : eventWallClock(event);
     final catColor = event.category.color;
+    //* Start hour on day one; "All day" for all-day events and later multi-day days
+    final timeLabel = eventTodayLabel(
+      event,
+      labels: DurationLabels(allDay: l.allDay),
+      locale: locale,
+    );
+    //* Price (or "Free") to show in the category colour
+    final priceLabel = event.isFree
+        ? l.free
+        : (event.hasPrice ? event.price : null);
 
     return InkWell(
       onTap: onOpen,
@@ -92,6 +99,7 @@ class EventRow extends StatelessWidget {
         ),
         child: Row(
           children: [
+            //* Date badge
             Container(
               width: 46,
               padding: const EdgeInsets.symmetric(vertical: 7),
@@ -112,7 +120,10 @@ class EventRow extends StatelessWidget {
                   Text(
                     isPast
                         ? l.pasShort
-                        : DateFormat('MMM', locale).format(badgeDate).toUpperCase(),
+                        : DateFormat(
+                            'MMM',
+                            locale,
+                          ).format(badgeDate).toUpperCase(),
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -154,12 +165,38 @@ class EventRow extends StatelessWidget {
                       event.venue!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textHint,
-                      ),
+                      style: TextStyle(fontSize: 12, color: AppColors.textHint),
                     ),
                   ],
+                  //* Bottom line: category icon + start hour (or "All day") + price chip
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Icon(event.category.iconData, size: 13, color: catColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        timeLabel,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textPlaceholder,
+                        ),
+                      ),
+                      if (priceLabel != null) const SizedBox(width: 10),
+                      if (priceLabel != null)
+                        Flexible(
+                          child: Text(
+                            priceLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPlaceholder,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -186,16 +223,7 @@ class EventRow extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: catColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 10),
                 _buildTrailing(primary),
               ],
             ),

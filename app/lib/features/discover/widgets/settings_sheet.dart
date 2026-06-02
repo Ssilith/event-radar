@@ -6,22 +6,17 @@ import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// Bottom sheet exposing the two app-wide preferences: theme mode and locale.
-// Tapping any chip writes through to SettingsService, which triggers MyApp to
-// rebuild MaterialApp with the new values.
+//* Settings sheet: theme, language, distance unit, and reminders toggle
 class SettingsSheet extends StatelessWidget {
   const SettingsSheet({super.key});
 
+  //* Open the sheet. isScrollControlled matches the city picker so it has the
+  //* same full-height drag-down-to-dismiss feel; the sheet paints its own bg.
   static Future<void> show(BuildContext context) {
-    // Background is painted inside the sheet (see build) — the route's own
-    // backgroundColor is evaluated once on open and would not refresh when the
-    // user flips the theme from inside the sheet.
     return showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => const SettingsSheet(),
     );
   }
@@ -29,10 +24,7 @@ class SettingsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = SettingsService.instance;
-    // Listening to themeMode here makes the WHOLE sheet rebuild on a flip, not
-    // just the segmented chips. Without this, the title / handle / labels keep
-    // reading the previous AppColors values because no parent rebuild reaches
-    // them — the bottom-sheet route lives below MyApp's MaterialApp boundary.
+    //* Rebuild the whole sheet on a theme flip so its own AppColors refresh
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: settings.themeMode,
       builder: (context, _, _) => _SheetBody(settings: settings),
@@ -40,6 +32,7 @@ class SettingsSheet extends StatelessWidget {
   }
 }
 
+//* The sheet's scrollable body with all the preference rows
 class _SheetBody extends StatelessWidget {
   final SettingsService settings;
   const _SheetBody({required this.settings});
@@ -53,9 +46,7 @@ class _SheetBody extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: AppShadows.overlay,
       ),
-      // SingleChildScrollView absorbs the borderline 2-px overflow that the
-      // SwitchListTile's adaptive height can produce on smaller screens, and
-      // keeps the sheet usable if future rows push it taller.
+      //* Scroll view absorbs minor overflow from the adaptive switch tile
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -129,12 +120,8 @@ class _SheetBody extends StatelessWidget {
               const SizedBox(height: 4),
               ValueListenableBuilder<bool>(
                 valueListenable: settings.notificationsEnabled,
-                // ListTile paints its background/ink on the nearest Material
-                // ancestor; the sheet's coloured Container sits between this
-                // tile and the bottom-sheet Material, which would hide those
-                // effects (Flutter asserts on it). A transparent Material here
-                // gives the tile its own paint surface without adding any
-                // colour over AppColors.surface.
+                //* Transparent Material so the ListTile has a paint surface
+                //* above the sheet's coloured Container (Flutter asserts otherwise)
                 builder: (_, enabled, _) => Material(
                   type: MaterialType.transparency,
                   child: SwitchListTile.adaptive(
@@ -156,6 +143,7 @@ class _SheetBody extends StatelessWidget {
   }
 }
 
+//* Small uppercased section label
 class _Section extends StatelessWidget {
   final String label;
   const _Section({required this.label});
@@ -174,6 +162,7 @@ class _Section extends StatelessWidget {
   }
 }
 
+//* Single-select pill row (theme/language/unit options)
 class _SegmentedRow<T> extends StatelessWidget {
   final T value;
   final List<(T, String)> options;
@@ -211,7 +200,7 @@ class _SegmentedRow<T> extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? Colors.black : AppColors.textBody,
+                color: selected ? AppColors.onPrimary : AppColors.textBody,
               ),
             ),
           ),
