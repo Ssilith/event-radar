@@ -3,3 +3,4 @@ berlin:DE
 opole:PL
 brussels:BE
 walbrzych:PL
+wroclaw:PL
