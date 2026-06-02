@@ -62,14 +62,17 @@ class _CityPickerSheetState extends State<CityPickerSheet> {
     _debounce?.cancel();
     final query = value.trim();
     if (query.isEmpty) {
-      setState(() => _future = _service.getItems('', languageCode: _langCode));
+      //* Block body so setState's callback returns void, not the Future
+      setState(() {
+        _future = _service.getItems('', languageCode: _langCode);
+      });
       return;
     }
     _debounce = Timer(const Duration(milliseconds: 350), () {
       if (!mounted) return;
-      setState(
-        () => _future = _service.getItems(query, languageCode: _langCode),
-      );
+      setState(() {
+        _future = _service.getItems(query, languageCode: _langCode);
+      });
     });
   }
 

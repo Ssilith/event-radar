@@ -1,3 +1,4 @@
+import 'package:diacritic/diacritic.dart';
 import 'package:extension_utils/string_utils.dart';
 
 //* A city the user can browse, identified by name + ISO country code
@@ -10,17 +11,20 @@ class CityItem {
   //* "Name:CC" key used for dataset slugs and lookups
   String get slug => '$name:$countryCode';
 
+  //* Diacritic- and case-folded name so "Wrocław" (GPS/API) and "Wroclaw"
+  //* (dataset slug) are treated as the same city
+  String get _nameKey => removeDiacritics(name).toLowerCase();
+
   @override
   String toString() => name.capitalize();
 
-  //* Case-insensitive on name so GPS/dataset casing differences still match
   @override
   bool operator ==(Object other) =>
       other is CityItem &&
-      other.name.toLowerCase() == name.toLowerCase() &&
+      other._nameKey == _nameKey &&
       other.countryCode == countryCode;
 
-  //* Must mirror == (same fields, same lowercasing) for Set/Map correctness
+  //* Must mirror == (same normalized fields) for Set/Map correctness
   @override
-  int get hashCode => Object.hash(name.toLowerCase(), countryCode);
+  int get hashCode => Object.hash(_nameKey, countryCode);
 }
