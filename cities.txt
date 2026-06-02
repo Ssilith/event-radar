@@ -1,3 +1,3 @@
 wrocław:PL
 berlin:DE
-opole:PLwroclaw:PL
+opole:PL
