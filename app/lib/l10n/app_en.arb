@@ -578,9 +578,13 @@
   "@retry": {
     "description": "Default retry button label."
   },
-  "scrapeStartedMessage": "Discovering events - usually takes about 2 minutes the first time.",
+  "scrapeStartedTitle": "Discovering events",
+  "@scrapeStartedTitle": {
+    "description": "Title shown while the first scrape kicks off."
+  },
+  "scrapeStartedMessage": "This usually takes about 2 minutes the first time.",
   "@scrapeStartedMessage": {
-    "description": "Status message shown while the first scrape kicks off."
+    "description": "Subtitle under scrapeStartedTitle explaining the wait."
   },
   "scrapePollingMessage": "Still discovering events…",
   "@scrapePollingMessage": {

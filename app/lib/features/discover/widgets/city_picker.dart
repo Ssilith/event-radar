@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:app_settings/app_settings.dart';
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/theme/app_shadows.dart';
 import 'package:event_radar/core/utils/language.dart';
@@ -10,104 +9,7 @@ import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:event_radar/core/models/city_item.dart';
 import 'package:event_radar/core/services/city_service.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-//* Searchable city dropdown with debounced remote lookup
-class CityPicker extends StatefulWidget {
-  final CityItem? initialValue;
-  final ValueChanged<CityItem> onCitySelected;
-  const CityPicker({
-    super.key,
-    this.initialValue,
-    required this.onCitySelected,
-  });
-
-  @override
-  State<CityPicker> createState() => _CityPickerState();
-}
-
-class _CityPickerState extends State<CityPicker> {
-  final _service = CityService.instance;
-  Timer? _debounce;
-
-  String get _langCode => deviceLanguageCode;
-
-  //* Load matching cities, debouncing remote search by 350ms
-  Future<List<CityItem>> _loadItems(String filter, _) async {
-    _debounce?.cancel();
-    if (filter.trim().isEmpty) {
-      return _service.getItems('', languageCode: _langCode);
-    }
-    final completer = Completer<List<CityItem>>();
-    _debounce = Timer(const Duration(milliseconds: 350), () async {
-      final results = await _service.getItems(filter, languageCode: _langCode);
-      if (!completer.isCompleted) completer.complete(results);
-    });
-    return completer.future;
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownSearch<CityItem>(
-      items: _loadItems,
-      itemAsString: (item) => item.name,
-      compareFn: (a, b) => a == b,
-      selectedItem: widget.initialValue,
-
-      popupProps: PopupProps.bottomSheet(
-        showSearchBox: true,
-        title: _PopupHeader(
-          langCode: _langCode,
-          onCityResolved: (city) {
-            _service.markUsed(city);
-            widget.onCitySelected(city);
-          },
-        ),
-        searchFieldProps: const TextFieldProps(
-          decoration: InputDecoration(
-            hintText: 'Search any city...',
-            prefixIcon: Icon(Icons.search),
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          ),
-        ),
-        itemBuilder: (context, item, isSelected, isDisabled) => _CityTile(
-          item: item,
-          isSelected: isSelected,
-          isCurrent: item == _service.locationCity,
-        ),
-        emptyBuilder: (_, _) => const Padding(
-          padding: EdgeInsets.all(16),
-          child: Text('No cities found'),
-        ),
-        loadingBuilder: (_, _) =>
-            const Padding(padding: EdgeInsets.all(24), child: Loading()),
-      ),
-
-      decoratorProps: const DropDownDecoratorProps(
-        decoration: InputDecoration(
-          labelText: 'City',
-          hintText: 'Select a city…',
-          prefixIcon: Icon(Icons.location_city),
-          border: OutlineInputBorder(),
-        ),
-      ),
-
-      onSelected: (city) {
-        if (city == null) return;
-        _service.markUsed(city);
-        widget.onCitySelected(city);
-      },
-    );
-  }
-}
 
 //* Modal bottom-sheet city chooser: location row, search, and results list
 class CityPickerSheet extends StatefulWidget {
@@ -278,13 +180,28 @@ class _CityPickerSheetState extends State<CityPickerSheet> {
                         }
                         final cities = snapshot.data ?? const <CityItem>[];
                         if (cities.isEmpty) {
+                          final primary = Theme.of(context).colorScheme.primary;
                           return Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(
-                              l.noCitiesFound,
-                              style: TextStyle(
-                                color: AppColors.textPlaceholder,
-                              ),
+                            padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.search_off_rounded,
+                                  size: 56,
+                                  color: primary.withValues(alpha: 0.4),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  l.noCitiesFound,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.syne(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         }
@@ -322,68 +239,6 @@ class _CityPickerSheetState extends State<CityPickerSheet> {
   }
 }
 
-//* Popup header with the "use my location" row
-class _PopupHeader extends StatefulWidget {
-  final String langCode;
-  final ValueChanged<CityItem> onCityResolved;
-
-  const _PopupHeader({required this.langCode, required this.onCityResolved});
-
-  @override
-  State<_PopupHeader> createState() => _PopupHeaderState();
-}
-
-class _PopupHeaderState extends State<_PopupHeader> {
-  bool _loading = false;
-
-  //* Resolve the user's city from GPS, or prompt to enable location
-  Future<void> _handleTap() async {
-    if (_loading) return;
-    setState(() => _loading = true);
-
-    final ok = await CityService.instance.resolveLocation(
-      languageCode: widget.langCode,
-      force: true,
-    );
-
-    if (!mounted) return;
-    setState(() => _loading = false);
-
-    final city = CityService.instance.locationCity;
-    if (ok && city != null) {
-      Navigator.of(context).pop();
-      widget.onCityResolved(city);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not get location. Please allow access in settings.',
-          ),
-        ),
-      );
-      AppSettings.openAppSettings(type: AppSettingsType.location);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
-          child: Text(
-            'Choose City',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-        ),
-        _LocationRow(loading: _loading, onTap: _handleTap),
-      ],
-    );
-  }
-}
-
 //* "Use my location" tappable row with a loading state
 class _LocationRow extends StatelessWidget {
   final bool loading;
@@ -413,7 +268,7 @@ class _LocationRow extends StatelessWidget {
               width: 18,
               height: 18,
               child: loading
-                  ? SpinKitRipple(color: primary)
+                  ? const Loading(size: 18)
                   : Icon(Icons.my_location, size: 18, color: primary),
             ),
             const SizedBox(width: 12),

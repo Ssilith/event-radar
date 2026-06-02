@@ -11,12 +11,6 @@ class UserDot extends StatelessWidget {
         color: Colors.blueAccent,
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 3),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 6,
-            color: Colors.blueAccent.withValues(alpha: 0.5),
-          ),
-        ],
       ),
     );
   }

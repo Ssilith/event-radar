@@ -466,7 +466,6 @@ class _ScrollTopButton extends StatelessWidget {
     return Material(
       color: primary,
       shape: const CircleBorder(),
-      elevation: 3,
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,

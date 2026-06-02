@@ -147,7 +147,8 @@
   "statusEmpty": "Nie znaleziono nadchodzących wydarzeń dla tego miasta",
   "statusEmptyPast": "Nie znaleziono minionych wydarzeń dla tego miasta",
   "retry": "Spróbuj ponownie",
-  "scrapeStartedMessage": "Wyszukuję wydarzenia — pierwsze pobranie zwykle trwa ok. 2 minut.",
+  "scrapeStartedTitle": "Wyszukuję wydarzenia",
+  "scrapeStartedMessage": "Pierwsze pobranie zwykle trwa ok. 2 minut.",
   "scrapePollingMessage": "Nadal wyszukuję wydarzenia…",
   "scrapeErrorMessage": "Nie udało się rozpocząć wyszukiwania. Spróbuj później.",
   "scrapeTimeoutMessage": "Wyszukiwanie trwa dłużej niż zwykle. Sprawdź ponownie za kilka minut."

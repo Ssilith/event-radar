@@ -451,8 +451,11 @@ class AppL10nPl extends AppL10n {
   String get retry => 'Spróbuj ponownie';
 
   @override
+  String get scrapeStartedTitle => 'Wyszukuję wydarzenia';
+
+  @override
   String get scrapeStartedMessage =>
-      'Wyszukuję wydarzenia — pierwsze pobranie zwykle trwa ok. 2 minut.';
+      'Pierwsze pobranie zwykle trwa ok. 2 minut.';
 
   @override
   String get scrapePollingMessage => 'Nadal wyszukuję wydarzenia…';

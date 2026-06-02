@@ -45,3 +45,21 @@ int _spanMs(Event e) {
   final r = e.wallClockRange;
   return r.end.difference(r.start).inMilliseconds;
 }
+
+//* Map markers are spatial, so a same title+venue event must be a single pin.
+//* [dedupeOverlapping] first merges genuinely continuous runs into their true
+//* span; then any remaining same-place repeats (a recurrence with gaps)
+//* collapse to the current/next occurrence — never a fabricated span.
+List<Event> dedupeForMap(List<Event> events) {
+  final byPlace = <String, Event>{};
+  for (final e in dedupeOverlapping(events)) {
+    final key = '${e.title.trim().toLowerCase()}|'
+        '${(e.venue ?? '').trim().toLowerCase()}';
+    final existing = byPlace[key];
+    //* Keep the earliest-starting (current/next) occurrence per place
+    if (existing == null || e.start.isBefore(existing.start)) {
+      byPlace[key] = e;
+    }
+  }
+  return byPlace.values.toList();
+}

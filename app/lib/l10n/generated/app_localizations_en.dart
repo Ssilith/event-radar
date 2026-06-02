@@ -436,8 +436,11 @@ class AppL10nEn extends AppL10n {
   String get retry => 'Retry';
 
   @override
+  String get scrapeStartedTitle => 'Discovering events';
+
+  @override
   String get scrapeStartedMessage =>
-      'Discovering events - usually takes about 2 minutes the first time.';
+      'This usually takes about 2 minutes the first time.';
 
   @override
   String get scrapePollingMessage => 'Still discovering events…';

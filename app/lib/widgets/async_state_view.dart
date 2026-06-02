@@ -25,7 +25,8 @@ class AsyncStateView extends StatelessWidget {
         retryLabel: l.retry,
       ),
       CityDataStatus.triggered => StatusView.loading(
-        message: l.scrapeStartedMessage,
+        message: l.scrapeStartedTitle,
+        body: l.scrapeStartedMessage,
       ),
       CityDataStatus.polling => StatusView.loading(
         message: l.scrapePollingMessage,

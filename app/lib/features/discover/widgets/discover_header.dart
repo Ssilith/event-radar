@@ -80,7 +80,6 @@ class DiscoverHeader extends StatelessWidget {
             IconBtn(
               icon: Icons.tune_rounded,
               onTap: () => SettingsSheet.show(context),
-              tooltip: l.settingsTitle,
             ),
           ],
         ),

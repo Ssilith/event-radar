@@ -3,15 +3,16 @@ import 'package:event_radar/core/services/settings_service.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/app_shell.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 //* Entry point: hold the splash, run startup init, then launch the app
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  if (!kIsWeb) FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await AppBootstrap.initialize();
-  FlutterNativeSplash.remove();
+  if (!kIsWeb) FlutterNativeSplash.remove();
   runApp(const MyApp());
 }
 

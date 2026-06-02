@@ -1,7 +1,7 @@
 import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
+import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 //* Discover placeholder prompting the user to pick a city
@@ -33,7 +33,7 @@ class DiscoverEmptyState extends StatelessWidget {
             l.chooseCityToDiscoverEvents,
             textAlign: TextAlign.center,
             style: GoogleFonts.syne(
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
               height: 1.3,
@@ -41,7 +41,7 @@ class DiscoverEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 28),
           if (cityLoading)
-            SpinKitRipple(color: primary, size: 36)
+            const Loading(size: 36)
           else
             FilledButton.icon(
               onPressed: onPickCity,

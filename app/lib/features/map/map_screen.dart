@@ -18,17 +18,16 @@ import 'package:event_radar/features/map/widgets/draggable_overlay.dart';
 import 'package:event_radar/features/map/widgets/event_marker.dart';
 import 'package:event_radar/features/map/widgets/events_chip.dart';
 import 'package:event_radar/features/map/widgets/events_panel.dart';
-import 'package:event_radar/features/map/widgets/loading_pill.dart';
 import 'package:event_radar/features/map/widgets/map_empty_state.dart';
 import 'package:event_radar/features/map/widgets/map_fab.dart';
 import 'package:event_radar/features/map/widgets/selected_event_card.dart';
 import 'package:event_radar/features/map/widgets/user_dot.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
+import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
 
@@ -126,7 +125,8 @@ class _MapScreenState extends State<MapScreen> {
           setState(() {
             _status = state.status;
             if (state.events.isNotEmpty) {
-              _events = dedupeOverlapping(
+              //* dedupeForMap: one pin per place (recurrences would stack)
+              _events = dedupeForMap(
                 state.events
                     .where((e) => e.hasLocation && DateFilter.all.matches(e))
                     .toList(),
@@ -290,8 +290,7 @@ class _MapScreenState extends State<MapScreen> {
   //* Build one event marker, shared by the cluster and selected-event layers
   Marker _buildEventMarker(Event event) {
     final isSelected = event.id == _selected?.id;
-    final today = event.isHappeningToday;
-    final size = isSelected ? 46 : (today ? 40 : 32);
+    final size = isSelected ? 46 : 32;
     return Marker(
       point: LatLng(event.latitude!, event.longitude!),
       width: size.toDouble(),
@@ -303,51 +302,21 @@ class _MapScreenState extends State<MapScreen> {
             if (!isSelected) _cardCollapsed = false;
           });
         },
-        child: EventMarker(
-          category: event.category,
-          isSelected: isSelected,
-          isToday: today,
-        ),
+        child: EventMarker(category: event.category, isSelected: isSelected),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final l = AppL10n.of(context);
     return Scaffold(
       backgroundColor: AppColors.bg,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: AppColors.bg.withValues(alpha: 0.85),
-        elevation: 0,
-        title: Text(
-          widget.city?.name ?? l.mapTitle,
-          style: GoogleFonts.syne(fontWeight: FontWeight.w700),
-        ),
-        actions: [
-          if (_events.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(
-                child: Text(
-                  l.eventCount(_events.length),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
       body: _buildBody(context),
     );
   }
 
-  //* Map stack: tiles, markers, loading pill, FABs, and the draggable overlays
+  //* Map stack: tiles, markers, loading, FABs, and the draggable overlays
   Widget _buildBody(BuildContext context) {
-    final l = AppL10n.of(context);
     if (widget.city == null) return const MapEmptyState();
 
     return Stack(
@@ -376,27 +345,27 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ],
               ),
-            //* Cluster layer holds unselected events; selected is drawn separately
-            //* below so it stays visible at any zoom
+            //* All events live in the cluster (selected is just restyled, not
+            //* pulled out) so selecting a spiderfied pin keeps the spread open
             MarkerClusterLayerWidget(
               options: MarkerClusterLayerOptions(
-                maxClusterRadius: 60,
-                disableClusteringAtZoom: 16,
+                maxClusterRadius: 45,
+                //* Cluster up to a deep zoom: tapping zooms in to separate
+                //* anything it can, and only truly same-spot events spiderfy
+                //* once you're zoomed in far.
+                disableClusteringAtZoom: 18,
+                spiderfyCircleRadius: 50,
                 size: const Size(44, 44),
-                markers: _events
-                    .where((e) => e.id != _selected?.id)
-                    .map(_buildEventMarker)
-                    .toList(),
+                markers: _events.map(_buildEventMarker).toList(),
                 builder: (ctx, markers) {
                   final primary = Theme.of(ctx).colorScheme.primary;
+                  //* Like a selected DateFilterBar pill: primary fill with an
+                  //* onPrimary count
                   return Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: primary,
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: const [
-                        BoxShadow(blurRadius: 6, color: Colors.black54),
-                      ],
+                      border: Border.all(color: primary),
                     ),
                     child: Center(
                       child: Text(
@@ -412,19 +381,11 @@ class _MapScreenState extends State<MapScreen> {
                 },
               ),
             ),
-            if (_selected != null &&
-                _events.any((e) => e.id == _selected!.id))
-              MarkerLayer(markers: [_buildEventMarker(_selected!)]),
           ],
         ),
         if (_status == CityDataStatus.polling ||
             _status == CityDataStatus.triggered)
-          Positioned(
-            top: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
-            left: 0,
-            right: 0,
-            child: const Center(child: LoadingPill()),
-          ),
+          const Positioned.fill(child: IgnorePointer(child: Loading())),
         Positioned(
           right: 16,
           bottom: 96 + _bottomNavReserved,
@@ -433,21 +394,15 @@ class _MapScreenState extends State<MapScreen> {
               MapFab(
                 icon: Icons.fit_screen_rounded,
                 onTap: _events.isEmpty ? null : _fitToEvents,
-                tooltip: l.fitToEvents,
               ),
               const SizedBox(height: 10),
-              MapFab(
-                icon: Icons.my_location_rounded,
-                onTap: _centerOnUser,
-                tooltip: l.myLocation,
-              ),
+              MapFab(icon: Icons.my_location_rounded, onTap: _centerOnUser),
             ],
           ),
         ),
         DraggableOverlay(
           key: _chipKey,
           snapToCorner: !_chipExpanded,
-          topReserved: kToolbarHeight,
           bottomReserved: _bottomNavReserved,
           defaultOffset: (screen, padding) =>
               Offset(16, screen.height - padding.bottom - _bottomNavReserved - 60),
@@ -484,12 +439,11 @@ class _MapScreenState extends State<MapScreen> {
           DraggableOverlay(
             key: _cardKey,
             snapToCorner: _cardCollapsed,
-            topReserved: kToolbarHeight,
             bottomReserved: _bottomNavReserved,
-            defaultOffset: (screen, padding) => Offset(
-              88,
-              screen.height - padding.bottom - _bottomNavReserved - 170,
-            ),
+            //* Default to the top-right corner (card is near full-width, so
+            //* x:88 right-aligns it with a 16px margin; y sits just below the
+            //* status bar)
+            defaultOffset: (screen, padding) => Offset(88, padding.top + 8),
             child: _cardCollapsed
                 ? CollapsedEventBubble(
                     event: _selected!,

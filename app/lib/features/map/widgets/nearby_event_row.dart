@@ -43,9 +43,6 @@ class NearbyEventRow extends StatelessWidget {
     final catColor = event.category.color;
     final distance = _distanceLabel();
     final durationLabels = DurationLabels(allDay: l.allDay);
-    //* Light mode uses the today style for all rows (faint ones vanish on light)
-    final showTodayStyle =
-        isToday || AppColors.brightness == Brightness.light;
 
     return InkWell(
       onTap: onTap,
@@ -53,10 +50,7 @@ class NearbyEventRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 12, 16, 12),
         decoration: BoxDecoration(
-          color: showTodayStyle ? primary.withValues(alpha: 0.05) : null,
-          border: Border(
-            bottom: BorderSide(color: AppColors.surfaceMuted),
-          ),
+          border: Border(bottom: BorderSide(color: AppColors.surfaceMuted)),
         ),
         child: Row(
           children: [
@@ -64,16 +58,10 @@ class NearbyEventRow extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: showTodayStyle
-                    ? catColor.withValues(alpha: 0.3)
-                    : catColor.withValues(alpha: 0.15),
+                //* Canonical category icon-box (same as the rest of the app)
+                color: catColor.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: showTodayStyle
-                      ? catColor
-                      : catColor.withValues(alpha: 0.35),
-                  width: showTodayStyle ? 1.5 : 1,
-                ),
+                border: Border.all(color: catColor.withValues(alpha: 0.4)),
               ),
               child: Icon(event.category.iconData, size: 18, color: catColor),
             ),

@@ -877,10 +877,16 @@ abstract class AppL10n {
   /// **'Retry'**
   String get retry;
 
-  /// Status message shown while the first scrape kicks off.
+  /// Title shown while the first scrape kicks off.
   ///
   /// In en, this message translates to:
-  /// **'Discovering events - usually takes about 2 minutes the first time.'**
+  /// **'Discovering events'**
+  String get scrapeStartedTitle;
+
+  /// Subtitle under scrapeStartedTitle explaining the wait.
+  ///
+  /// In en, this message translates to:
+  /// **'This usually takes about 2 minutes the first time.'**
   String get scrapeStartedMessage;
 
   /// Status message shown on subsequent polls while waiting for results.
