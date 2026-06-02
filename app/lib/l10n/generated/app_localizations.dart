@@ -505,6 +505,18 @@ abstract class AppL10n {
   /// **'Collapse'**
   String get collapse;
 
+  /// Toggle to expand a clamped event description.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get showMore;
+
+  /// Toggle to collapse an expanded event description.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get showLess;
+
   /// Tooltip on the close button on a draggable overlay.
   ///
   /// In en, this message translates to:

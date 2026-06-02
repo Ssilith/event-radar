@@ -288,10 +288,17 @@ class _CityPickerSheetState extends State<CityPickerSheet> {
                             ),
                           );
                         }
-                        return ListView.builder(
+                        return ListView.separated(
                           shrinkWrap: true,
                           padding: const EdgeInsets.only(bottom: 8),
                           itemCount: cities.length,
+                          separatorBuilder: (_, _) => Divider(
+                            height: 1,
+                            thickness: 1,
+                            indent: 16,
+                            endIndent: 16,
+                            color: AppColors.border,
+                          ),
                           itemBuilder: (_, i) {
                             final city = cities[i];
                             return _CityTile(
@@ -412,11 +419,9 @@ class _LocationRow extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               loading ? l.gettingLocation : l.useMyLocation,
-              style: GoogleFonts.syne(
-                textStyle: TextStyle(
-                  color: primary,
-                  fontWeight: FontWeight.w600,
-                ),
+              style: TextStyle(
+                color: primary,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],

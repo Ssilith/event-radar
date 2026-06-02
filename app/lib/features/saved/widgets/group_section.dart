@@ -1,7 +1,8 @@
 import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
+import 'package:event_radar/features/discover/widgets/event_row.dart';
+import 'package:event_radar/features/event_details/event_details_screen.dart';
 import 'package:event_radar/features/saved/models/group.dart';
-import 'package:event_radar/features/saved/widgets/saved_event_row.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -59,7 +60,14 @@ class GroupSection extends StatelessWidget {
           ),
         ),
         ...group.events.map(
-          (e) => SavedEventRow(event: e, onRemove: () => onRemove(e)),
+          (e) => EventRow(
+            event: e,
+            isSaved: true,
+            onToggleSave: () => onRemove(e),
+            onOpen: () => Navigator.of(context).push<void>(
+              MaterialPageRoute(builder: (_) => EventDetailsScreen(event: e)),
+            ),
+          ),
         ),
       ],
     );

@@ -9,6 +9,11 @@ class InfoRow extends StatelessWidget {
   final String value;
   final String? subValue;
   final bool highlight;
+  //* Optional custom value widget (e.g. a date range with an inline arrow);
+  //* falls back to a plain [value] Text when null
+  final Widget? valueWidget;
+  //* Optional value colour override (takes precedence over [highlight])
+  final Color? valueColor;
 
   const InfoRow({
     super.key,
@@ -17,6 +22,8 @@ class InfoRow extends StatelessWidget {
     required this.value,
     this.subValue,
     this.highlight = false,
+    this.valueWidget,
+    this.valueColor,
   });
 
   @override
@@ -44,14 +51,17 @@ class InfoRow extends StatelessWidget {
               children: [
                 Text(label.toUpperCase(), style: AppText.fieldLabel),
                 const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: highlight ? primary : AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                valueWidget ??
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color:
+                            valueColor ??
+                            (highlight ? primary : AppColors.textPrimary),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                 if (subValue != null && subValue!.trim().isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(

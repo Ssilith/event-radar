@@ -24,12 +24,13 @@ class SortBar extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
       child: Container(
-        padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
           color: AppColors.surfaceHigh,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: AppColors.surfacePill),
         ),
+        //* No outer padding: the selected pill fills its half up to the border,
+        //* while keeping fully rounded corners
         child: Row(
           children: EventSort.values.map((s) {
             final enabled = s == EventSort.date || nearbyAvailable;
@@ -49,10 +50,10 @@ class SortBar extends StatelessWidget {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
                   decoration: BoxDecoration(
                     color: selected ? primary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(21),
                     boxShadow: selected ? AppShadows.subtle : null,
                   ),
                   child: Row(

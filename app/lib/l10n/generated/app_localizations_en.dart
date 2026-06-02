@@ -243,6 +243,12 @@ class AppL10nEn extends AppL10n {
   String get collapse => 'Collapse';
 
   @override
+  String get showMore => 'Show more';
+
+  @override
+  String get showLess => 'Show less';
+
+  @override
   String get dismiss => 'Dismiss';
 
   @override

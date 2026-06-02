@@ -157,7 +157,7 @@ class AppL10nPl extends AppL10n {
 
   @override
   String savedCount(int count) {
-    return 'zapisane: $count';
+    return 'Zapisane: $count';
   }
 
   @override
@@ -249,6 +249,12 @@ class AppL10nPl extends AppL10n {
   String get collapse => 'Zwiń';
 
   @override
+  String get showMore => 'Pokaż więcej';
+
+  @override
+  String get showLess => 'Pokaż mniej';
+
+  @override
   String get dismiss => 'Zamknij';
 
   @override
@@ -313,7 +319,7 @@ class AppL10nPl extends AppL10n {
 
   @override
   String timeSuffix(String name) {
-    return 'czas $name';
+    return 'Czas $name';
   }
 
   @override

@@ -1,16 +1,26 @@
 import 'package:event_radar/core/models/event_category.dart';
 import 'package:event_radar/core/theme/app_colors.dart';
+import 'package:event_radar/core/utils/event_time.dart';
+import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
-//* Category-tinted gradient header with a centred icon and PAST/UPCOMING pill
+//* Category-tinted gradient header with a centred icon and a localized status pill
 class EventHero extends StatelessWidget {
   final EventCategory category;
-  final bool isPast;
-  const EventHero({super.key, required this.category, required this.isPast});
+  final EventStatus status;
+  const EventHero({super.key, required this.category, required this.status});
 
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
+    final l = AppL10n.of(context);
+    final isPast = status == EventStatus.past;
+    //* Localized badge text for the event's lifecycle stage
+    final label = switch (status) {
+      EventStatus.past => l.past,
+      EventStatus.ongoing => l.ongoing,
+      EventStatus.upcoming => l.upcoming,
+    };
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -58,7 +68,7 @@ class EventHero extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                isPast ? 'PAST' : 'UPCOMING',
+                label,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,

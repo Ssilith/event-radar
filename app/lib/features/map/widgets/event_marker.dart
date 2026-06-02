@@ -45,7 +45,13 @@ class EventMarker extends StatelessWidget {
       child: Icon(
         category.iconData,
         size: isSelected ? 22 : (showTodayStyle ? 20 : 16),
-        color: filled ? Colors.black : color,
+        //* On a filled pin the icon must contrast the fill: white on the deep
+        //* light-mode shade, black on the pale dark-mode pastel
+        color: filled
+            ? (AppColors.brightness == Brightness.light
+                  ? Colors.white
+                  : Colors.black)
+            : color,
       ),
     );
   }

@@ -315,6 +315,14 @@
   "@collapse": {
     "description": "Tooltip on the minimize button on a draggable overlay."
   },
+  "showMore": "Show more",
+  "@showMore": {
+    "description": "Toggle to expand a clamped event description."
+  },
+  "showLess": "Show less",
+  "@showLess": {
+    "description": "Toggle to collapse an expanded event description."
+  },
   "dismiss": "Dismiss",
   "@dismiss": {
     "description": "Tooltip on the close button on a draggable overlay."

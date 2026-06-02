@@ -15,7 +15,6 @@ class GroupToggle extends StatelessWidget {
     final primary = Theme.of(context).colorScheme.primary;
     final l = AppL10n.of(context);
     return Container(
-      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: AppColors.surfaceHigh,
         borderRadius: BorderRadius.circular(22),
@@ -56,10 +55,10 @@ class GroupToggle extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
             color: selected ? primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(21),
             boxShadow: selected ? AppShadows.subtle : null,
           ),
           child: Row(
