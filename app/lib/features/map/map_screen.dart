@@ -23,6 +23,7 @@ import 'package:event_radar/features/map/widgets/map_fab.dart';
 import 'package:event_radar/features/map/widgets/selected_event_card.dart';
 import 'package:event_radar/features/map/widgets/user_dot.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
+import 'package:event_radar/widgets/app_toast.dart';
 import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -45,6 +46,14 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   //* Space for the bottom tab bar + pop-up overhang (not in MediaQuery padding)
   static const _bottomNavReserved = 110.0;
+
+  //* OSM tiles stay sharp up to ~18, so cap zoom there. Keeping this == the
+  //* cluster threshold means a same-spot stack stays a tappable cluster at the
+  //* deepest zoom, so tapping it spiderfies.
+  static const _maxZoom = 18.0;
+
+  //* List-select focuses an event at max zoom (deepest detail).
+  static const _focusZoom = _maxZoom;
 
   final _eventService = EventService.instance;
   final _cityService = CityService.instance;
@@ -158,18 +167,17 @@ class _MapScreenState extends State<MapScreen> {
       }
       if (perm == LocationPermission.deniedForever) {
         if (interactive && mounted) {
-          final l = AppL10n.of(context);
-          _showLocationError(
-            l.locationPermissionDeniedForever,
-            actionLabel: l.settings,
-            onAction: AppSettings.openAppSettings,
-          );
+          _showLocationError(AppL10n.of(context).locationPermissionDeniedForever);
+          //* Only the OS settings can re-grant it, so take them there
+          await AppSettings.openAppSettings();
         }
         return;
       }
       final pos = await Geolocator.getCurrentPosition(
         //* Base LocationSettings (not AndroidSettings) so it's correct on iOS too
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+        ),
       );
       if (mounted) setState(() => _userPosition = pos);
     } catch (e, s) {
@@ -180,23 +188,10 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  //* Show a location-error snackbar with an optional settings action
-  void _showLocationError(
-    String message, {
-    String? actionLabel,
-    VoidCallback? onAction,
-  }) {
+  //* Show a location-error toast
+  void _showLocationError(String message) {
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        action: actionLabel != null && onAction != null
-            ? SnackBarAction(label: actionLabel, onPressed: onAction)
-            : null,
-      ),
-    );
+    AppToast.error(context, message);
   }
 
   //* Fit the camera to all event markers (and the user, if known)
@@ -218,7 +213,12 @@ class _MapScreenState extends State<MapScreen> {
     _mapController.fitCamera(
       CameraFit.bounds(
         bounds: bounds,
-        padding: const EdgeInsets.fromLTRB(40, 80, 40, 160 + _bottomNavReserved),
+        padding: const EdgeInsets.fromLTRB(
+          40,
+          80,
+          40,
+          160 + _bottomNavReserved,
+        ),
       ),
     );
   }
@@ -240,9 +240,10 @@ class _MapScreenState extends State<MapScreen> {
     setState(() => _cardCollapsed = true);
   }
 
-  //* Pan to an event and select it
+  //* Pan to an event and select it, zooming in deep so the chosen pin shows on
+  //* its own rather than inside a cluster (treats list-select like a zoom-in)
   void _panTo(Event event) {
-    _mapController.move(LatLng(event.latitude!, event.longitude!), 15);
+    _mapController.move(LatLng(event.latitude!, event.longitude!), _focusZoom);
     setState(() {
       _selected = event;
       _cardCollapsed = false;
@@ -309,10 +310,7 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: _buildBody(context),
-    );
+    return Scaffold(backgroundColor: AppColors.bg, body: _buildBody(context));
   }
 
   //* Map stack: tiles, markers, loading, FABs, and the draggable overlays
@@ -327,6 +325,7 @@ class _MapScreenState extends State<MapScreen> {
             backgroundColor: AppColors.bg,
             initialCenter: const LatLng(52.2297, 21.0122),
             initialZoom: 11,
+            maxZoom: _maxZoom,
             onTap: (_, _) => _onMapTap(),
           ),
           children: [
@@ -350,10 +349,10 @@ class _MapScreenState extends State<MapScreen> {
             MarkerClusterLayerWidget(
               options: MarkerClusterLayerOptions(
                 maxClusterRadius: 45,
-                //* Cluster up to a deep zoom: tapping zooms in to separate
-                //* anything it can, and only truly same-spot events spiderfy
-                //* once you're zoomed in far.
-                disableClusteringAtZoom: 18,
+                //* Keep clustering up to max zoom: tapping a cluster zooms to
+                //* separate what it can, and a same-spot stack stays a cluster
+                //* you can tap to spiderfy.
+                disableClusteringAtZoom: _maxZoom.toInt(),
                 spiderfyCircleRadius: 50,
                 size: const Size(44, 44),
                 markers: _events.map(_buildEventMarker).toList(),
@@ -404,8 +403,10 @@ class _MapScreenState extends State<MapScreen> {
           key: _chipKey,
           snapToCorner: !_chipExpanded,
           bottomReserved: _bottomNavReserved,
-          defaultOffset: (screen, padding) =>
-              Offset(16, screen.height - padding.bottom - _bottomNavReserved - 60),
+          defaultOffset: (screen, padding) => Offset(
+            16,
+            screen.height - padding.bottom - _bottomNavReserved - 60,
+          ),
           child: _chipExpanded
               ? SizedBox(
                   width: MediaQuery.of(context).size.width - 32,

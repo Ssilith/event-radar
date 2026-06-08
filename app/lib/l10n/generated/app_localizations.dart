@@ -256,13 +256,13 @@ abstract class AppL10n {
   /// Reminder notification title shown the day before a saved event.
   ///
   /// In en, this message translates to:
-  /// **'{title} is tomorrow'**
+  /// **'{title}'**
   String notificationsTitle(String title);
 
   /// Reminder notification body. venuePart is empty or ' at <venue>'.
   ///
   /// In en, this message translates to:
-  /// **'Starts at {time}{venuePart}'**
+  /// **'Tomorrow at {time}{venuePart}'**
   String notificationsBody(String time, String venuePart);
 
   /// Section header for events closest to the user's location.
@@ -270,6 +270,12 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Nearby'**
   String get nearbySection;
+
+  /// Toast title shown when a saved-event reminder was scheduled (the reminder date/time is the detail line).
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder set'**
+  String get reminderSetTitle;
 
   /// Label preceding the sort chips above the All Events list.
   ///

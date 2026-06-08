@@ -39,6 +39,26 @@ class EventRow extends StatelessWidget {
     return SettingsService.instance.distanceUnit.value.format(km);
   }
 
+  //* Small status pill (TODAY / PAST) — same shape as the map's row chip
+  Widget _statusChip(String text, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          color: fg,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.8,
+        ),
+      ),
+    );
+  }
+
   //* Trailing widget: distance pill when known, else a chevron
   Widget _buildTrailing(Color primary) {
     final distance = _distanceLabel();
@@ -89,6 +109,10 @@ class EventRow extends StatelessWidget {
     final priceLabel = event.isFree
         ? l.free
         : (event.hasPrice ? event.price : null);
+    //* Status pill before the title: TODAY (primary) or PAST (red), as on the map
+    final Widget? statusChip = isHappeningToday
+        ? _statusChip(l.bucketToday, primary, AppColors.onPrimary)
+        : (isPast ? _statusChip(l.past, Colors.red.shade400, Colors.white) : null);
 
     return InkWell(
       onTap: onOpen,
@@ -118,12 +142,8 @@ class EventRow extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    isPast
-                        ? l.pasShort
-                        : DateFormat(
-                            'MMM',
-                            locale,
-                          ).format(badgeDate).toUpperCase(),
+                    //* Always the month (even for past); red conveys "past"
+                    DateFormat('MMM', locale).format(badgeDate).toUpperCase(),
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -148,16 +168,26 @@ class EventRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  HtmlText(
-                    event.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                      height: 1.3,
-                    ),
+                  Row(
+                    children: [
+                      if (statusChip != null) ...[
+                        statusChip,
+                        const SizedBox(width: 6),
+                      ],
+                      Expanded(
+                        child: HtmlText(
+                          event.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   if (event.venue != null) ...[
                     const SizedBox(height: 3),

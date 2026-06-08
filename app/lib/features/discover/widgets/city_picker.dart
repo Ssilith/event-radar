@@ -5,6 +5,7 @@ import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/theme/app_shadows.dart';
 import 'package:event_radar/core/utils/language.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
+import 'package:event_radar/widgets/app_toast.dart';
 import 'package:event_radar/widgets/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:event_radar/core/models/city_item.dart';
@@ -95,10 +96,7 @@ class _CityPickerSheetState extends State<CityPickerSheet> {
     if (ok && city != null) {
       _select(city);
     } else {
-      final l = AppL10n.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.couldNotGetLocation)));
+      AppToast.error(context, AppL10n.of(context).couldNotGetLocation);
       AppSettings.openAppSettings(type: AppSettingsType.location);
     }
   }

@@ -27,6 +27,9 @@ dependencies:
   # icons
   flutter_material_design_icons: ^3.0.0+7447
 
+  # toast
+  motion_toast: ^2.15.0
+
   # localization
   geolocator: ^14.0.2
 

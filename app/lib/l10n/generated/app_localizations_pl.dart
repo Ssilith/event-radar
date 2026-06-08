@@ -90,16 +90,19 @@ class AppL10nPl extends AppL10n {
 
   @override
   String notificationsTitle(String title) {
-    return '$title jutro';
+    return '$title';
   }
 
   @override
   String notificationsBody(String time, String venuePart) {
-    return 'Początek: $time$venuePart';
+    return 'Jutro o $time$venuePart';
   }
 
   @override
   String get nearbySection => 'W pobliżu';
+
+  @override
+  String get reminderSetTitle => 'Przypomnienie ustawione';
 
   @override
   String get sortByLabel => 'Sortuj';

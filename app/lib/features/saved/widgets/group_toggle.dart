@@ -67,7 +67,7 @@ class GroupToggle extends StatelessWidget {
               Icon(
                 icon,
                 size: 14,
-                color: selected ? AppColors.onPrimary : AppColors.textMuted,
+                color: selected ? AppColors.onPrimary : AppColors.textBody,
               ),
               const SizedBox(width: 6),
               Text(
@@ -75,7 +75,7 @@ class GroupToggle extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? AppColors.onPrimary : AppColors.textMuted,
+                  color: selected ? AppColors.onPrimary : AppColors.textBody,
                 ),
               ),
             ],

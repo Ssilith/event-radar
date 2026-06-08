@@ -104,7 +104,7 @@
   "@notificationsHint": {
     "description": "Helper text describing what the notifications toggle does."
   },
-  "notificationsTitle": "{title} is tomorrow",
+  "notificationsTitle": "{title}",
   "@notificationsTitle": {
     "description": "Reminder notification title shown the day before a saved event.",
     "placeholders": {
@@ -113,7 +113,7 @@
       }
     }
   },
-  "notificationsBody": "Starts at {time}{venuePart}",
+  "notificationsBody": "Tomorrow at {time}{venuePart}",
   "@notificationsBody": {
     "description": "Reminder notification body. venuePart is empty or ' at <venue>'.",
     "placeholders": {
@@ -128,6 +128,10 @@
   "nearbySection": "Nearby",
   "@nearbySection": {
     "description": "Section header for events closest to the user's location."
+  },
+  "reminderSetTitle": "Reminder set",
+  "@reminderSetTitle": {
+    "description": "Toast title shown when a saved-event reminder was scheduled (the reminder date/time is the detail line)."
   },
   "sortByLabel": "Sort",
   "@sortByLabel": {

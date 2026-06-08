@@ -29,6 +29,7 @@ import 'package:event_radar/features/discover/widgets/section_header.dart';
 import 'package:event_radar/features/discover/widgets/sort_bar.dart';
 import 'package:event_radar/features/event_details/event_details_screen.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
+import 'package:event_radar/widgets/app_toast.dart';
 import 'package:event_radar/widgets/async_state_view.dart';
 import 'package:event_radar/widgets/status_view.dart';
 import 'package:flutter/material.dart';
@@ -191,9 +192,18 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       status == CityDataStatus.error ||
       status == CityDataStatus.timeout;
 
-  //* Save/unsave an event (and schedule/cancel its reminder)
-  Future<void> _toggleBookmark(Event event) =>
-      BookmarkActions.toggle(event, AppL10n.of(context));
+  //* Save/unsave an event (and schedule/cancel its reminder), confirming the
+  //* reminder with a snackbar when one was set
+  Future<void> _toggleBookmark(Event event) async {
+    final l = AppL10n.of(context);
+    final result = await BookmarkActions.toggle(event, l);
+    if (!mounted || result.reminderAt == null) return;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    //* reminderAt is a venue-tz TZDateTime; format its own fields (no toLocal,
+    //* which would convert to the unset tz.local == UTC and shift the time)
+    final when = DateFormat.MMMEd(locale).add_Hm().format(result.reminderAt!);
+    AppToast.reminder(context, title: l.reminderSetTitle, message: when);
+  }
 
   //* Open the city chooser bottom sheet (markUsed is handled inside the sheet)
   void _openCityPicker() {
@@ -318,6 +328,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   //* The scrollable feed: header, stats, featured carousel, filters, list
   Widget _buildEventFeed(BuildContext context) {
     final l = AppL10n.of(context);
+    //* Compute the (filtered, deduped, sorted) feed and featured list ONCE per
+    //* build. These getters re-run the whole pipeline on each access, so using
+    //* them directly in the list builder would recompute it for every row.
+    final filtered = _filtered;
+    final featured = _featuredEvents;
     final feed = RefreshIndicator(
       onRefresh: _refresh,
       child: CustomScrollView(
@@ -339,7 +354,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           //   ),
           // ),
           if (_hasData) ...[
-            if (_featuredEvents.isNotEmpty) ...[
+            if (featured.isNotEmpty) ...[
               SliverToBoxAdapter(
                 child: SectionHeader(
                   title: l.featuredSection,
@@ -352,7 +367,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               ),
               SliverToBoxAdapter(
                 child: FeaturedCarousel(
-                  events: _featuredEvents,
+                  events: featured,
                   bookmarked: _bookmarked,
                   onToggleBookmark: _toggleBookmark,
                   onOpenDetails: _openDetails,
@@ -362,7 +377,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             SliverToBoxAdapter(
               child: SectionHeader(
                 title: l.allEventsSection,
-                trailing: l.eventsFound(_filtered.length),
+                trailing: l.eventsFound(filtered.length),
               ),
             ),
             SliverToBoxAdapter(
@@ -398,7 +413,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 onChanged: (s) => setState(() => _sort = s),
               ),
             ),
-            if (_filtered.isEmpty)
+            if (filtered.isEmpty)
               SliverToBoxAdapter(
                 child: StatusView.empty(
                   message: _dateFilter == DateFilter.past
@@ -409,14 +424,17 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             else
               SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (ctx, i) => EventRow(
-                    event: _filtered[i],
-                    isSaved: _bookmarked.contains(_filtered[i].id),
-                    onToggleSave: () => _toggleBookmark(_filtered[i]),
-                    onOpen: () => _openDetails(_filtered[i]),
-                    userPosition: _cityService.lastPosition,
-                  ),
-                  childCount: _filtered.length,
+                  (ctx, i) {
+                    final e = filtered[i];
+                    return EventRow(
+                      event: e,
+                      isSaved: _bookmarked.contains(e.id),
+                      onToggleSave: () => _toggleBookmark(e),
+                      onOpen: () => _openDetails(e),
+                      userPosition: _cityService.lastPosition,
+                    );
+                  },
+                  childCount: filtered.length,
                 ),
               ),
             const SliverToBoxAdapter(child: SizedBox(height: 40)),

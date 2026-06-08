@@ -11,6 +11,7 @@ import 'package:event_radar/core/utils/maps_launcher.dart';
 import 'package:event_radar/features/event_details/widgets/event_hero.dart';
 import 'package:event_radar/features/event_details/widgets/info_row.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
+import 'package:event_radar/widgets/app_toast.dart';
 import 'package:event_radar/widgets/category_chip.dart';
 import 'package:event_radar/widgets/html_text.dart';
 import 'package:flutter/material.dart';
@@ -36,11 +37,18 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     _isSaved = EventCacheService.bookmarkedIds().contains(widget.event.id);
   }
 
-  //* Save/unsave this event
+  //* Save/unsave this event, confirming a scheduled reminder with a snackbar
   Future<void> _toggleSave() async {
-    final saved = await BookmarkActions.toggle(widget.event, AppL10n.of(context));
+    final l = AppL10n.of(context);
+    final result = await BookmarkActions.toggle(widget.event, l);
     if (!mounted) return;
-    setState(() => _isSaved = saved);
+    setState(() => _isSaved = result.saved);
+    if (result.reminderAt == null) return;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    //* reminderAt is a venue-tz TZDateTime; format its own fields (no toLocal,
+    //* which would convert to the unset tz.local == UTC and shift the time)
+    final when = DateFormat.MMMEd(locale).add_Hm().format(result.reminderAt!);
+    AppToast.reminder(context, title: l.reminderSetTitle, message: when);
   }
 
   //* Open the event's ticket/source URL in an in-app browser
@@ -57,9 +65,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   Future<void> _openDirections() async {
     final ok = await openDirectionsToEvent(widget.event);
     if (!ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppL10n.of(context).couldNotOpenMaps)),
-      );
+      AppToast.error(context, AppL10n.of(context).couldNotOpenMaps);
     }
   }
 

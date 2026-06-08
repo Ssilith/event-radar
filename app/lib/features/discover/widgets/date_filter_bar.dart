@@ -53,7 +53,7 @@ class DateFilterBar extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-                      color: sel ? AppColors.onPrimary : AppColors.textMuted,
+                      color: sel ? AppColors.onPrimary : AppColors.textBody,
                     ),
                   ),
                 ),
@@ -91,7 +91,7 @@ class DateFilterBar extends StatelessWidget {
                     Icon(
                       Icons.savings_rounded,
                       size: 14,
-                      color: freeOnly ? AppColors.onPrimary : AppColors.textMuted,
+                      color: freeOnly ? AppColors.onPrimary : AppColors.textBody,
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -100,7 +100,7 @@ class DateFilterBar extends StatelessWidget {
                         fontSize: 13,
                         fontWeight:
                             freeOnly ? FontWeight.w700 : FontWeight.w400,
-                        color: freeOnly ? AppColors.onPrimary : AppColors.textMuted,
+                        color: freeOnly ? AppColors.onPrimary : AppColors.textBody,
                       ),
                     ),
                   ],

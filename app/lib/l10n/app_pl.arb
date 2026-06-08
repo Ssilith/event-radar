@@ -26,7 +26,7 @@
   "distanceUnitMi": "Mile",
   "notificationsLabel": "Przypomnienia",
   "notificationsHint": "Powiadom dzień przed zapisanymi wydarzeniami",
-  "notificationsTitle": "{title} jutro",
+  "notificationsTitle": "{title}",
   "@notificationsTitle": {
     "placeholders": {
       "title": {
@@ -34,7 +34,7 @@
       }
     }
   },
-  "notificationsBody": "Początek: {time}{venuePart}",
+  "notificationsBody": "Jutro o {time}{venuePart}",
   "@notificationsBody": {
     "placeholders": {
       "time": {
@@ -46,6 +46,7 @@
     }
   },
   "nearbySection": "W pobliżu",
+  "reminderSetTitle": "Przypomnienie ustawione",
   "sortByLabel": "Sortuj",
   "sortByDate": "Sortuj według daty",
   "sortByNearby": "Sortuj według odległości",
