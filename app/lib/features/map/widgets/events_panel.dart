@@ -65,8 +65,6 @@ class EventsPanel extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      //* Today count as a filled pill (matches the collapsed chip),
-                      //* else a plain upcoming count
                       if (todayCount > 0)
                         Container(
                           padding: const EdgeInsets.symmetric(

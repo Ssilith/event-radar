@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 //* Drop-shadow presets — identical in light and dark mode.
-//* Temporarily disabled app-wide: both presets are empty for a flat look.
 class AppShadows {
   AppShadows._();
 

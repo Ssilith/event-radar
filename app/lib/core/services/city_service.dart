@@ -89,12 +89,15 @@ class CityService {
     try {
       final list = jsonDecode(raw) as List;
       _recentCities.addAll(
-        list.whereType<Map>().map(
-          (m) => CityItem(
-            m['name'] as String? ?? '',
-            m['countryCode'] as String? ?? '',
-          ),
-        ).where((c) => c.name.isNotEmpty),
+        list
+            .whereType<Map>()
+            .map(
+              (m) => CityItem(
+                m['name'] as String? ?? '',
+                m['countryCode'] as String? ?? '',
+              ),
+            )
+            .where((c) => c.name.isNotEmpty),
       );
     } catch (e, s) {
       _log.warning('corrupted recents entry', e, s);
@@ -311,7 +314,9 @@ class CityService {
       }
       return await Geolocator.getCurrentPosition(
         //* Base LocationSettings (not AndroidSettings) so it's correct on iOS too
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+        ),
       );
     } catch (e, s) {
       _log.warning('getPosition failed', e, s);

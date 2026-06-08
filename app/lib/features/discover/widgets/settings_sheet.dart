@@ -24,7 +24,6 @@ class SettingsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = SettingsService.instance;
-    //* Rebuild the whole sheet on a theme flip so its own AppColors refresh
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: settings.themeMode,
       builder: (context, _, _) => _SheetBody(settings: settings),
@@ -46,7 +45,6 @@ class _SheetBody extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: AppShadows.overlay,
       ),
-      //* Scroll view absorbs minor overflow from the adaptive switch tile
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -120,8 +118,6 @@ class _SheetBody extends StatelessWidget {
               const SizedBox(height: 4),
               ValueListenableBuilder<bool>(
                 valueListenable: settings.notificationsEnabled,
-                //* Transparent Material so the ListTile has a paint surface
-                //* above the sheet's coloured Container (Flutter asserts otherwise)
                 builder: (_, enabled, _) => Material(
                   type: MaterialType.transparency,
                   child: SwitchListTile.adaptive(
@@ -143,7 +139,7 @@ class _SheetBody extends StatelessWidget {
   }
 }
 
-//* Small uppercased section label
+//* Small section label
 class _Section extends StatelessWidget {
   final String label;
   const _Section({required this.label});

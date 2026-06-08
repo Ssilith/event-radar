@@ -30,10 +30,6 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
       vsync: this,
     );
     _loadDefaultCity();
-    // The tab screens read colours from the global AppColors tokens, which
-    // have no InheritedWidget to rebuild them on a theme flip. Rebuilding here
-    // (a State setState, which const can't block) refreshes them while keeping
-    // this State alive — so `const AppShell()` is fine.
     SettingsService.instance.themeMode.addListener(_onThemeChanged);
   }
 

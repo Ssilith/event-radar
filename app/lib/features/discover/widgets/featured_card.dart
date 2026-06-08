@@ -43,8 +43,6 @@ class FeaturedCard extends StatelessWidget {
       child: Container(
         width: 295,
         margin: const EdgeInsets.only(right: 14, bottom: 4),
-        //* Clip so the bleed-past-corner glow circle below stays inside the
-        //* rounded rectangle (otherwise it spills out the top-right corner)
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
@@ -62,7 +60,6 @@ class FeaturedCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            //* Subtle tinted corner glow
             Positioned(
               top: -30,
               right: -30,
@@ -113,7 +110,6 @@ class FeaturedCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          //* Stronger fill on ONGOING so it reads as "active now"
                           color: statusColor.withValues(
                             alpha: isOngoing ? 0.28 : 0.18,
                           ),

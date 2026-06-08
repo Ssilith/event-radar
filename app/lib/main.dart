@@ -42,8 +42,6 @@ class MyApp extends StatelessWidget {
               locale: locale,
               localizationsDelegates: AppL10n.localizationsDelegates,
               supportedLocales: AppL10n.supportedLocales,
-              //* AppShell subscribes to themeMode itself and rebuilds its tabs
-              //* on a flip, so it can stay const here (see app_shell.dart)
               home: const AppShell(),
             );
           },

@@ -52,7 +52,6 @@ class EventHero extends StatelessWidget {
             child: Icon(
               category.iconData,
               size: 88,
-              //* textPrimary so the icon stays visible on either palette
               color: AppColors.textPrimary.withValues(alpha: 0.85),
             ),
           ),

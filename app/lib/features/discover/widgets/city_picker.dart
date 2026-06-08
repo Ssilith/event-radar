@@ -275,10 +275,7 @@ class _LocationRow extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               loading ? l.gettingLocation : l.useMyLocation,
-              style: TextStyle(
-                color: primary,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: primary, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -309,11 +306,23 @@ class _CityTile extends StatelessWidget {
     //* One badge per row (recent > current > nearby > fetched)
     final ({String label, IconData icon, Color color})? badge;
     if (svc.isRecent(item)) {
-      badge = (label: l.cityBadgeRecent, icon: Icons.history_rounded, color: primary);
+      badge = (
+        label: l.cityBadgeRecent,
+        icon: Icons.history_rounded,
+        color: primary,
+      );
     } else if (isCurrent) {
-      badge = (label: l.cityBadgeNearby, icon: Icons.my_location_rounded, color: primary);
+      badge = (
+        label: l.cityBadgeNearby,
+        icon: Icons.my_location_rounded,
+        color: primary,
+      );
     } else if (svc.isNearby(item)) {
-      badge = (label: l.cityBadgeNearby, icon: Icons.near_me_rounded, color: primary);
+      badge = (
+        label: l.cityBadgeNearby,
+        icon: Icons.near_me_rounded,
+        color: primary,
+      );
     } else if (svc.isFetched(item)) {
       badge = (
         label: l.cityBadgeFetched,

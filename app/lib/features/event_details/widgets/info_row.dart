@@ -9,10 +9,7 @@ class InfoRow extends StatelessWidget {
   final String value;
   final String? subValue;
   final bool highlight;
-  //* Optional custom value widget (e.g. a date range with an inline arrow);
-  //* falls back to a plain [value] Text when null
   final Widget? valueWidget;
-  //* Optional value colour override (takes precedence over [highlight])
   final Color? valueColor;
 
   const InfoRow({

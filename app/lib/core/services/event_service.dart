@@ -70,8 +70,7 @@ class EventService {
 
     //* Remote dataset exists and is within the staleness window
     final dataset = await _fetchDataset(slug);
-    final datasetTimestamp =
-        dataset?['updated_at'] ?? dataset?['generated_at'];
+    final datasetTimestamp = dataset?['updated_at'] ?? dataset?['generated_at'];
     if (dataset != null && !DataFreshness.isStale(datasetTimestamp)) {
       final events = _parseEvents(dataset);
       _setCache(slug, events);
@@ -202,15 +201,13 @@ class EventService {
   //* Parse dataset events, injecting the dataset-level venue timezone into each
   List<Event> _parseEvents(Map<String, dynamic> data) {
     final tzName = (data['timezone'] as String?)?.trim() ?? '';
-    return (data['events'] as List? ?? [])
-        .map((e) {
-          final raw = e as Map<String, dynamic>;
-          return Event.fromJson({
-            ...raw,
-            if (tzName.isNotEmpty) 'timezone': tzName,
-          });
-        })
-        .toList();
+    return (data['events'] as List? ?? []).map((e) {
+      final raw = e as Map<String, dynamic>;
+      return Event.fromJson({
+        ...raw,
+        if (tzName.isNotEmpty) 'timezone': tzName,
+      });
+    }).toList();
   }
 
   //* Window by date (and radius when coords given), then sort by distance/date

@@ -29,8 +29,6 @@ class SortBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: AppColors.surfacePill),
         ),
-        //* No outer padding: the selected pill fills its half up to the border,
-        //* while keeping fully rounded corners
         child: Row(
           children: EventSort.values.map((s) {
             final enabled = s == EventSort.date || nearbyAvailable;

@@ -17,8 +17,7 @@ class AppSpacing {
 
   //* Common screen-edge / list-row paddings
   static const EdgeInsets pagePadding = EdgeInsets.symmetric(horizontal: xl);
-  static const EdgeInsets listRowPadding =
-      EdgeInsets.fromLTRB(xl, 14, lg, 14);
+  static const EdgeInsets listRowPadding = EdgeInsets.fromLTRB(xl, 14, lg, 14);
 }
 
 //* Corner-radius tokens
@@ -39,11 +38,32 @@ class AppRadius {
 class AppGap {
   AppGap._();
 
-  static const SizedBox xxs = SizedBox(height: AppSpacing.xxs, width: AppSpacing.xxs);
-  static const SizedBox xs = SizedBox(height: AppSpacing.xs, width: AppSpacing.xs);
-  static const SizedBox sm = SizedBox(height: AppSpacing.sm, width: AppSpacing.sm);
-  static const SizedBox md = SizedBox(height: AppSpacing.md, width: AppSpacing.md);
-  static const SizedBox lg = SizedBox(height: AppSpacing.lg, width: AppSpacing.lg);
-  static const SizedBox xl = SizedBox(height: AppSpacing.xl, width: AppSpacing.xl);
-  static const SizedBox xxl = SizedBox(height: AppSpacing.xxl, width: AppSpacing.xxl);
+  static const SizedBox xxs = SizedBox(
+    height: AppSpacing.xxs,
+    width: AppSpacing.xxs,
+  );
+  static const SizedBox xs = SizedBox(
+    height: AppSpacing.xs,
+    width: AppSpacing.xs,
+  );
+  static const SizedBox sm = SizedBox(
+    height: AppSpacing.sm,
+    width: AppSpacing.sm,
+  );
+  static const SizedBox md = SizedBox(
+    height: AppSpacing.md,
+    width: AppSpacing.md,
+  );
+  static const SizedBox lg = SizedBox(
+    height: AppSpacing.lg,
+    width: AppSpacing.lg,
+  );
+  static const SizedBox xl = SizedBox(
+    height: AppSpacing.xl,
+    width: AppSpacing.xl,
+  );
+  static const SizedBox xxl = SizedBox(
+    height: AppSpacing.xxl,
+    width: AppSpacing.xxl,
+  );
 }

@@ -2,7 +2,7 @@ import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 
-//* Event classification used for icons, colours, and filtering
+//* Event classification used for icons, colors, and filtering
 enum EventCategory {
   music,
   theater,

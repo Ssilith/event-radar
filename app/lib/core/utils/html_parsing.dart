@@ -28,7 +28,6 @@ String? htmlToTextOrNull(String? input) {
 String unescapeHtmlIfNeeded(String input) {
   if (input.isEmpty) return input;
   var out = input.contains('&') ? _unescape.convert(input) : input;
-  //* Normalise literal "\n"/"\r" sequences (raw JSON dumps) to real newlines
   if (out.contains(r'\n') || out.contains(r'\r')) {
     out = out
         .replaceAll(r'\r\n', '\n')
@@ -44,7 +43,7 @@ String unescapeHtmlIfNeeded(String input) {
         )
         .replaceAll('\n', '<br>');
   }
-  //* Trim trailing whitespace and stray <br>/<p></p>/&nbsp; artefacts
+  //* Trim trailing whitespace and stray <br>/<p></p>/&nbsp; artefact
   final trailing = RegExp(
     r'(\s|<br\s*/?>|<p>\s*</p>|&nbsp;)+$',
     caseSensitive: false,
@@ -84,23 +83,29 @@ List<InlineSpan> _nodesToSpans(List<dom.Node> nodes) {
         break;
       case 'b':
       case 'strong':
-        spans.add(TextSpan(
-          style: const TextStyle(fontWeight: FontWeight.bold),
-          children: _nodesToSpans(node.nodes),
-        ));
+        spans.add(
+          TextSpan(
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            children: _nodesToSpans(node.nodes),
+          ),
+        );
         break;
       case 'i':
       case 'em':
-        spans.add(TextSpan(
-          style: const TextStyle(fontStyle: FontStyle.italic),
-          children: _nodesToSpans(node.nodes),
-        ));
+        spans.add(
+          TextSpan(
+            style: const TextStyle(fontStyle: FontStyle.italic),
+            children: _nodesToSpans(node.nodes),
+          ),
+        );
         break;
       case 'u':
-        spans.add(TextSpan(
-          style: const TextStyle(decoration: TextDecoration.underline),
-          children: _nodesToSpans(node.nodes),
-        ));
+        spans.add(
+          TextSpan(
+            style: const TextStyle(decoration: TextDecoration.underline),
+            children: _nodesToSpans(node.nodes),
+          ),
+        );
         break;
       case 'li':
         spans.add(const TextSpan(text: '• '));

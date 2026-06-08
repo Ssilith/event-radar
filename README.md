@@ -1,6 +1,12 @@
 <h3 align="center">Event Radar</h3>
 <p align="center">
-  <img src="app/assets/logo.png" alt="Event Radar Logo" width="100">
+  <img src="app/assets/logo_launcher.png" alt="Event Radar Logo" width="100">
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/Flutter-3.44+-02569B?logo=flutter&logoColor=white" alt="Flutter 3.44+">
+  <img src="https://img.shields.io/badge/platform-Android%20%7C%20iOS-44CC11" alt="Platform: Android | iOS">
 </p>
 
 <p align="center">
@@ -26,16 +32,45 @@
   a trip abroad, Event Radar is your shortcut to what's on.
 </p>
 
+<p align="center">
+  Events are auto-classified into <b>17 categories</b> you can filter by: music, theater, art,
+  festival, food, sports, comedy, dance, literature, education, family, film, market, business,
+  social, tour, and a catch-all <em>other</em>.
+</p>
+
 <table align="center">
   <tr>
     <td align="center"><img src="app/assets/screenshots/discover.jpg" alt="Discover" width="200"></td>
+    <td align="center"><img src="app/assets/screenshots/details.jpg" alt="Event details" width="200"></td>
     <td align="center"><img src="app/assets/screenshots/saved.jpg" alt="Bookmarks" width="200"></td>
     <td align="center"><img src="app/assets/screenshots/map.jpg" alt="Map" width="200"></td>
   </tr>
   <tr>
     <td align="center">Discover</td>
+    <td align="center">Event details</td>
     <td align="center">Bookmarks</td>
     <td align="center">Map</td>
+  </tr>
+</table>
+
+<h3 align="center">Themes &amp; languages</h3>
+
+<p align="center">
+  Every surface is brightness-aware and fully localized. Flip <b>light / dark / system</b>
+  theme, <b>English or Polish</b>, and <b>kilometres or miles</b> straight from Settings — each
+  change applies instantly, with no restart. Weekdays, dates, and event times are localized too
+  (Polish gets the right grammar and capitalization), and times always read in the venue's own
+  timezone rather than your phone's.
+</p>
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="app/assets/screenshots/light.jpg" alt="Light theme" width="200"></td>
+    <td align="center"><img src="app/assets/screenshots/polish.jpg" alt="Polish" width="200"></td>
+  </tr>
+  <tr>
+    <td align="center">Light</td>
+    <td align="center">Polish</td>
   </tr>
 </table>
 
@@ -64,6 +99,15 @@
   target date rather than adding a flat 24 hours, so the clock-time stays correct across
   daylight-saving changes. The app asks for the OS notification permission the first time it
   needs to schedule a reminder.
+</p>
+
+<h3 align="center">Privacy</h3>
+
+<p>
+  No account, no analytics, no tracking. Your <b>location</b> is used only on the device — to
+  show how far each event is and to sort by nearest — and never leaves your phone. <b>Saved
+  events</b> and recently-picked cities are kept in local storage only. The app's sole network
+  call is fetching the public city datasets.
 </p>
 
 <h3 align="center">Technical Details</h3>
@@ -144,12 +188,16 @@
     <td>Resolves venue coordinates for events whose embedded data has no latitude/longitude.</td>
   </tr>
   <tr>
+    <td>GeoDB Cities (RapidAPI)</td>
+    <td>Powers city lookup in the app — resolves the user's GPS position to nearby cities and finds cities by name for the picker.</td>
+  </tr>
+  <tr>
     <td>GitHub Actions &amp; Pages</td>
     <td>Runs the monthly (and on-demand) indexing pipeline and hosts the resulting static JSON datasets for free.</td>
   </tr>
   <tr>
     <td>Vercel Serverless Functions</td>
-    <td>Provides the on-demand city-indexing trigger and a dataset proxy the app talks to.</td>
+    <td>Provides the on-demand city-indexing trigger, a dataset proxy, and a GeoDB city-lookup proxy the app talks to.</td>
   </tr>
 </table>
 
@@ -280,6 +328,7 @@ vercel dev
 GITHUB_OWNER=<your-gh-user>
 GITHUB_REPO=event-radar
 GITHUB_TOKEN=<PAT with workflow + contents:write scopes>
+GEODB_API_KEY=<RapidAPI key for the GeoDB Cities API>
 ```
 
 ### Discovery pipeline (one-off run)
@@ -298,9 +347,9 @@ Set `TAVILY_API_KEY` in your environment first (get one at https://tavily.com).
 ## Deployment
 
 - **Indexer:** GitHub Actions (`.github/workflows/pipeline.yml`). Secrets required: `TAVILY_API_KEY`. Output goes to GitHub Pages.
-- **API:** Vercel project pointing at `api/`. Env vars: `GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_TOKEN`.
+- **API:** Vercel project pointing at `api/`. Env vars: `GITHUB_OWNER`, `GITHUB_REPO`, `GITHUB_TOKEN`, `GEODB_API_KEY`.
 - **App:** Flutter build for Android/iOS as usual.
 
 ## License
 
-See `LICENSE`.
+Released under the [MIT License](LICENSE).

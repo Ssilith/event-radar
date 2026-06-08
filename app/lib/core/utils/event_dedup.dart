@@ -1,13 +1,12 @@
 import 'package:event_radar/core/models/event.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 
-//* Collapse same title+venue events with overlapping date ranges (the same
-//* occurrence re-listed) to one, keeping the widest span; recurrences on
-//* separate dates are kept
+//* Collapse same title+venue events with overlapping date ranges
 List<Event> dedupeOverlapping(List<Event> events) {
   final groups = <String, List<Event>>{};
   for (final e in events) {
-    final key = '${e.title.trim().toLowerCase()}|'
+    final key =
+        '${e.title.trim().toLowerCase()}|'
         '${(e.venue ?? '').trim().toLowerCase()}';
     (groups[key] ??= []).add(e);
   }
@@ -46,17 +45,14 @@ int _spanMs(Event e) {
   return r.end.difference(r.start).inMilliseconds;
 }
 
-//* Map markers are spatial, so a same title+venue event must be a single pin.
-//* [dedupeOverlapping] first merges genuinely continuous runs into their true
-//* span; then any remaining same-place repeats (a recurrence with gaps)
-//* collapse to the current/next occurrence — never a fabricated span.
+//* Map markers are spatial, so a same title+venue event must be a single pin
 List<Event> dedupeForMap(List<Event> events) {
   final byPlace = <String, Event>{};
   for (final e in dedupeOverlapping(events)) {
-    final key = '${e.title.trim().toLowerCase()}|'
+    final key =
+        '${e.title.trim().toLowerCase()}|'
         '${(e.venue ?? '').trim().toLowerCase()}';
     final existing = byPlace[key];
-    //* Keep the earliest-starting (current/next) occurrence per place
     if (existing == null || e.start.isBefore(existing.start)) {
       byPlace[key] = e;
     }

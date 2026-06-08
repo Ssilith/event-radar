@@ -89,7 +89,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     if (mounted) setState(() {});
   }
 
-  //* Show the jump-to-top button after scrolling past ~one screenful
+  //* Show the jump-to-top button
   void _onScroll() {
     final show = _scrollController.offset > 500;
     if (show != _showScrollTop) setState(() => _showScrollTop = show);
@@ -198,10 +198,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     final l = AppL10n.of(context);
     final result = await BookmarkActions.toggle(event, l);
     if (!mounted || result.reminderAt == null) return;
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    //* reminderAt is a venue-tz TZDateTime; format its own fields (no toLocal,
-    //* which would convert to the unset tz.local == UTC and shift the time)
-    final when = DateFormat.MMMEd(locale).add_Hm().format(result.reminderAt!);
+    final when = formatReminderDate(
+      result.reminderAt!,
+      Localizations.localeOf(context).toLanguageTag(),
+    );
     AppToast.reminder(context, title: l.reminderSetTitle, message: when);
   }
 
@@ -328,16 +328,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   //* The scrollable feed: header, stats, featured carousel, filters, list
   Widget _buildEventFeed(BuildContext context) {
     final l = AppL10n.of(context);
-    //* Compute the (filtered, deduped, sorted) feed and featured list ONCE per
-    //* build. These getters re-run the whole pipeline on each access, so using
-    //* them directly in the list builder would recompute it for every row.
     final filtered = _filtered;
     final featured = _featuredEvents;
     final feed = RefreshIndicator(
       onRefresh: _refresh,
       child: CustomScrollView(
         controller: _scrollController,
-        //* Always overscroll so pull-to-refresh works with a short list
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
@@ -347,18 +343,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               onTapCity: _openCityPicker,
             ),
           ),
-          // SliverToBoxAdapter(
-          //   child: DiscoverStatsCard(
-          //     isPolling: _isPolling,
-          //     eventCount: _state.events.length,
-          //   ),
-          // ),
           if (_hasData) ...[
             if (featured.isNotEmpty) ...[
               SliverToBoxAdapter(
                 child: SectionHeader(
                   title: l.featuredSection,
-                  //* Capitalise the weekday (Polish lowercases it) for the label
                   trailing: DateFormat(
                     'EEEE',
                     Localizations.localeOf(context).languageCode,
@@ -423,27 +412,21 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               )
             else
               SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (ctx, i) {
-                    final e = filtered[i];
-                    return EventRow(
-                      event: e,
-                      isSaved: _bookmarked.contains(e.id),
-                      onToggleSave: () => _toggleBookmark(e),
-                      onOpen: () => _openDetails(e),
-                      userPosition: _cityService.lastPosition,
-                    );
-                  },
-                  childCount: filtered.length,
-                ),
+                delegate: SliverChildBuilderDelegate((ctx, i) {
+                  final e = filtered[i];
+                  return EventRow(
+                    event: e,
+                    isSaved: _bookmarked.contains(e.id),
+                    onToggleSave: () => _toggleBookmark(e),
+                    onOpen: () => _openDetails(e),
+                    userPosition: _cityService.lastPosition,
+                  );
+                }, childCount: filtered.length),
               ),
             const SliverToBoxAdapter(child: SizedBox(height: 40)),
           ] else
             SliverFillRemaining(
-              child: AsyncStateView(
-                state: _state,
-                onRetry: _loadEvents,
-              ),
+              child: AsyncStateView(state: _state, onRetry: _loadEvents),
             ),
         ],
       ),

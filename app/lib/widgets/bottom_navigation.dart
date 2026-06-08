@@ -40,8 +40,6 @@ class BottomNavigation extends StatelessWidget {
         tabSelectedColor: cs.primary,
         tabIconColor: cs.onSurface.withValues(alpha: 0.5),
         tabIconSize: 30,
-        //* Light mode: icon matches the bar colour (knockout on the circle);
-        //* dark mode: onPrimary stays legible on the bright primary circle
         tabIconSelectedColor: cs.brightness == Brightness.light
             ? cs.surfaceContainerHigh
             : cs.onPrimary,

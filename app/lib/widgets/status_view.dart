@@ -58,8 +58,6 @@ class StatusView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            //* Same hero look as the empty-bookmarks page: ripple while loading,
-            //* else a large primary-tinted icon
             if (showSpinner)
               const Loading()
             else if (icon != null)

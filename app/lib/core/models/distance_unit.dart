@@ -2,7 +2,7 @@
 enum DistanceUnit { km, mi }
 
 extension DistanceUnitExt on DistanceUnit {
-  //* Format a kilometre distance in this unit (m/ft under 1, 1 decimal under 10)
+  //* Format a kilometer distance in this unit (m/ft under 1, 1 decimal under 10)
   String format(double km) {
     switch (this) {
       case DistanceUnit.km:

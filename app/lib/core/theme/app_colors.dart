@@ -49,7 +49,8 @@ class AppColors {
 
   //* Text (lightest → darkest in dark mode; reversed in light). Light mode
   //* uses deep slate tones rather than pure black/grey for a softer, premium feel.
-  static Color get textPrimary => _dark ? Colors.white : const Color(0xFF101620);
+  static Color get textPrimary =>
+      _dark ? Colors.white : const Color(0xFF101620);
   static Color get textBody =>
       _dark ? const Color(0xFFCCCCCC) : const Color(0xFF2B333F);
   static Color get textBodyAlt =>

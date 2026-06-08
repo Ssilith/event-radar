@@ -19,10 +19,9 @@ class EmptyBookmarks extends StatelessWidget {
             Icon(
               Icons.bookmark_outline_rounded,
               size: 56,
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withValues(alpha: 0.4),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 20),
             Text(

@@ -10,7 +10,7 @@ final _log = Logger('EventTime');
 bool _tzInitialized = false;
 String? _phoneIanaName;
 
-//* Initialise the tz database; fire-and-forget the phone tz lookup
+//* Initialism the tz database; fire-and-forget the phone tz lookup
 void initVenueTime() {
   if (_tzInitialized) return;
   tzdata.initializeTimeZones();
@@ -159,7 +159,7 @@ bool venueTzDiffersFromPhone(String? tzName) {
   return venueOffset != DateTime.now().timeZoneOffset;
 }
 
-//* Localised "All day" string, passed in to keep this file UI-free
+//* Localized "All day" string, passed in to keep this file UI-free
 class DurationLabels {
   final String allDay;
   const DurationLabels({required this.allDay});
@@ -198,4 +198,14 @@ String venueTzShortName(String? tzName) {
   if (loc == tz.UTC) return 'UTC';
   final parts = loc.name.split('/');
   return parts.last.replaceAll('_', ' ');
+}
+
+//* Format a saved-event reminder's fire time for display. [reminderAt] is a
+//* venue-tz TZDateTime, so its own fields are formatted directly — calling
+//* toLocal would convert to the unset tz.local (== UTC) and shift the time.
+//* The first letter is upper-cased since some locales (e.g. Polish) lowercase
+//* weekday/month names.
+String formatReminderDate(DateTime reminderAt, String locale) {
+  final s = DateFormat.MMMEd(locale).add_Hm().format(reminderAt);
+  return s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 }

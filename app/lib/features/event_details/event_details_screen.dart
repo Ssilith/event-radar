@@ -44,10 +44,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     if (!mounted) return;
     setState(() => _isSaved = result.saved);
     if (result.reminderAt == null) return;
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    //* reminderAt is a venue-tz TZDateTime; format its own fields (no toLocal,
-    //* which would convert to the unset tz.local == UTC and shift the time)
-    final when = DateFormat.MMMEd(locale).add_Hm().format(result.reminderAt!);
+    final when = formatReminderDate(
+      result.reminderAt!,
+      Localizations.localeOf(context).toLanguageTag(),
+    );
     AppToast.reminder(context, title: l.reminderSetTitle, message: when);
   }
 
@@ -127,8 +127,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               style: outlinedStyle,
             );
     }
+
     //* Distance from the user's last GPS fix, formatted in their chosen unit
-    //* (only when both a position and event coordinates are available)
     final userPos = CityService.instance.lastPosition;
     final distanceKm = userPos == null
         ? null
@@ -166,110 +166,112 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             ),
           ),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CategoryChip(category: cat, large: true),
-                  const SizedBox(height: 14),
-                  HtmlText(
-                    event.title,
-                    style: GoogleFonts.syne(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  InfoRow(
-                    icon: Icons.calendar_today_rounded,
-                    label: l.dateLabel,
-                    value: _formatDate(event, context),
-                    valueWidget: _dateValueWidget(event, context, dateColor),
-                    valueColor: dateColor,
-                  ),
-                  InfoRow(
-                    icon: Icons.schedule_rounded,
-                    label: l.timeLabel,
-                    value: hasVenueTzDifference
-                        ? '${_formatTimeVenue(event)}  ·  ${l.timeSuffix(venueTzShortName(event.timezone))}'
-                        : _formatTimeVenue(event),
-                    subValue: hasVenueTzDifference
-                        ? '${_formatTimePhone(event, context)}  ·  ${l.timeSuffix(phoneTzShortName() ?? l.timeYour)}'
-                        : null,
-                  ),
-                  if (event.venue != null)
-                    InfoRow(
-                      icon: Icons.location_on_rounded,
-                      label: l.venueLabel,
-                      value: event.venue!,
-                      subValue: CityService.instance.displayCityName(event.city),
-                    ),
-                  if (distanceLabel != null)
-                    InfoRow(
-                      icon: Icons.near_me_rounded,
-                      label: l.distanceUnitLabel,
-                      value: distanceLabel,
-                    ),
-                  InfoRow(
-                    icon: Icons.sell_rounded,
-                    label: l.priceLabel,
-                    value: event.isFree
-                        ? l.free
-                        : (event.hasPrice ? event.price! : l.unknown),
-                    highlight: event.isFree,
-                  ),
-                  if (event.description != null &&
-                      event.description!.trim().isNotEmpty) ...[
-                    const SizedBox(height: 18),
-                    Text(
-                      l.aboutSection,
-                      //* Body font (not Syne) so it matches the rest of the text
-                      style: TextStyle(
-                        fontSize: 17,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CategoryChip(category: cat, large: true),
+                    const SizedBox(height: 14),
+                    HtmlText(
+                      event.title,
+                      style: GoogleFonts.syne(
+                        fontSize: 26,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
+                        height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    _ExpandableDescription(
-                      data: unescapeHtmlIfNeeded(event.description!),
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.5,
-                        color: AppColors.textBodyAlt,
-                      ),
-                      moreLabel: l.showMore,
-                      lessLabel: l.showLess,
-                      toggleColor: primary,
+                    const SizedBox(height: 20),
+                    InfoRow(
+                      icon: Icons.calendar_today_rounded,
+                      label: l.dateLabel,
+                      value: _formatDate(event, context),
+                      valueWidget: _dateValueWidget(event, context, dateColor),
+                      valueColor: dateColor,
                     ),
-                  ],
-                  if (event.hasLocation || event.url != null) ...[
-                    const SizedBox(height: 24),
-                    //* Both present → side by side: route (outlined) then open
-                    //* page (filled). A lone button spans the full width, filled.
-                    if (event.hasLocation && event.url != null)
-                      Row(
-                        children: [
-                          Expanded(child: directionsButton(filled: false)),
-                          const SizedBox(width: 10),
-                          Expanded(child: viewPageButton(filled: true)),
-                        ],
-                      )
-                    else if (event.hasLocation)
-                      SizedBox(
-                        width: double.infinity,
-                        child: directionsButton(filled: true),
-                      )
-                    else
-                      SizedBox(
-                        width: double.infinity,
-                        child: viewPageButton(filled: true),
+                    InfoRow(
+                      icon: Icons.schedule_rounded,
+                      label: l.timeLabel,
+                      value: hasVenueTzDifference
+                          ? '${_formatTimeVenue(event)}  ·  ${l.timeSuffix(venueTzShortName(event.timezone))}'
+                          : _formatTimeVenue(event),
+                      subValue: hasVenueTzDifference
+                          ? '${_formatTimePhone(event, context)}  ·  ${l.timeSuffix(phoneTzShortName() ?? l.timeYour)}'
+                          : null,
+                    ),
+                    if (event.venue != null)
+                      InfoRow(
+                        icon: Icons.location_on_rounded,
+                        label: l.venueLabel,
+                        value: event.venue!,
+                        subValue: CityService.instance.displayCityName(
+                          event.city,
+                        ),
                       ),
+                    if (distanceLabel != null)
+                      InfoRow(
+                        icon: Icons.near_me_rounded,
+                        label: l.distanceUnitLabel,
+                        value: distanceLabel,
+                      ),
+                    InfoRow(
+                      icon: Icons.sell_rounded,
+                      label: l.priceLabel,
+                      value: event.isFree
+                          ? l.free
+                          : (event.hasPrice ? event.price! : l.unknown),
+                      highlight: event.isFree,
+                    ),
+                    if (event.description != null &&
+                        event.description!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 18),
+                      Text(
+                        l.aboutSection,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _ExpandableDescription(
+                        data: unescapeHtmlIfNeeded(event.description!),
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.5,
+                          color: AppColors.textBodyAlt,
+                        ),
+                        moreLabel: l.showMore,
+                        lessLabel: l.showLess,
+                        toggleColor: primary,
+                      ),
+                    ],
+                    if (event.hasLocation || event.url != null) ...[
+                      const SizedBox(height: 24),
+                      if (event.hasLocation && event.url != null)
+                        Row(
+                          children: [
+                            Expanded(child: directionsButton(filled: false)),
+                            const SizedBox(width: 10),
+                            Expanded(child: viewPageButton(filled: true)),
+                          ],
+                        )
+                      else if (event.hasLocation)
+                        SizedBox(
+                          width: double.infinity,
+                          child: directionsButton(filled: true),
+                        )
+                      else
+                        SizedBox(
+                          width: double.infinity,
+                          child: viewPageButton(filled: true),
+                        ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),

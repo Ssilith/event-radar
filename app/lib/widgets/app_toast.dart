@@ -2,9 +2,7 @@ import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:motion_toast/motion_toast.dart';
 
-//* App-wide animated toasts (wraps motion_toast so call sites stay tiny).
-//* Styled as a surface card with the app's accent icon-badge — matches the
-//* event rows rather than motion_toast's default saturated fill.
+//* Animated toast
 class AppToast {
   AppToast._();
 
@@ -61,11 +59,6 @@ class AppToast {
     ).show(context);
   }
 
-  //* Uppercase just the first character (Polish lowercases weekday/month names,
-  //* so the formatted date would otherwise start lower-case); rest unchanged
-  static String _capFirst(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
-
   //* The toast's inner layout: accent icon-badge + title/detail text
   static Widget _content({
     String? title,
@@ -73,9 +66,9 @@ class AppToast {
     required Color accent,
     required IconData icon,
   }) {
+    final isSingleLine = title == null;
     return Row(
       children: [
-        //* Same rounded, tinted icon-box used throughout the app
         Container(
           width: 40,
           height: 40,
@@ -95,7 +88,7 @@ class AppToast {
             children: [
               if (title != null) ...[
                 Text(
-                  _capFirst(title),
+                  title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -108,15 +101,15 @@ class AppToast {
                 const SizedBox(height: 2),
               ],
               Text(
-                _capFirst(message),
+                message,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: title == null
+                  color: isSingleLine
                       ? AppColors.textPrimary
                       : AppColors.textSecondary,
-                  fontWeight: title == null ? FontWeight.w600 : FontWeight.w500,
-                  fontSize: title == null ? 13.5 : 12.5,
+                  fontWeight: isSingleLine ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: isSingleLine ? 13.5 : 12.5,
                   height: 1.2,
                 ),
               ),

@@ -26,8 +26,10 @@ class GroupSection extends StatelessWidget {
               if (group.emphasis)
                 Container(
                   margin: const EdgeInsets.only(right: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: primary,
                     borderRadius: BorderRadius.circular(4),

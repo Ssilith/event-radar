@@ -60,7 +60,6 @@ class DateFilterBar extends StatelessWidget {
               ),
             );
           }),
-          //* Separator + free-only toggle (kept inline to save vertical space)
           Container(
             width: 1,
             height: 18,
@@ -91,16 +90,21 @@ class DateFilterBar extends StatelessWidget {
                     Icon(
                       Icons.savings_rounded,
                       size: 14,
-                      color: freeOnly ? AppColors.onPrimary : AppColors.textBody,
+                      color: freeOnly
+                          ? AppColors.onPrimary
+                          : AppColors.textBody,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       l.filterFreeOnly,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight:
-                            freeOnly ? FontWeight.w700 : FontWeight.w400,
-                        color: freeOnly ? AppColors.onPrimary : AppColors.textBody,
+                        fontWeight: freeOnly
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                        color: freeOnly
+                            ? AppColors.onPrimary
+                            : AppColors.textBody,
                       ),
                     ),
                   ],

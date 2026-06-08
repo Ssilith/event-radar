@@ -6,7 +6,7 @@ enum EventSort { date, nearby }
 extension EventSortExt on EventSort {
   //* Localized sort label
   String label(AppL10n l) => switch (this) {
-        EventSort.date => l.sortByDate,
-        EventSort.nearby => l.sortByNearby,
-      };
+    EventSort.date => l.sortByDate,
+    EventSort.nearby => l.sortByNearby,
+  };
 }

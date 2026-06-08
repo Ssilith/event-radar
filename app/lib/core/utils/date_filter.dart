@@ -8,12 +8,12 @@ enum DateFilter { today, week, month, all, past }
 extension DateFilterExt on DateFilter {
   //* Localized chip label
   String label(AppL10n l) => switch (this) {
-        DateFilter.today => l.filterToday,
-        DateFilter.week => l.filterWeek,
-        DateFilter.month => l.filterMonth,
-        DateFilter.all => l.filterAll,
-        DateFilter.past => l.filterPast,
-      };
+    DateFilter.today => l.filterToday,
+    DateFilter.week => l.filterWeek,
+    DateFilter.month => l.filterMonth,
+    DateFilter.all => l.filterAll,
+    DateFilter.past => l.filterPast,
+  };
 
   //* Whether an event falls in this bucket, by its full venue-local range
   //* (shared by Discover + Map so they can't drift apart)
@@ -24,15 +24,23 @@ extension DateFilterExt on DateFilter {
     final now = nowInVenueTz(event.timezone);
     return switch (this) {
       DateFilter.today => _overlaps(
-          start,
-          end,
-          DateTime(now.year, now.month, now.day),
-          DateTime(now.year, now.month, now.day).add(const Duration(days: 1)),
-        ),
-      DateFilter.week =>
-        _overlaps(start, end, now, now.add(const Duration(days: 7))),
-      DateFilter.month =>
-        _overlaps(start, end, now, now.add(const Duration(days: 30))),
+        start,
+        end,
+        DateTime(now.year, now.month, now.day),
+        DateTime(now.year, now.month, now.day).add(const Duration(days: 1)),
+      ),
+      DateFilter.week => _overlaps(
+        start,
+        end,
+        now,
+        now.add(const Duration(days: 7)),
+      ),
+      DateFilter.month => _overlaps(
+        start,
+        end,
+        now,
+        now.add(const Duration(days: 30)),
+      ),
       //* All = every non-past event (past lives behind the Past chip)
       DateFilter.all => !end.isBefore(now),
       //* Past only once the end has actually gone by (ongoing stays out)
@@ -47,5 +55,4 @@ bool _overlaps(
   DateTime end,
   DateTime windowStart,
   DateTime windowEnd,
-) =>
-    start.isBefore(windowEnd) && !end.isBefore(windowStart);
+) => start.isBefore(windowEnd) && !end.isBefore(windowStart);

@@ -6,6 +6,7 @@ import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:event_radar/widgets/html_text.dart';
+import 'package:event_radar/widgets/status_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -58,7 +59,6 @@ class NearbyEventRow extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                //* Canonical category icon-box (same as the rest of the app)
                 color: catColor.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: catColor.withValues(alpha: 0.4)),
@@ -73,24 +73,10 @@ class NearbyEventRow extends StatelessWidget {
                   Row(
                     children: [
                       if (isToday) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: primary,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            l.bucketToday.toUpperCase(),
-                            style: TextStyle(
-                              color: AppColors.onPrimary,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
+                        StatusChip(
+                          label: l.bucketToday,
+                          background: primary,
+                          foreground: AppColors.onPrimary,
                         ),
                         const SizedBox(width: 6),
                       ],
@@ -121,7 +107,11 @@ class NearbyEventRow extends StatelessWidget {
                                 labels: durationLabels,
                                 locale: locale,
                               )
-                            : formatEventTime(event, 'd MMM • HH:mm', locale: locale),
+                            : formatEventTime(
+                                event,
+                                'd MMM • HH:mm',
+                                locale: locale,
+                              ),
                         style: TextStyle(
                           fontSize: 11,
                           color: AppColors.textPlaceholder,
@@ -149,10 +139,7 @@ class NearbyEventRow extends StatelessWidget {
             const SizedBox(width: 8),
             if (distance != null)
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),

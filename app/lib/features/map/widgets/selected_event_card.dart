@@ -25,7 +25,6 @@ class SelectedEventCard extends StatelessWidget {
   });
 
   //* Today → time/"All day" (like featured); else "EEE d MMM, HH:mm".
-  //* First letter uppercased so Polish weekday names aren't lower-case.
   String _formatWhen(String locale, DurationLabels labels) {
     final raw = event.isHappeningToday
         ? eventTodayLabel(event, labels: labels, locale: locale)

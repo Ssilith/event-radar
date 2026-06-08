@@ -8,75 +8,68 @@ class AppText {
 
   //* Display / heading styles (Syne)
   static TextStyle displayLarge() => GoogleFonts.syne(
-        fontSize: 28,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.1,
-      );
+    fontSize: 28,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+    height: 1.1,
+  );
 
   static TextStyle displayMedium() => GoogleFonts.syne(
-        fontSize: 26,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.2,
-      );
+    fontSize: 26,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+    height: 1.2,
+  );
 
   static TextStyle headingLarge() => GoogleFonts.syne(
-        fontSize: 22,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.3,
-      );
+    fontSize: 22,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+    height: 1.3,
+  );
 
   static TextStyle headingMedium() => GoogleFonts.syne(
-        fontSize: 20,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-      );
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+  );
 
   static TextStyle headingSmall() => GoogleFonts.syne(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-      );
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+  );
 
   static TextStyle headingTiny() => GoogleFonts.syne(
-        fontSize: 17,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.15,
-      );
+    fontSize: 17,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+    height: 1.15,
+  );
 
   //* Body styles (non-const getters so theme-aware AppColors resolve)
   static TextStyle get bodyLarge => TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-        height: 1.3,
-      );
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+    height: 1.3,
+  );
 
-  static TextStyle get bodyMedium => TextStyle(
-        fontSize: 14,
-        color: AppColors.textPrimary,
-        height: 1.3,
-      );
+  static TextStyle get bodyMedium =>
+      TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.3);
 
   static TextStyle get bodyMediumBold => TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-        height: 1.3,
-      );
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+    height: 1.3,
+  );
 
-  static TextStyle get bodyMutedSmall => TextStyle(
-        fontSize: 12,
-        color: AppColors.textHint,
-      );
+  static TextStyle get bodyMutedSmall =>
+      TextStyle(fontSize: 12, color: AppColors.textHint);
 
-  static TextStyle get caption => TextStyle(
-        fontSize: 11,
-        color: AppColors.textPlaceholder,
-      );
+  static TextStyle get caption =>
+      TextStyle(fontSize: 11, color: AppColors.textPlaceholder);
 
   static const TextStyle micro = TextStyle(
     fontSize: 9,
@@ -93,9 +86,9 @@ class AppText {
 
   //* InfoRow field label on the event details screen
   static TextStyle get fieldLabel => TextStyle(
-        fontSize: 10,
-        letterSpacing: 1.4,
-        color: AppColors.textHint,
-        fontWeight: FontWeight.w700,
-      );
+    fontSize: 10,
+    letterSpacing: 1.4,
+    color: AppColors.textHint,
+    fontWeight: FontWeight.w700,
+  );
 }

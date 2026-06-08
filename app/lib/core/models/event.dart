@@ -108,7 +108,7 @@ class Event {
 //* Degrees → radians
 double _toRad(double deg) => deg * pi / 180;
 
-//* Parse an ISO date, normalising naive timestamps to UTC
+//* Parse an ISO date, normalizing naive timestamps to UTC
 DateTime _parseDate(String raw) {
   var dt = DateTime.tryParse(raw);
   if (dt == null) throw FormatException('Cannot parse date: $raw');

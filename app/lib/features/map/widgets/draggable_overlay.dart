@@ -5,9 +5,7 @@ class DraggableOverlay extends StatefulWidget {
   final Widget child;
   final bool snapToCorner;
   final Offset Function(Size screen, EdgeInsets padding) defaultOffset;
-  //* Top inset so it can't be dragged under the AppBar
   final double topReserved;
-  //* Bottom inset so it can't be dragged under the tab bar
   final double bottomReserved;
 
   const DraggableOverlay({
@@ -66,7 +64,8 @@ class DraggableOverlayState extends State<DraggableOverlay> {
       final padding = MediaQuery.of(context).padding;
       final minY = padding.top + widget.topReserved + 8;
       final maxX = screen.width - size.width - 16;
-      final maxY = screen.height -
+      final maxY =
+          screen.height -
           size.height -
           padding.bottom -
           widget.bottomReserved -
@@ -118,9 +117,7 @@ class DraggableOverlayState extends State<DraggableOverlay> {
     final minY = padding.top + widget.topReserved + 8;
 
     return AnimatedPositioned(
-      duration: _animating
-          ? const Duration(milliseconds: 280)
-          : Duration.zero,
+      duration: _animating ? const Duration(milliseconds: 280) : Duration.zero,
       curve: Curves.easeOutCubic,
       left: offset.dx,
       top: offset.dy,
@@ -145,10 +142,12 @@ class DraggableOverlayState extends State<DraggableOverlay> {
           final cur = _offset ?? offset;
           final start = _dragStart ?? cur;
           _dragStart = null;
-          final box = _innerKey.currentContext?.findRenderObject() as RenderBox?;
+          final box =
+              _innerKey.currentContext?.findRenderObject() as RenderBox?;
           final size = box?.size ?? Size.zero;
           final maxX = screen.width - size.width - 16;
-          final maxY = screen.height -
+          final maxY =
+              screen.height -
               size.height -
               padding.bottom -
               widget.bottomReserved -

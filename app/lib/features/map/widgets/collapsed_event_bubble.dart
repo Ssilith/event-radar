@@ -46,7 +46,6 @@ class CollapsedEventBubble extends StatelessWidget {
           top: -2,
           child: Material(
             color: AppColors.surfaceElevated,
-            //* Red ring + icon to read as a "dismiss" action
             shape: const CircleBorder(
               side: BorderSide(color: Color(0xFFEF5350), width: 1.2),
             ),

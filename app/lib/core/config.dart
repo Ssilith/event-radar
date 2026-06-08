@@ -5,6 +5,7 @@ class AppConfig {
 
   //* Datasets proxy endpoint
   static String get datasetsBase => '$vercelBase/api/datasets';
+
   //* Scrape-trigger endpoint
   static String get triggerUrl => '$vercelBase/api/trigger';
 

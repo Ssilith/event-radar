@@ -34,8 +34,6 @@ class CategoryBar extends StatelessWidget {
               avatar: Icon(
                 cat?.iconData ?? Icons.apps_rounded,
                 size: 15,
-                //* Selected fg contrasts the fill: black on pale dark-mode fills,
-                //* white on the deep light-mode fills (same rule as onPrimary)
                 color: sel ? AppColors.onPrimary : color,
               ),
               label: Text(cat?.label(l) ?? l.categoryAll),
@@ -44,9 +42,7 @@ class CategoryBar extends StatelessWidget {
               showCheckmark: false,
               selectedColor: color,
               backgroundColor: AppColors.surfaceHigh,
-              side: BorderSide(
-                color: sel ? color : AppColors.borderStrong,
-              ),
+              side: BorderSide(color: sel ? color : AppColors.borderStrong),
               labelStyle: TextStyle(
                 fontSize: 12,
                 color: sel ? AppColors.onPrimary : AppColors.textBody,

@@ -58,9 +58,9 @@ class _SavedScreenState extends State<SavedScreen> {
 
   //* Grouped bookmarks for the active grouping mode
   List<Group> _groups(AppL10n l) => switch (_groupMode) {
-        GroupMode.location => _groupByLocation(l),
-        GroupMode.date => _groupByDate(l),
-      };
+    GroupMode.location => _groupByLocation(l),
+    GroupMode.date => _groupByDate(l),
+  };
 
   //* Group bookmarks by city, current city first, then alphabetically
   List<Group> _groupByLocation(AppL10n l) {
@@ -76,8 +76,10 @@ class _SavedScreenState extends State<SavedScreen> {
 
     final entries = byDisplay.entries.toList()
       ..sort((a, b) {
-        final aCurrent = current != null && cityService.sameCity(a.key, current);
-        final bCurrent = current != null && cityService.sameCity(b.key, current);
+        final aCurrent =
+            current != null && cityService.sameCity(a.key, current);
+        final bCurrent =
+            current != null && cityService.sameCity(b.key, current);
         if (aCurrent != bCurrent) return aCurrent ? -1 : 1;
         if (a.key == unknown) return 1;
         if (b.key == unknown) return -1;
@@ -85,8 +87,7 @@ class _SavedScreenState extends State<SavedScreen> {
       });
 
     return entries.map((e) {
-      final isCurrent =
-          current != null && cityService.sameCity(e.key, current);
+      final isCurrent = current != null && cityService.sameCity(e.key, current);
       e.value.sort((x, y) {
         final xPast = x.isPast;
         final yPast = y.isPast;
@@ -147,23 +148,25 @@ class _SavedScreenState extends State<SavedScreen> {
 
     return buckets.entries
         .where((e) => e.value.isNotEmpty)
-        .map((e) => Group(
-              label: _bucketLabel(l, e.key),
-              events: e.value,
-              emphasis: e.key == _DateBucket.today,
-            ))
+        .map(
+          (e) => Group(
+            label: _bucketLabel(l, e.key),
+            events: e.value,
+            emphasis: e.key == _DateBucket.today,
+          ),
+        )
         .toList();
   }
 
   //* Localized label for a date bucket
   String _bucketLabel(AppL10n l, _DateBucket b) => switch (b) {
-        _DateBucket.today => l.bucketToday,
-        _DateBucket.tomorrow => l.bucketTomorrow,
-        _DateBucket.thisWeek => l.bucketThisWeek,
-        _DateBucket.thisMonth => l.bucketThisMonth,
-        _DateBucket.later => l.bucketLater,
-        _DateBucket.past => l.bucketPast,
-      };
+    _DateBucket.today => l.bucketToday,
+    _DateBucket.tomorrow => l.bucketTomorrow,
+    _DateBucket.thisWeek => l.bucketThisWeek,
+    _DateBucket.thisMonth => l.bucketThisMonth,
+    _DateBucket.later => l.bucketLater,
+    _DateBucket.past => l.bucketPast,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -228,10 +231,8 @@ class _SavedScreenState extends State<SavedScreen> {
                   : ListView.builder(
                       padding: const EdgeInsets.only(bottom: 24),
                       itemCount: groups.length,
-                      itemBuilder: (_, i) => GroupSection(
-                        group: groups[i],
-                        onRemove: _remove,
-                      ),
+                      itemBuilder: (_, i) =>
+                          GroupSection(group: groups[i], onRemove: _remove),
                     ),
             ),
           ],

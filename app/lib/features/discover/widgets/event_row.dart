@@ -6,6 +6,7 @@ import 'package:event_radar/core/theme/app_colors.dart';
 import 'package:event_radar/core/theme/app_shadows.dart';
 import 'package:event_radar/core/utils/event_time.dart';
 import 'package:event_radar/widgets/html_text.dart';
+import 'package:event_radar/widgets/status_chip.dart';
 import 'package:event_radar/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -18,7 +19,6 @@ class EventRow extends StatelessWidget {
   final bool isSaved;
   final VoidCallback onToggleSave;
   final VoidCallback onOpen;
-  //* When set (and the event has coords), shows a distance pill instead of a chevron
   final Position? userPosition;
 
   const EventRow({
@@ -37,26 +37,6 @@ class EventRow extends StatelessWidget {
     final km = event.distanceTo(pos.latitude, pos.longitude);
     if (km == null) return null;
     return SettingsService.instance.distanceUnit.value.format(km);
-  }
-
-  //* Small status pill (TODAY / PAST) — same shape as the map's row chip
-  Widget _statusChip(String text, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        text.toUpperCase(),
-        style: TextStyle(
-          color: fg,
-          fontSize: 9,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.8,
-        ),
-      ),
-    );
   }
 
   //* Trailing widget: distance pill when known, else a chevron
@@ -111,8 +91,18 @@ class EventRow extends StatelessWidget {
         : (event.hasPrice ? event.price : null);
     //* Status pill before the title: TODAY (primary) or PAST (red), as on the map
     final Widget? statusChip = isHappeningToday
-        ? _statusChip(l.bucketToday, primary, AppColors.onPrimary)
-        : (isPast ? _statusChip(l.past, Colors.red.shade400, Colors.white) : null);
+        ? StatusChip(
+            label: l.bucketToday,
+            background: primary,
+            foreground: AppColors.onPrimary,
+          )
+        : (isPast
+              ? StatusChip(
+                  label: l.past,
+                  background: Colors.red.shade400,
+                  foreground: Colors.white,
+                )
+              : null);
 
     return InkWell(
       onTap: onOpen,
@@ -123,7 +113,6 @@ class EventRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            //* Date badge
             Container(
               width: 46,
               padding: const EdgeInsets.symmetric(vertical: 7),
@@ -142,7 +131,6 @@ class EventRow extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    //* Always the month (even for past); red conveys "past"
                     DateFormat('MMM', locale).format(badgeDate).toUpperCase(),
                     style: TextStyle(
                       fontSize: 9,
@@ -198,7 +186,6 @@ class EventRow extends StatelessWidget {
                       style: TextStyle(fontSize: 12, color: AppColors.textHint),
                     ),
                   ],
-                  //* Bottom line: category icon + start hour (or "All day") + price chip
                   const SizedBox(height: 5),
                   Row(
                     children: [

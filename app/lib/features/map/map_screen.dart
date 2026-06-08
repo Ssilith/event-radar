@@ -47,9 +47,7 @@ class _MapScreenState extends State<MapScreen> {
   //* Space for the bottom tab bar + pop-up overhang (not in MediaQuery padding)
   static const _bottomNavReserved = 110.0;
 
-  //* OSM tiles stay sharp up to ~18, so cap zoom there. Keeping this == the
-  //* cluster threshold means a same-spot stack stays a tappable cluster at the
-  //* deepest zoom, so tapping it spiderfies.
+  //* Deepest zoom
   static const _maxZoom = 18.0;
 
   //* List-select focuses an event at max zoom (deepest detail).
@@ -76,7 +74,6 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
     _seedUserPosition();
     if (widget.city != null) _loadEvents(widget.city!);
-    //* Rebuild so distance pills refresh when the unit changes
     SettingsService.instance.distanceUnit.addListener(_onSettingsChanged);
   }
 
@@ -134,7 +131,6 @@ class _MapScreenState extends State<MapScreen> {
           setState(() {
             _status = state.status;
             if (state.events.isNotEmpty) {
-              //* dedupeForMap: one pin per place (recurrences would stack)
               _events = dedupeForMap(
                 state.events
                     .where((e) => e.hasLocation && DateFilter.all.matches(e))
@@ -167,14 +163,14 @@ class _MapScreenState extends State<MapScreen> {
       }
       if (perm == LocationPermission.deniedForever) {
         if (interactive && mounted) {
-          _showLocationError(AppL10n.of(context).locationPermissionDeniedForever);
-          //* Only the OS settings can re-grant it, so take them there
+          _showLocationError(
+            AppL10n.of(context).locationPermissionDeniedForever,
+          );
           await AppSettings.openAppSettings();
         }
         return;
       }
       final pos = await Geolocator.getCurrentPosition(
-        //* Base LocationSettings (not AndroidSettings) so it's correct on iOS too
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.low,
         ),
@@ -344,22 +340,16 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ],
               ),
-            //* All events live in the cluster (selected is just restyled, not
-            //* pulled out) so selecting a spiderfied pin keeps the spread open
+            //* All events live in the cluster
             MarkerClusterLayerWidget(
               options: MarkerClusterLayerOptions(
                 maxClusterRadius: 45,
-                //* Keep clustering up to max zoom: tapping a cluster zooms to
-                //* separate what it can, and a same-spot stack stays a cluster
-                //* you can tap to spiderfy.
                 disableClusteringAtZoom: _maxZoom.toInt(),
                 spiderfyCircleRadius: 50,
                 size: const Size(44, 44),
                 markers: _events.map(_buildEventMarker).toList(),
                 builder: (ctx, markers) {
                   final primary = Theme.of(ctx).colorScheme.primary;
-                  //* Like a selected DateFilterBar pill: primary fill with an
-                  //* onPrimary count
                   return Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -441,9 +431,6 @@ class _MapScreenState extends State<MapScreen> {
             key: _cardKey,
             snapToCorner: _cardCollapsed,
             bottomReserved: _bottomNavReserved,
-            //* Default to the top-right corner (card is near full-width, so
-            //* x:88 right-aligns it with a 16px margin; y sits just below the
-            //* status bar)
             defaultOffset: (screen, padding) => Offset(88, padding.top + 8),
             child: _cardCollapsed
                 ? CollapsedEventBubble(
