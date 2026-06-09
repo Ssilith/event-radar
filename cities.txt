@@ -2,3 +2,4 @@ wrocław:PL
 berlin:DE
 opole:PL
 legnica:PL
+wroclaw:PL
