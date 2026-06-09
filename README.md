@@ -206,8 +206,10 @@ event-radar/
 ├── app/             # Flutter mobile app (Android + iOS)
 ├── api/             # Vercel serverless functions (trigger + dataset proxy)
 ├── indexer/         # Python event-discovery pipeline run by GitHub Actions
-├── cities.txt       # Cities to index monthly (one Name:CC per line)
-└── .github/workflows/pipeline.yml
+├── cities.txt       # Cities to index monthly (one Name:CC per line, deduped by slug)
+└── .github/workflows/
+    ├── pipeline.yml        # Monthly + on-demand scrape, publishes to GitHub Pages
+    └── clear-datasets.yml  # Manual one-off wipe of the published datasets
 ```
 
 ## Data flow in detail
@@ -220,15 +222,25 @@ GitHub Actions runs on the 1st of every month at 06:00 UTC. It reads every city 
 
 When a user picks a city that hasn't been indexed yet:
 
-1. Flutter calls `POST /api/trigger` with `{ city: "Gdańsk", country_code: "PL" }`
-2. Vercel checks `index.json` — city not found or data is stale
+1. Flutter calls `POST /api/trigger` with `{ city: "Gdańsk", slug: "gdansk", country_code: "PL" }`
+2. Vercel looks the city up in `index.json` **by slug** (diacritic/case-proof) — not found, or its data is stale
 3. Vercel checks the GitHub Actions API — no run already in progress
 4. Vercel triggers `workflow_dispatch` for `Gdańsk:PL`
-5. GitHub Actions indexes Gdańsk and appends it to `cities.txt` (so it runs every month from now on)
+5. GitHub Actions indexes Gdańsk and appends it to `cities.txt` — **deduplicated by slug**, so spelling variants (e.g. `Gdańsk:PL` vs `gdansk:PL`) collapse to one entry instead of stacking up and scraping the same dataset twice
 6. Flutter polls `/api/datasets?path=index.json` every 15 seconds
 7. When `gdansk.json` appears in the index, Flutter fetches and displays the events
 
 Total time from tap to events: **~2 minutes**.
+
+Throughout, a city's identity is its **slug** — lower-cased and diacritic-stripped (`Gdańsk` → `gdansk`). The app, the Vercel trigger, and the pipeline all compare by slug, so the same place can never be indexed twice under different spellings. A failed dataset fetch is also distinguished from a missing one: a `404` means "not indexed yet" (and triggers a scrape), while a network/proxy error surfaces as a retryable error rather than a phantom scrape.
+
+### Clearing datasets
+
+The published datasets live **only** on the GitHub Pages deployment (not in git), and every pipeline run re-seeds itself from the live site — so the only way to clear them is to publish a deployment that no longer contains them. `clear-datasets.yml` does exactly that: a manual (`workflow_dispatch`) job, gated behind typing `WIPE` to confirm, that deploys an empty `datasets/index.json`. After it runs the index lists zero cities and old `{slug}.json` URLs 404; since `cities.txt` is left untouched, the next pipeline run rebuilds everything from scratch.
+
+```bash
+gh workflow run clear-datasets.yml -f confirm=WIPE
+```
 
 ### Broken upstream times
 
