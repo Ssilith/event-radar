@@ -250,6 +250,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                         moreLabel: l.showMore,
                         lessLabel: l.showLess,
                         toggleColor: primary,
+                        onTapLink: _openUrl,
                       ),
                     ],
                     if (event.hasLocation || event.url != null) ...[
@@ -378,6 +379,7 @@ class _ExpandableDescription extends StatefulWidget {
   final String moreLabel;
   final String lessLabel;
   final Color toggleColor;
+  final void Function(String url)? onTapLink;
 
   const _ExpandableDescription({
     required this.data,
@@ -385,6 +387,7 @@ class _ExpandableDescription extends StatefulWidget {
     required this.moreLabel,
     required this.lessLabel,
     required this.toggleColor,
+    this.onTapLink,
   });
 
   @override
@@ -424,6 +427,8 @@ class _ExpandableDescriptionState extends State<_ExpandableDescription> {
                 textAlign: TextAlign.justify,
                 maxLines: _expanded ? null : _collapsedLines,
                 overflow: _expanded ? TextOverflow.clip : TextOverflow.ellipsis,
+                onTapLink: widget.onTapLink,
+                linkColor: widget.toggleColor,
               ),
               if (overflows)
                 Padding(

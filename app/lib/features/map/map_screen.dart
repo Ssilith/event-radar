@@ -57,6 +57,8 @@ class _MapScreenState extends State<MapScreen> {
   final _cityService = CityService.instance;
   final _mapController = MapController();
 
+  bool _mapReady = false;
+
   StreamSubscription<CityDataState>? _sub;
   List<Event> _events = [];
   CityDataStatus _status = CityDataStatus.polling;
@@ -193,7 +195,7 @@ class _MapScreenState extends State<MapScreen> {
 
   //* Fit the camera to all event markers (and the user, if known)
   void _fitToEvents() {
-    if (_events.isEmpty) return;
+    if (!_mapReady || _events.isEmpty) return;
     if (_events.length == 1) {
       _mapController.move(
         LatLng(_events.first.latitude!, _events.first.longitude!),
@@ -324,6 +326,10 @@ class _MapScreenState extends State<MapScreen> {
             initialZoom: 11,
             maxZoom: _maxZoom,
             onTap: (_, _) => _onMapTap(),
+            onMapReady: () {
+              _mapReady = true;
+              _fitToEvents();
+            },
           ),
           children: [
             TileLayer(
@@ -341,36 +347,36 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ],
               ),
-            //* All events live in the cluster
-            MarkerClusterLayerWidget(
-              options: MarkerClusterLayerOptions(
-                maxClusterRadius: 45,
-                disableClusteringAtZoom: _maxZoom.toInt(),
-                spiderfyCircleRadius: 50,
-                size: const Size(44, 44),
-                markers: _events.map(_buildEventMarker).toList(),
-                builder: (ctx, markers) {
-                  final primary = Theme.of(ctx).colorScheme.primary;
-                  return Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: primary,
-                      border: Border.all(color: primary),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${markers.length}',
-                        style: TextStyle(
-                          color: AppColors.onPrimary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
+            if (_events.isNotEmpty)
+              MarkerClusterLayerWidget(
+                options: MarkerClusterLayerOptions(
+                  maxClusterRadius: 45,
+                  disableClusteringAtZoom: _maxZoom.toInt(),
+                  spiderfyCircleRadius: 50,
+                  size: const Size(44, 44),
+                  markers: _events.map(_buildEventMarker).toList(),
+                  builder: (ctx, markers) {
+                    final primary = Theme.of(ctx).colorScheme.primary;
+                    return Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: primary,
+                        border: Border.all(color: primary),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${markers.length}',
+                          style: TextStyle(
+                            color: AppColors.onPrimary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
           ],
         ),
         if (_status == CityDataStatus.polling ||
