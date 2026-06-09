@@ -158,6 +158,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     _sub = _eventService
         .getEventsForCity(
           slug,
+          cityName: city.name,
           countryCode: city.countryCode,
           includePast: true,
         )
@@ -201,6 +202,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     final when = formatReminderDate(
       result.reminderAt!,
       Localizations.localeOf(context).toLanguageTag(),
+      zoneSuffix: venueTzDiffersFromPhone(event.timezone)
+          ? l.timeSuffix(venueTzShortName(event.timezone))
+          : null,
     );
     AppToast.reminder(context, title: l.reminderSetTitle, message: when);
   }

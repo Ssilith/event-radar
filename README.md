@@ -21,7 +21,7 @@
   <li><b>Discover events</b> in any city — search by keyword and filter by category, date, and price (including a free-only filter), or sort by what's soonest or nearest.</li>
   <li><b>Browse a map</b> of nearby events, with live distance from your location shown in kilometres or miles.</li>
   <li><b>Save events</b> you care about to a personal bookmarks list that works offline.</li>
-  <li><b>Get reminded</b> with local notifications before a saved event starts — with smart handling of multi-day events (see <a href="#notifications">Notifications</a>).</li>
+  <li><b>Get reminded</b> with a local notification 24 hours before a saved event starts (see <a href="#notifications">Notifications</a>).</li>
   <li><b>See full details</b> — venue, description, price, ticket link, and the start time shown in the event's own timezone, not your phone's.</li>
   <li><b>Make it yours</b> — light / dark / system theme, English or Polish, and kilometres or miles, all switchable on the fly.</li>
   <li><b>Unlock new cities on demand</b> — pick a city nobody has indexed yet and the app spins up a fresh index in about two minutes.</li>
@@ -47,7 +47,7 @@
   </tr>
   <tr>
     <td align="center">Discover</td>
-    <td align="center">Event details</td>
+    <td align="center">Event Details</td>
     <td align="center">Bookmarks</td>
     <td align="center">Map</td>
   </tr>
@@ -83,22 +83,18 @@
   in Settings clears every pending one at once.
 </p>
 
-<p>When a reminder fires depends on the event:</p>
+<p>Whether a reminder is scheduled depends on how far off the event is:</p>
 <ul>
-  <li><b>Plenty of notice:</b> a heads-up <b>24 hours before</b> the event's start time.</li>
-  <li><b>Saved late, or a multi-day event that's already running:</b> if the "day before"
-      moment has already passed, the reminder instead fires at the event's <b>next daily
-      session</b> — the next time its start clock-time comes around, as long as that still
-      falls within the event's run. Save a 7-day festival that starts at 18:00 while it's
-      already underway, and you'll be reminded at the very next 18:00.</li>
-  <li><b>Already finished:</b> nothing is scheduled — there's nothing left to remind you about.</li>
+  <li><b>More than a day away:</b> a heads-up fires <b>24 hours before</b> the event's start time.</li>
+  <li><b>Less than 24 hours away, or already started:</b> no reminder is scheduled — there isn't
+      a full day's notice left to give, so the app doesn't add last-minute noise.</li>
 </ul>
 
 <p>
-  Every reminder is anchored to the <b>venue's timezone</b>, and the schedule rebuilds the
-  target date rather than adding a flat 24 hours, so the clock-time stays correct across
-  daylight-saving changes. The app asks for the OS notification permission the first time it
-  needs to schedule a reminder.
+  Reminder times are computed in the <b>venue's timezone</b>, and the notification text shows the
+  event's start time in that same zone — labelled with the zone name when it differs from your
+  phone's, so an out-of-town event is never misread as your local time. The app asks for the OS
+  notification permission the first time it needs to schedule a reminder.
 </p>
 
 <h3 align="center">Privacy</h3>
@@ -299,7 +295,7 @@ lib/
 ```
 
 - **Localization:** English (template) and Polish; the device locale is auto-detected at startup. Add a locale by dropping `lib/l10n/app_<code>.arb` next to the others and running `flutter gen-l10n`. Plural-sensitive keys use ICU syntax so Polish gets correct grammar.
-- **Persistence (Hive):** `bookmarks` (saved events) and `recent_cities`.
+- **Persistence (Hive):** `bookmarks` (saved events), `recent_cities`, and `settings` (theme, locale, distance unit, notifications toggle).
 - **Notifications:** scheduled by `NotificationService` and wired into the save/unsave flow by `BookmarkActions` (see [Notifications](#notifications)).
 - **Config:** `app/lib/core/config.dart` reads `VERCEL_BASE` from `--dart-define`, e.g. `https://event-radar.vercel.app`.
 

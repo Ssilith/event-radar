@@ -10,15 +10,16 @@ export default async function handler(req, res) {
   if (req.method !== "POST")
     return res.status(405).json({ error: "POST only" });
 
-  const { city, country_code } = req.body || {};
+  const { city, slug, country_code } = req.body || {};
   if (!city?.trim())
     return res.status(400).json({ error: "'city' field is required" });
 
   const cityName = city.trim();
+  const citySlug = (slug || "").trim();
   const cc = (country_code || "").trim().toUpperCase();
   const cityArg = cc ? `${cityName}:${cc}` : cityName;
 
-  const entry = await findInIndex(cityName);
+  const entry = await findInIndex(cityName, citySlug);
   if (entry) {
     const ageMs = Date.now() - new Date(entry.updated_at).getTime();
     if (ageMs < STALE_MS) {
@@ -89,13 +90,18 @@ async function isWorkflowRunning() {
   }
 }
 
-async function findInIndex(cityName) {
+async function findInIndex(cityName, slug) {
   try {
     const r = await fetch(`${BASE_URL()}/index.json`);
     if (!r.ok) return null;
     const data = await r.json();
+    const cities = data.cities ?? [];
+    if (slug) {
+      const bySlug = cities.find((c) => c.slug === slug);
+      if (bySlug) return bySlug;
+    }
     const needle = cityName.toLowerCase();
-    return data.cities?.find((c) => c.city?.toLowerCase() === needle) ?? null;
+    return cities.find((c) => c.city?.toLowerCase() === needle) ?? null;
   } catch {
     return null;
   }

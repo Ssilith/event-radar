@@ -44,6 +44,7 @@ class EventService {
   //* Stream a city's events: cache → remote → trigger scrape + poll
   Stream<CityDataState> getEventsForCity(
     String slug, {
+    String? cityName,
     String countryCode = '',
     double? latitude,
     double? longitude,
@@ -68,8 +69,15 @@ class EventService {
       return;
     }
 
-    //* Remote dataset exists and is within the staleness window
-    final dataset = await _fetchDataset(slug);
+    //* Remote dataset lookup
+    final Map<String, dynamic>? dataset;
+    try {
+      dataset = await _fetchDataset(slug);
+    } catch (e, s) {
+      _log.warning('fetchDataset($slug) failed', e, s);
+      yield const CityDataState.error();
+      return;
+    }
     final datasetTimestamp = dataset?['updated_at'] ?? dataset?['generated_at'];
     if (dataset != null && !DataFreshness.isStale(datasetTimestamp)) {
       final events = _parseEvents(dataset);
@@ -82,10 +90,14 @@ class EventService {
     }
 
     //* Data is missing or stale - trigger a scrape and poll for results
-    final cityName = dataset?['city'] as String? ?? slug;
+    final scrapeName = dataset?['city'] as String? ?? cityName ?? slug;
     yield const CityDataState.triggered();
 
-    if (!await _triggerScrape(cityName, countryCode: countryCode)) {
+    if (!await _triggerScrape(
+      scrapeName,
+      slug: slug,
+      countryCode: countryCode,
+    )) {
       yield const CityDataState.error();
       return;
     }
@@ -96,9 +108,17 @@ class EventService {
       await Future.delayed(_pollInterval);
       yield const CityDataState.polling();
 
-      final entry = await _findInIndex(cityName);
+      final entry = await _findInIndex(scrapeName);
       if (entry != null && !DataFreshness.isStale(entry['updated_at'])) {
-        final fresh = await _fetchDataset(entry['slug'] as String);
+        //* A transient failure here just means try again next tick — the index
+        //* already says the data is ready, so don't abandon the poll.
+        Map<String, dynamic>? fresh;
+        try {
+          fresh = await _fetchDataset(entry['slug'] as String);
+        } catch (e, s) {
+          _log.warning('poll fetch failed, retrying', e, s);
+          continue;
+        }
         if (fresh != null) {
           final entrySlug = entry['slug'] as String;
           final events = _parseEvents(fresh);
@@ -153,25 +173,29 @@ class EventService {
 
   //* Fetch and decode a single city dataset JSON
   Future<Map<String, dynamic>?> _fetchDataset(String slug) async {
-    try {
-      final r = await _client.get(_datasetUri('$slug.json'));
-      if (r.statusCode == 200) {
-        return json.decode(r.body) as Map<String, dynamic>;
-      }
-      _log.warning('fetchDataset($slug): status ${r.statusCode}');
-    } catch (e, s) {
-      _log.warning('fetchDataset($slug) failed', e, s);
+    final r = await _client.get(_datasetUri('$slug.json'));
+    if (r.statusCode == 200) {
+      return json.decode(r.body) as Map<String, dynamic>;
     }
-    return null;
+    if (r.statusCode == 404) return null;
+    throw Exception('fetchDataset($slug): HTTP ${r.statusCode}');
   }
 
   //* Ask the backend to (re)scrape a city; true if it accepted the request
-  Future<bool> _triggerScrape(String city, {String countryCode = ''}) async {
+  Future<bool> _triggerScrape(
+    String city, {
+    required String slug,
+    String countryCode = '',
+  }) async {
     try {
       final r = await _client.post(
         _triggerUri,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'city': city, 'country_code': countryCode}),
+        body: json.encode({
+          'city': city,
+          'slug': slug,
+          'country_code': countryCode,
+        }),
       );
       if (r.statusCode == 200) {
         final body = json.decode(r.body) as Map<String, dynamic>;

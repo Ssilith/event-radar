@@ -20,11 +20,14 @@ class BookmarkActions {
       return (saved: false, reminderAt: null);
     }
     final time = formatEventTime(event, 'HH:mm');
+    final timeLabel = venueTzDiffersFromPhone(event.timezone)
+        ? '$time ${l.timeSuffix(venueTzShortName(event.timezone))}'
+        : time;
     final venuePart = event.venue == null ? '' : ' · ${event.venue}';
     final reminderAt = await NotificationService.instance.scheduleEventReminder(
       event,
       title: l.notificationsTitle(event.title),
-      body: l.notificationsBody(time, venuePart),
+      body: l.notificationsBody(timeLabel, venuePart),
     );
     return (saved: true, reminderAt: reminderAt);
   }

@@ -47,6 +47,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     final when = formatReminderDate(
       result.reminderAt!,
       Localizations.localeOf(context).toLanguageTag(),
+      zoneSuffix: venueTzDiffersFromPhone(widget.event.timezone)
+          ? l.timeSuffix(venueTzShortName(widget.event.timezone))
+          : null,
     );
     AppToast.reminder(context, title: l.reminderSetTitle, message: when);
   }

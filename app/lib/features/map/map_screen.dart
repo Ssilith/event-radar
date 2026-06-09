@@ -124,6 +124,7 @@ class _MapScreenState extends State<MapScreen> {
         //* includePast keeps ongoing multi-day events; DateFilter.all drops ended
         .getEventsForCity(
           slug,
+          cityName: city.name,
           countryCode: city.countryCode,
           includePast: true,
         )

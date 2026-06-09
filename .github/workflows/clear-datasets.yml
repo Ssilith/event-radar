@@ -1,0 +1,59 @@
+name: Clear Published Datasets
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type WIPE to confirm clearing ALL published datasets"
+        required: true
+        default: ""
+
+permissions:
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "event-pipeline-scheduled"
+  cancel-in-progress: false
+
+jobs:
+  wipe:
+    name: "Wipe & Publish empty index"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "WIPE" ]; then
+            echo "::error::Confirmation failed — type WIPE exactly to proceed."
+            exit 1
+          fi
+
+      - name: Build empty site
+        run: |
+          mkdir -p _site/datasets
+          printf '{\n  "cities": [],\n  "updated_at": "%s"\n}\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > _site/datasets/index.json
+
+          cat > _site/index.html << 'HTML'
+          <!DOCTYPE html>
+          <html><head><meta charset="UTF-8"><title>EventRadar API</title>
+          <style>body{font-family:monospace;max-width:700px;margin:40px auto;background:#0a0e1a;color:#ccc}
+          h1{color:#00e5b4}a{color:#4cc9f0}code{background:#1a2040;padding:2px 6px;border-radius:4px}
+          .c{margin:6px 0;padding:10px;background:#111827;border-radius:6px}</style></head>
+          <body><h1>EventRadar API</h1>
+          <p>Updated monthly + on-demand for new cities.</p>
+          <p><code>GET /datasets/index.json</code>&nbsp;<code>GET /datasets/{slug}.json</code></p>
+          <div id="out">Loading...</div>
+          <script>fetch('datasets/index.json').then(r=>r.json()).then(d=>{
+          document.getElementById('out').innerHTML=d.cities.length?d.cities.map(c=>
+          '<div class="c"><b>'+c.city+'</b> — '+c.count+' events <a href="datasets/'+c.url+'">JSON</a>'
+          +'<small style="float:right;color:#555">'+(c.updated_at||'').slice(0,10)+'</small></div>'
+          ).join(''):'<div class="c">No cities indexed yet.</div>'})</script></body></html>
+          HTML
+
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site/
+      - uses: actions/deploy-pages@v4

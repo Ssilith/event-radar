@@ -61,7 +61,9 @@ jobs:
           if [ -n "$INPUT" ]; then
             echo "CITIES=$INPUT" >> $GITHUB_ENV
             echo "On-demand: $INPUT"
-            if ! grep -qxF "$INPUT" cities.txt; then
+            if INPUT="$INPUT" python3 -c "import os,sys; sys.path.insert(0,'indexer'); from config import city_to_slug; t=city_to_slug(os.environ['INPUT'].rsplit(':',1)[0]); seen={city_to_slug(l.rsplit(':',1)[0]) for l in open('cities.txt',encoding='utf-8').read().splitlines() if l.strip()}; sys.exit(0 if t in seen else 1)"; then
+              echo "$INPUT already indexed (same slug) — not re-adding"
+            else
               echo "$INPUT" >> cities.txt
               echo "Added $INPUT to cities.txt"
               echo "NEW_CITY=true" >> $GITHUB_ENV

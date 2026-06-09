@@ -200,12 +200,13 @@ String venueTzShortName(String? tzName) {
   return parts.last.replaceAll('_', ' ');
 }
 
-//* Format a saved-event reminder's fire time for display. [reminderAt] is a
-//* venue-tz TZDateTime, so its own fields are formatted directly — calling
-//* toLocal would convert to the unset tz.local (== UTC) and shift the time.
-//* The first letter is upper-cased since some locales (e.g. Polish) lowercase
-//* weekday/month names.
-String formatReminderDate(DateTime reminderAt, String locale) {
+//* Format a saved-event reminder's fire time for display
+String formatReminderDate(
+  DateTime reminderAt,
+  String locale, {
+  String? zoneSuffix,
+}) {
   final s = DateFormat.MMMEd(locale).add_Hm().format(reminderAt);
-  return s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+  final capped = s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+  return zoneSuffix == null ? capped : '$capped · $zoneSuffix';
 }
