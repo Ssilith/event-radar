@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
-//* Entry point: hold the splash, run startup init, then launch the app
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   if (!kIsWeb) FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
@@ -16,7 +15,6 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-//* Root widget: rebuilds MaterialApp on theme/locale change
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
